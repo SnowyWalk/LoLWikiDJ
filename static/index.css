@@ -20,11 +20,13 @@ body {
   background-color: lightblue;
   left: 0px;
   height: 86px;
+  cursor: pointer;
 }
 
 /* 선택된 재생목록 (const) */
 #current_playlist_name_const {
   text-align: center;
+  margin-top: 8px;
 }
 
 /* 선택된 재생목록 */
@@ -38,6 +40,8 @@ body {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  margin-top: 4px;
+  margin-left: 5px;
 }
 
 /* =================== 하단 ========================= */
