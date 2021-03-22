@@ -1,0 +1,246 @@
+body {
+  margin: 0;
+  padding: 0;
+}
+
+.nanum {
+  font-family: "Nanum Gothic";
+}
+.bold {
+  font-weight: bold;
+}
+
+/* * { font-family: "Nanum Gothic" !important; } */
+
+/* =================== 좌 하단 ========================= */
+
+/* 현재 재생목록 정보 */
+#current_playlist_info_box {
+  position: fixed;
+  background-color: lightblue;
+  left: 0px;
+  height: 86px;
+}
+
+/* 선택된 재생목록 (const) */
+#current_playlist_name_const {
+  text-align: center;
+}
+
+/* 선택된 재생목록 */
+#current_playlist_name {
+  text-align: center;
+}
+
+/* 현재 재생목록 맨 앞 곡 정보 */
+#current_playlist_video_name
+{
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* =================== 하단 ========================= */
+
+/* 현재 비디오 정보 */
+#video_info {
+  background-color: lightblue;
+  height: 86px;
+  width: 622px;
+  position: fixed;
+  border-width: thin;
+  border-top: 0;
+  border-bottom: 0;
+  border-style: solid;
+}
+
+#video_info_dj { 
+  font-family: "Nanum Gothic";
+  padding-left: 11px;
+  padding-top: 6px;
+}
+
+#video_info_dj::before {
+  content: 'DJ';
+  font-weight: bold;
+  padding-right: 6px;
+}
+
+#video_info_name {
+  font-family: "Nanum Gothic";
+  padding-left: 11px;
+  padding-top: 5px;
+}
+
+#video_info_name::before {
+  content: 'TITLE';
+  font-weight: bold;
+  padding-right: 6px;
+}
+
+/* 영상 링크 확인 */
+#video_link {
+  padding-left: 10px;
+  font-family: "Nanum Gothic";
+}
+
+/* 영상 시간 프로그레스 바 */
+#my_progress_bar {
+  background: #b1a8a3;
+  border-radius: 12px;
+  height: 9px;
+  width: 600px;
+  padding: 0px;
+  margin: 0 auto;
+  position: fixed;
+  left: 243px;
+}
+#my_progress_bar_after {
+  height: 9px;
+  width: 0px;
+  left: 243px;
+  position: fixed;
+  display: block;
+  background: red;
+  border-radius: 9px;
+}
+/* 영상 시간 라벨 */
+#video_info_time {
+  text-align: right;
+  position: fixed;
+  left: 243px;
+  width: 601px;
+  font-size: 14;
+  font-weight: bold;
+  font-family: "Nanum Gothic";
+}
+
+/* =================== 영상부 ========================= */
+
+/* 유튜브 영상 */
+#video_player {
+  top:0px; 
+  left:0px; 
+  position: fixed;
+  z-index: 1;
+}
+/* 유튜브 영상 커버 */
+#block_video {
+  position: fixed;
+  top:0px; 
+  left:0px; 
+  background-color: black;
+  color: white;
+  font-family: "Nanum Gothic";
+  font-weight: bold;
+  font-size: xxx-large;
+  text-align: center;
+  z-index: 2;
+  display: none;
+}
+
+/* =================== 우측 채팅 ========================= */
+
+/* 채팅 메인 */
+#mainchat {
+  margin: auto;
+  /* border-radius: 20px; */
+  background-color: lightblue;
+  text-align: center;
+  width: 350px;
+  height: 100%;
+}
+
+/* 채팅 영역 */
+#chat {
+  height: 95%;
+  width: 100%;
+  overflow-y: auto;
+}
+
+#chat_input {
+  width: 85%;
+  height: 26px;
+  margin-top: 11px;
+  position: relative;
+}
+
+#chat_send {
+  height: 26px;
+  top: 2px;
+  position: relative;
+  /* left: 5px; */
+}
+
+/* 접속 알림 */
+.connect {
+  width: 90%;
+  margin: auto;
+  background-color: aquamarine;
+  text-align: center;
+  margin-top: 10px;
+}
+
+/* 접속 종료 알림 */
+.disconnect {
+  width: 90%;
+  margin: auto;
+  background-color: indianred;
+  text-align: center;
+  margin-top: 10px;
+}
+
+/* 내가 보낸 메시지 */
+.me {
+  width: 90%;
+  margin: auto;
+  margin-top: 10px;
+  background-color: lemonchiffon;
+  border-radius: 5px;
+  text-align: left;
+}
+
+/* 상대방이 보낸 메시지 */
+.other {
+  width: 90%;
+  margin: auto;
+  margin-top: 10px;
+  background-color: white;
+  border-radius: 5px;
+  text-align: left;
+}
+
+/* 시스템 메시지 */
+.system_message {
+  width: 100%;
+  margin: auto;
+  background-color: rgb(160, 224, 57);
+  text-align: center;
+  margin-top: 10px;
+}
+
+.chat {
+  overflow-wrap: break-word;
+  padding-top: 3px;
+  padding-bottom: 3px;
+  white-space: pre-line;
+}
+
+.chat_balloon {
+  padding-left: 7px;
+  padding-right: 7px;
+}
+
+.chat_img {
+  width: 100%;
+}
+
+/* =================== 플레이리스트 컨트롤 패널 ========================= */
+
+/* 플레이리스트 컨트롤 패널 */
+#playlist_control_panel {
+  height: 100%;
+  z-index: 3;
+  background-color: dodgerblue;
+  display: none;
+}

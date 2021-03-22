@@ -1,0 +1,68 @@
+<html>
+<title>LoLWiki.DJ</title>
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="shortcut icon" href="$_localhost/static/favicon.ico" type="image/x-icon">
+  <link rel="stylesheet" href="$_localhost/static/index.css">
+  <script src="$_localhost/node_modules/socket.io/client-dist/socket.io.js"></script>
+
+  <style type="text/css">
+    /* nanum-gothic-regular - latin_korean */
+    @font-face {
+      font-family: 'Nanum Gothic';
+      font-style: normal;
+      font-weight: 400;
+      src: url('/fonts/nanum-gothic-v17-latin_korean-regular.eot'); /* IE9 Compat Modes */
+      src: local(''),
+          url('/fonts/nanum-gothic-v17-latin_korean-regular.eot?#iefix') format('embedded-opentype'), /* IE6-IE8 */
+          url('/fonts/nanum-gothic-v17-latin_korean-regular.woff2') format('woff2'), /* Super Modern Browsers */
+          url('/fonts/nanum-gothic-v17-latin_korean-regular.woff') format('woff'), /* Modern Browsers */
+          url('/fonts/nanum-gothic-v17-latin_korean-regular.ttf') format('truetype'), /* Safari, Android, iOS */
+          url('/fonts/nanum-gothic-v17-latin_korean-regular.svg#NanumGothic') format('svg'); /* Legacy iOS */
+    }
+  </style>
+
+</head>
+
+<body>
+  <div id="mainchat">
+    <div id="chat">
+      <!-- 채팅 메시지 영역 -->
+    </div>
+    <div>
+      <input type="text" id="chat_input" onkeydown="chat_keydown()" placeholder="메시지를 입력해주세요..">
+      <button id="chat_send" onclick="send()">전송</button>
+    </div>
+  </div>
+
+
+  <div id="current_playlist_info_box">
+    <div class="nanum bold" id="current_playlist_name_const">선택된 재생목록</div>
+    <div id="current_playlist_name">나의 재생목록 1</div>
+    <div id="current_playlist_video_name">벌칙으로 공포게임을 했습니다.. 이은도의저주.... [팡이요, 종합게임]</div>
+  </div>
+
+  <div id="video_info">
+    <div id="video_info_dj">-<font color=gray><b><a id="video_link" href='#' onclick='show_video_link()'></a></b></font></div>
+    <div id="video_info_name">재생 중인 영상이 없습니다.</div>
+    
+    <div id="my_progress_bar"></div>
+    <div id="my_progress_bar_after"></div>
+    <div id="video_info_time">--:-- / --:--</div>
+  </div>
+
+  <div id="current_video_rating_box">
+
+  <div id="block_video">재생 중인 영상이 없습니다.</div>
+  <div id="video_player"></div>
+
+  <div id="playlist_control_panel"></div>
+
+  <script src="https://www.youtube.com/iframe_api"></script>
+  <script src="$_localhost/static/index.js"></script>
+
+</body>
+
+</html>
