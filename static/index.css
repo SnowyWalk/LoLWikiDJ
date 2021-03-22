@@ -23,6 +23,10 @@ body {
   cursor: pointer;
 }
 
+#current_playlist_info_box:hover {
+  background-color: rgb(160, 224, 57);
+}
+
 /* 선택된 재생목록 (const) */
 #current_playlist_name_const {
   text-align: center;
