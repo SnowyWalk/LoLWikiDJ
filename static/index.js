@@ -14,6 +14,9 @@ var g_show_playlist_control_panel = false
 
 var g_data = null
 
+var g_video_info_dic = null
+var g_playlist_info_list = null
+
 /* 접속 되었을 때 실행 */
 socket.on('connect', function () {
 	if(g_isLogin)
@@ -121,6 +124,13 @@ socket.on('update_current_video', function(data) {
 	g_cued_time_ms = Date.now() - data.seek_s * 1000
 	var seek_time_s = (Date.now() - g_cued_time_ms) / 1000
 	player.cueVideoById(data.video_id, seek_time_s, 'low')
+})
+
+socket.on('update_playlist', function(data) {
+	g_video_info_dic = data[0]
+	g_playlist_info_list = data[1]
+
+	console.log('update_playlist', g_video_info_dic, g_playlist_info_list)
 })
 
 socket.on('data', function(data) {

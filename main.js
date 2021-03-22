@@ -300,35 +300,43 @@ io.sockets.on('connection', function(socket)
 	socket.on('playlist', async function() {
 		// TODO: 그냥 업데이트_플레이리스트 로 바꿔도 될듯. 이 함수는 임시 함수가 될 가능성이 높다.
 
+		try
+		{
+			// 해당 계정의 재생목록ID 전체를 가져옴
+			var playlist_id_list = await select_playlists(socket.name).then( (ret) => JSON.parse(ret[0].Playlists) )
+			console.log(playlist_id_list)
 
-		await db_query(format('SELECT ', ))
+			// 해당 재생목록들의 내용을 가져옴 [ { Name:내 재생목록, VideoList:[2134,2345,12,1] } , ... ]
+			var playlist_info_list = await db_select('Id, Name, VideoList', 'Playlists', format('Id IN ({0})', playlist_id_list.join(', '))).then(JSON.stringify).then(JSON.parse)
+			console.log(playlist_info_list)
 
-		var playlists = await select_playlists(socket.name).then( (ret) => JSON.parse(ret[0].Playlists) )
-		console.log(playlists)
+			socket.emit('data', playlist_info_list)
 
+			// VideoList의 원소들을 모은다 (Videos DB에 한번에 요청하기 위해)
+			video_index_list = []
+			for(var e of playlist_info_list)
+			{
+				e.VideoList = JSON.parse(e.VideoList)
+				video_index_list.push(...e.VideoList)
+			}
+			video_index_list = [...new Set(video_index_list)] // 중복 제거
 
+			// Videos DB에 비디오 정보를 한번에 조회
+			var video_info_list = await db_select('Id, Name, VideoId, Length, Thumbnail', 'Videos', format('Id IN ({0})', video_index_list.join(', '))).then(JSON.stringify).then(JSON.parse)
+			console.log(video_info_list)
 
-		// select_playlists(socket.name, function(err, result) {
-		// 	if(err)
-		// 	{
-		// 		log('ERROR', 'playlist query 1', err)
-		// 		return	
-		// 	}
+			// Video 정보를 Dic형태로 재구성
+			var video_info_dic = {}
+			for(var e of video_info_list)
+				video_info_dic[e.Id] = { Name: e.Name, VideoId: e.VideoId, Length: e.Length, Thumbnail: e.Thumbnail }
 
-		// 	playlists_id = JSON.parse(result[0].Playlists)
-		// 	db.query(format('SELECT `Name`, `VideoList` FROM `Playlists` WHERE `Id` in ({0})', playlists_id.join(',')), function(err, result) {
-		// 		if(err)
-		// 		{
-		// 			log('ERROR', 'playlist query 2', err)
-		// 			return
-		// 		}
-				
-		// 		log('INFO', 'playlists', result[0])
-		// 		playlists = JSON.parse(result[0].VideoList)
-		// 		log('INFO', 'playlists', playlists)
-		// 		console.log(typeof(playlists.VideoList))
-		// 	})
-		// })
+			socket.emit('update_playlist', [video_info_dic, playlist_info_list])
+		}
+		catch (exception)
+		{
+			log('THROW_CATCH', 'playlist', exception.name + ' --> ' + exception.message)
+			log('ERROR_CATCH', 'playlist', exception.stack)
+		}
 	})
 
 	/* 해당 유저에게 플레이리스트 갱신 */
@@ -601,7 +609,7 @@ function parse_youtube_response_data(query_result)
 	return video_data
 }
 
-function db_select(columns, from, where, options)
+function db_select(columns, from, where, options = '')
 {
 	var query = format('SELECT {0} FROM {1} WHERE {2} {3}', columns, from, where, options)
 	return new Promise(function(resolve, reject) {
