@@ -131,14 +131,14 @@ io.sockets.on('connection', function(socket)
 			}
 
 			// 로그인 성공
-			db.commit()
+			await db_commit()
 			socket.emit('login', true)
 			update_current_video(socket)
 		}
 		catch (exception)
 		{
 			console.log(exception.stack)
-			db.rollback()
+			await db_rollback()
 			log('ERROR_CATCH', 'login', socket.name + ' 로그인 실패. 에러 : ' + JSON.stringify(err))
 			socket.name = ''
 			socket.emit('login', false)
@@ -214,10 +214,7 @@ io.sockets.on('connection', function(socket)
 			body = await request_youtube_data(data.video_id)
 			var item = body.items[0]
 			if(item == null)
-			{
-				
-				return
-			}
+				throw Error()
 			var response_data = parse_youtube_response_data(body)
 			
 			log('INFO', 'play', response_data.title)
@@ -342,57 +339,27 @@ io.sockets.on('connection', function(socket)
 	}
 
 	/* 새 재생목록 추가하기 */
-	socket.on('new_playlist', function() {
-		/*
-		db.beginTransaction( function(err) {
-			if(err)
-			{
-				log('ERROR', 'new_playlist.db.beginTransaction', err)
-				return
-			}
+	socket.on('new_playlist', async function() {
+		try
+		{
+			await db_beginTransaction()
 
-			// 새 재생목록 만들기
-			create_new_playlist(function (err, result){
-				if(err)
-				{
-					log('ERROR', 'new_playlist query 1', err)
-					db.rollback()
-					return
-				}
+			// 새 재생목록 생성
+			var new_playlist_id = await db_insert('Playlists', ['Name', 'VideoList'], ['새 재생목록', '[]']).then(ret => ret.insertId)
+			
+			// 유저의 현재 재생목록에 추가
+			await db_update('Accounts', format('Playlists = JSON_ARRAY_APPEND(Playlists, "$", {0})', new_playlist_id), format('Name = "{0}"', socket.name))
 
-				var insert_id = result.insertId
+			await db_commit()
 
-				// 유저의 현재 재생목록 가져오기
-				select_playlists(socket.name, function(err, result) {
-					if(err)
-					{
-						log('ERROR', 'playlist query 2', err)
-						db.rollback()
-						return	
-					}
-
-					var current_playlists = JSON.parse(result[0].Playlists)
-					current_playlists.push(insert_id)
-
-					// 새 재생목록으로 덮어씌우기
-					db.query(format('UPDATE `Accounts` SET `Playlists` = "{0}" WHERE (`Name` = "{1}")', JSON.stringify(current_playlists), socket.name), function(err, result) {
-						if(err)
-						{
-							log('ERROR', 'playlist query 3', err)
-							db.rollback()
-							return	
-						}
-
-						log('INFO', 'new_playlist', format('새 재생목록 추가 {0} ({1})', JSON.stringify(current_playlists), insert_id))
-						db.commit()
-
-						// 업데이트 플레이리스트
-						update_playlist(socket)
-					})
-				})
-			})
-		})
-		*/
+			// 업데이트
+			update_playlist(socket)
+		}
+		catch (exception)
+		{
+			log('ERROR_CATCH', 'new_playlist', exception.stack)
+			await db_rollback()
+		}		
 	})
 
 	/* 재생목록 선택 */
@@ -410,7 +377,7 @@ io.sockets.on('connection', function(socket)
 		})
 	})
 
-	/* 현재 재생목록에 video 추가 (TODO: 재생목록을 지정할 수 있어야함) */
+	/*  특정 재생목록에 video 추가  */
 	// 유효한 영상이어야한다. (삭제된 영상이 아니어야한다. Embedding 비허용 영상은 상관 없음.) 
 	socket.on('push_video', async function(data) {
 		// 1. Videos DB에 이미 있는 곡인지 확인
@@ -583,7 +550,7 @@ function update_current_video(dest_socket)
 		video_id: g_video_id,
 		title: g_video_title,
 		duration: g_video_duration,
-		seek_s: g_video_duration > 0 ? ((Date.now() - g_played_time_ms) / 1000) : 1
+		seek_s: g_video_duration > 0 ? ((Date.now() - g_played_time_ms) / 1000) : 0
 	})
 }
 
@@ -688,6 +655,24 @@ function db_beginTransaction()
 	return new Promise( function(resolve, reject) {
 		db.beginTransaction( (err) => {
 			err ? reject(err) : resolve()	
+		})
+	})
+}
+
+function db_commit()
+{
+	return new Promise( function(resolve, reject) {
+		db.commit( (err) => {
+			err ? reject(err) : resolve()
+		})
+	})
+}
+
+function db_rollback()
+{
+	return new Promise( function(resolve, reject) {
+		db.rollback( (err) => {
+			err ? reject(err) : resolve()
 		})
 	})
 }
