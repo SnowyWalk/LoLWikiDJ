@@ -389,6 +389,7 @@ function chat_keydown() {
 
 window.onload = function() {
 	initial_resize()
+	init_block.style.display = 'none'
 	loop_func(update_video_time, 100)
 }
 window.onresize = resize
@@ -396,12 +397,20 @@ window.onresize = resize
 
 function initial_resize()
 {
+	/* 우측 채팅 */
+	mainchat.style.width = 350
+
 	/* 좌하단 재생목록 정보 */
-	current_playlist_info_box.style.width = 232;
+	current_playlist_info_box.style.width = 232
 
 	/* 하단 현재 영상 정보 */
-	video_info.style.left = current_playlist_info_box.style.width
-	
+	video_info.style.left = current_playlist_info_box.clientWidth
+	my_progress_bar.style.left = current_playlist_info_box.clientWidth + 11 // 프로그레스 바 패딩 : 양옆 11px
+	my_progress_bar_after.style.left = current_playlist_info_box.clientWidth + 11
+
+	/* 우하단 기타 박스 */
+	etc_box.style.width = 216
+
 	resize()
 }
 
@@ -409,18 +418,20 @@ function resize() {
 	var window_width = window.innerWidth
 	var window_height = window.innerHeight
 
+	var bottom_height = 86 // 하단 박스 높이
+
 	/* 채팅 */
-	mainchat.style.marginLeft = (window_width - mainchat.clientWidth)
+	mainchat.style.marginLeft = (window_width - mainchat.clientWidth) // 350
 
 	chat.style.height = (window_height - 50)
 
 	/* 유튜브 플레이어 */
 	if(player)
-		player.setSize(window_width - mainchat.clientWidth, window_height - 86)
+		player.setSize(window_width - mainchat.clientWidth, window_height - bottom_height)
 
 	block_video.style.width = (window_width - mainchat.clientWidth)
-	block_video.style.height = (window_height - 86)
-	block_video.style.lineHeight = (window_height - 86) + 'px'
+	block_video.style.height = (window_height - bottom_height)
+	block_video.style.lineHeight = (window_height - bottom_height) + 'px'
 	
 	if(!player || !g_current_video_id)
 		block_video.style.display = 'block'
@@ -428,28 +439,29 @@ function resize() {
 		block_video.style.display = 'none'
 
 	/* 좌하단 재생목록 정보 */
-	current_playlist_info_box.style.top = (window_height - 86) 
+	current_playlist_info_box.style.top = (window_height - bottom_height) 
 
 	/* 하단 영상 정보 */ 
-	var video_info_width = (window_width - 798)
-
-	video_info.style.left = current_playlist_info_box.style.width
-	video_info.style.top = (window_height - 86)
+	var video_info_width = window_width - mainchat.clientWidth - current_playlist_info_box.clientWidth - etc_box.clientWidth // 798
+	video_info.style.top = (window_height - bottom_height)
 	video_info.style.width = video_info_width
 
-	my_progress_bar.style.width = (window_width - 820)
+	my_progress_bar.style.width = (video_info_width - 22)
 	my_progress_bar.style.top = (window_height - 29)
 	
 	my_progress_bar_after.style.top = (window_height - 29)
 	update_video_time()
 	
 	video_info_time.style.top = (window_height - 20)
-	video_info_time.style.width = (window_width - 820)
+	video_info_time.style.width = (video_info_width - 22)
+
+	/* 우하단 기타 패널 */
+
 
 	/* 플레이리스트 패널 */
 	if(g_show_playlist_control_panel)
 	{
-		playlist_control_panel.style.width = (window_width - 350)
+		playlist_control_panel.style.width = (window_width - mainchat.clientWidth)
 	}
 }
 
@@ -457,6 +469,11 @@ function resize() {
 function show_playlist_control_panel(isShow) 
 {
 	playlist_control_panel.style.display = isShow ? 'block' : 'none'
+}
+function toggle_playlist_control_panel()
+{
+	g_show_playlist_control_panel = !g_show_playlist_control_panel
+	show_playlist_control_panel(g_show_playlist_control_panel)
 }
 
 

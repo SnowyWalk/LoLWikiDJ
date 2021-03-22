@@ -12,6 +12,17 @@ body {
 
 /* * { font-family: "Nanum Gothic" !important; } */
 
+/* 초기화 전 블록 */
+#init_block {
+  position: fixed;
+  left: 0px;
+  top: 0px;
+  width: 100%;
+  height: 100%;
+  background-image: url('bg.jpg');
+  z-index: 100;
+}
+
 /* =================== 좌 하단 ========================= */
 
 /* 현재 재생목록 정보 */
@@ -54,7 +65,7 @@ body {
 #video_info {
   background-color: lightblue;
   height: 86px;
-  width: 622px;
+  /* width: 622px; */
   position: fixed;
   border-width: thin;
   border-top: 0;
@@ -101,12 +112,12 @@ body {
   padding: 0px;
   margin: 0 auto;
   position: fixed;
-  left: 243px;
+  /* left: 243px; */
 }
 #my_progress_bar_after {
   height: 9px;
   width: 0px;
-  left: 243px;
+  /* left: 243px; */
   position: fixed;
   display: block;
   background: red;
@@ -121,6 +132,12 @@ body {
   font-size: 14;
   font-weight: bold;
   font-family: "Nanum Gothic";
+}
+
+/* =================== 우하단 ========================= */
+
+#etc_box {
+  
 }
 
 /* =================== 영상부 ========================= */
@@ -155,7 +172,7 @@ body {
   /* border-radius: 20px; */
   background-color: lightblue;
   text-align: center;
-  width: 350px;
+  /* width: 350px; */
   height: 100%;
 }
 
