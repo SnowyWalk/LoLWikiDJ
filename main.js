@@ -642,7 +642,7 @@ function update_current_video(dest_socket)
 		video_id: g_video_id,
 		title: g_video_title,
 		duration: g_video_duration,
-		seek_s: g_video_duration > 0 ? ((Date.now() - g_played_time_ms) / 1000) : 0
+		seek_s: g_video_duration > 0 ? ((Date.now() - g_played_time_ms - 1000) / 1000) : 0
 	})
 }
 

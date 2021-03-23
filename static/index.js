@@ -405,7 +405,7 @@ function send() {
 		return
 	}
 
-	if(message.toLowerCase() == '/skip' || message == '/나ㅑㅔ' || message.toLowerCase() == '/s')
+	if(message.toLowerCase() == '/skip' || message == '/나ㅑㅔ' || message.toLowerCase() == '/s' || message == '/ㄴ')
 	{
 		socket.emit('skip')
 	}
