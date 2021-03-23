@@ -1,26 +1,38 @@
 var socket = io()
 
+/* 채팅/인증용 데이터 */
 var g_nick = ''
-
 var g_isLogin = false
-var g_isConnected = false
-var g_isWindowLoaded = false
 
+/* 플레이어 관련 데이터 */
 var g_cued_time_ms = 0
 var g_current_video_id = ''
 var g_current_dj = ''
 var g_current_title = ''
 var g_current_duration = 0
 
+var g_good_list = [] // 좋아요 누른 사람 닉네임 목록
+var g_bad_list = [] // 싫어요 목록
+
+/* 웹 페이지 로딩 체크용 */
+var g_isConnected = false
+var g_isWindowLoaded = false
 var g_player_ready = false
+
+/* 반응형 패널 상태 */
 var g_show_playlist_control_panel = false
 
+/* DEBUG용 전역변수 */
 var g_data = null
 
+/* 재생목록 데이터 */
 var g_video_info_dic = null
 var g_playlist_info_list = null
 
+/* DEBUG: 랜덤 닉네임 모드 */
 var g_setting_auto_login = false
+
+
 
 /* 접속 되었을 때 실행 */
 socket.on('connect', function () {
@@ -132,7 +144,6 @@ function disappear_login_scene()
 	init_block.style.display = 'none'
 }
 
-
 /* 서버로부터 채팅 데이터 받은 경우 */
 socket.on('chat_update', function (data) {
 	if(!g_isLogin)
@@ -187,6 +198,18 @@ socket.on('update_current_video', function(data) {
 	player.cueVideoById(data.video_id, seek_time_s, 'low')
 })
 
+/* 좋/실 갱신 신호 받음*/
+socket.on('rating', function(data) {
+	// { good: list, bad: list }
+
+	console.log('rating', data)
+
+	g_good_list = data.good
+	g_bad_list = data.bad
+
+	update_rating_status()
+})
+
 socket.on('update_playlist', function(data) {
 	g_video_info_dic = data[0]
 	g_playlist_info_list = data[1]
@@ -208,7 +231,7 @@ socket.on('push_video_result', function(data) {
 // =====================================================================
 
 /* 채팅창에 메시지 추가 함수 */
-var imgReg = /\/img (\S+)/
+var imgReg = /\/img (\S+)/i
 function add_message(data) 
 {
 	var message = document.createElement('div')
@@ -327,7 +350,9 @@ function send() {
 							+ '/(s)kip : 현재 영상 스킵\n'
 							+ '/(r)ewind 10 : 10초 되감기 (/되감기 10 도 가능)\n'
 							+ '/(f)wd 10 : 10초 빨리감기 (/빨리감기 10 도 가능)\n'
-							+ '/맥심')
+							+ '/맥심\n'
+							+ '/img {이미지주소} : 이미지 채팅'
+							)
 		return
 	}
 
@@ -495,11 +520,14 @@ window.onresize = resize
 
 function initial_resize()
 {
+	var bottom_height = 86 // 하단 박스 높이
+
 	/* 우측 채팅 */
 	mainchat.style.width = 350
 
 	/* 좌하단 재생목록 정보 */
 	current_playlist_info_box.style.width = 232
+	current_playlist_info_box.style.height = bottom_height
 
 	/* 하단 현재 영상 정보 */
 	video_info.style.left = current_playlist_info_box.clientWidth
@@ -508,6 +536,7 @@ function initial_resize()
 
 	/* 우하단 기타 박스 */
 	etc_box.style.width = 216
+	etc_box.style.height = bottom_height
 
 	resize()
 }
@@ -554,7 +583,7 @@ function resize() {
 	current_playlist_info_box.style.top = (window_height - bottom_height) 
 
 	/* 하단 영상 정보 */ 
-	var video_info_width = window_width - mainchat.clientWidth - current_playlist_info_box.clientWidth - etc_box.clientWidth // 798
+	var video_info_width = window_width - mainchat.clientWidth - current_playlist_info_box.clientWidth - etc_box.clientWidth - 3 // 798
 	video_info.style.top = (window_height - bottom_height)
 	video_info.style.width = video_info_width
 
@@ -568,12 +597,24 @@ function resize() {
 	video_info_time.style.width = (video_info_width - 22)
 
 	/* 우하단 기타 패널 */
+	etc_box.style.top = (window_height - bottom_height) 
+	etc_box.style.left = current_playlist_info_box.clientWidth + video_info.clientWidth + 2
 
+	etc_good_button.style.left = etc_box.offsetLeft + 50
+	etc_good_button.style.top = etc_box.offsetTop + 45
+	etc_good_count.style.left = etc_good_button.offsetLeft + etc_good_button.clientWidth
+	etc_good_count.style.top = etc_good_button.offsetTop
+
+	etc_bad_button.style.left = etc_box.offsetLeft + 121
+	etc_bad_button.style.top = etc_box.offsetTop + 45
+	etc_bad_count.style.left = etc_bad_button.offsetLeft + etc_bad_button.clientWidth
+	etc_bad_count.style.top = etc_bad_button.offsetTop
 
 	/* 플레이리스트 패널 */
 	if(g_show_playlist_control_panel)
 	{
 		playlist_control_panel.style.width = (window_width - mainchat.clientWidth)
+		playlist_control_panel.style.height = (window_height - bottom_height)
 	}
 }
 
@@ -581,13 +622,21 @@ function resize() {
 function show_playlist_control_panel(isShow) 
 {
 	playlist_control_panel.style.display = isShow ? 'block' : 'none'
+	resize()
 }
 function toggle_playlist_control_panel()
 {
 	g_show_playlist_control_panel = !g_show_playlist_control_panel
 	show_playlist_control_panel(g_show_playlist_control_panel)
 }
-
+function onclick_good_button()
+{
+	socket.emit('rating', true)
+}
+function onclick_bad_button()
+{
+	socket.emit('rating', false)
+}
 
 /* 유튜브 플러그인 */
 var player;
@@ -644,6 +693,7 @@ function onPlayerStateChange(event)
 
 		if(diff >= 0.5)
 			player.seekTo((Date.now() - g_cued_time_ms) / 1000, true)
+		SetVideoBlock(!g_current_video_id)
 	 }
 
 	 if(event.data == 2)
@@ -774,6 +824,21 @@ function update_current_video_name()
 	}
 	video_info_name.innerText = video_name
 	hide_video_link()
+}
+
+/* 좋아요/싫어요 패널 업데이트 */
+function update_rating_status()
+{
+	var good_count = g_good_list.length
+	var bad_count = g_bad_list.length
+	var is_good_pick = g_good_list.indexOf(g_nick) != -1
+	var is_bad_pick = g_bad_list.indexOf(g_nick) != -1
+
+	etc_good_count.innerText = good_count
+	etc_bad_count.innerText = bad_count
+
+	etc_good_count.style.color = is_good_pick ? 'red' : 'black'
+	etc_bad_count.style.color = is_bad_pick ? 'blue' : 'black'
 }
 
 function selectRange(obj) 

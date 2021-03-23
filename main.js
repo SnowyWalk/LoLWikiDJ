@@ -65,6 +65,10 @@ g_djs = []
 /* 임시: QUEUE */
 g_queue = []
 
+/* 좋아요/싫어요 데이터 */
+g_good_list = []
+g_bad_list = []
+
 // app.get('/static/fonts/*', function(request, response, next) {
 // 	response.header( "Access-Control-Allow-Origin", "*")
 // })
@@ -78,7 +82,9 @@ app.get('/', function(request, response, next) {
 			if(!request.headers.host)
 				return
 			response.writeHead(200, {'Content-Type':'text/html'})
-			var text = data.toString().replace(/\$_localhost/g, 'http://' + request.headers.host.substr(0, request.headers.host.length-5))
+			var text = data.toString()
+						.replace(/\$_localhost/g, 'http://' + request.headers.host.substr(0, request.headers.host.length-5))
+						.replace(/\$_version/g, new Date().getTime())
 			response.write(text)
 			response.end()
 		}
@@ -137,6 +143,7 @@ io.sockets.on('connection', function(socket)
 			socket.emit('login', true)
 			update_current_video(socket) // 플레이 영상 데이터 보내기
 			update_current_queue(socket) // 플레이 대기열 알림
+			update_current_rating(socket) // 좋/싫 알림
 		}
 		catch (exception)
 		{
@@ -502,6 +509,44 @@ io.sockets.on('connection', function(socket)
 		}
 	})
 
+	/* 좋아요/싫어요 투표 신호 */
+	socket.on('rating', function(isGood) {
+
+		// 비디오 재생중 체크
+		if(!g_video_id)
+			return
+
+		var is_in_good = g_good_list.indexOf(socket.name) != -1
+		var is_in_bad = g_bad_list.indexOf(socket.name) != -1
+		var is_nothing = !is_in_good && !is_in_bad
+
+		// 기존꺼 제거
+		if(!is_nothing)
+		{
+			if(is_in_good)
+				g_good_list.splice(g_good_list.indexOf(socket.name), 1)
+			else
+				g_bad_list.splice(g_bad_list.indexOf(socket.name), 1)
+		}
+
+		// 새로 추가
+		if(isGood)
+		{
+			if(!is_in_good)
+				g_good_list.push(socket.name)
+		}
+		else
+		{
+			if(!is_in_bad)
+				g_bad_list.push(socket.name)
+		}
+
+		log('INFO', 'rating', format('{0} 가 {1} 클릭 --> good: {2}, bad: {3}', socket.name, isGood ? 'good' : 'bad', JSON.stringify(g_good_list), JSON.stringify(g_bad_list)))
+
+		// 모두에게 좋/싫 알림
+		update_current_rating(io.sockets)
+	})
+
 	/* 맥심 */
 	var imgReg = /window\.open\('\.(\/file\/\S+?)\'/
 	socket.on('maxim', function() {
@@ -598,6 +643,9 @@ function end_of_video() {
 
 	log('INFO', 'end_of_video', 'end of video')
 
+	g_good_list = []
+	g_bad_list = []
+
 	if(g_queue.length > 0)
 	{
 		var next_queue_data = g_queue[0]
@@ -619,6 +667,8 @@ function end_of_video() {
 		if(g_video_duration != 0)
 			set_timeout_end_of_video()
 
+		log('INFO', 'queue_play', next_queue_data)
+
 		// 모두에게 영상 갱신
 		update_current_video(io.sockets)
 
@@ -632,7 +682,11 @@ function end_of_video() {
 		g_video_duration = 0
 		g_video_title = ''
 		io.sockets.emit('update_current_video', null)
+
 	}
+
+	// 모두에게 좋/싫 알림
+	update_current_rating(io.sockets)
 }
 
 /* 현재 영상 전송 */
@@ -643,7 +697,7 @@ function update_current_video(dest_socket)
 		video_id: g_video_id,
 		title: g_video_title,
 		duration: g_video_duration,
-		seek_s: g_video_duration > 0 ? ((Date.now() - g_played_time_ms - 1000) / 1000) : 0
+		seek_s: g_video_duration > 0 ? ((Date.now() - g_played_time_ms - 1000) / 1000) : 999999999
 	})
 }
 
@@ -663,6 +717,12 @@ function update_current_queue(dest_socket)
 	}
 
 	dest_socket.emit('chat_update', {type: 'system_message', time: GetTime(), message: str })
+}
+
+/* 좋아요/싫어요 알림 */
+function update_current_rating(dest_socket)
+{
+	dest_socket.emit('rating', {good: g_good_list, bad: g_bad_list})
 }
 
 /* 영상 종료 타이머 설정  */

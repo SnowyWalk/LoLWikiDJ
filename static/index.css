@@ -135,6 +135,9 @@ body {
   font-family: "Nanum Gothic";
   padding-left: 11px;
   padding-top: 5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 #video_info_name::before {
@@ -183,7 +186,42 @@ body {
 /* =================== 우하단 ========================= */
 
 #etc_box {
-  
+  position: fixed;
+  background-color: lightblue;
+  border-width: thin;
+  border-top: 0;
+  border-bottom: 0;
+  border-left: 0;
+  border-style: solid;
+}
+
+/* 좋아요 이미지 */
+#etc_good_button {
+  position: fixed;
+  width: 32px;
+  height: 32px;
+  cursor: pointer;
+  background-image: url('good3.png');
+  background-size: 100%;
+}
+
+#etc_good_count {
+  position: fixed;
+  line-height: 32px;
+}
+
+#etc_bad_button {
+  position: fixed;
+  width: 32px;
+  height: 32px;
+  cursor: pointer;
+  background-image: url('bad3.png');
+  background-size: 100%;
+}
+
+#etc_bad_count {
+  position: fixed;
+  line-height: 32px;
 }
 
 /* =================== 영상부 ========================= */
@@ -310,8 +348,10 @@ body {
 
 /* 플레이리스트 컨트롤 패널 */
 #playlist_control_panel {
-  height: 100%;
-  z-index: 3;
+  position: fixed;
+  left: 0px;
+  top: 0px;
+  z-index: 10;
   background-color: dodgerblue;
   display: none;
 }
