@@ -3,6 +3,9 @@ var socket = io()
 var g_nick = ''
 
 var g_isLogin = false
+var g_isConnected = false
+var g_isWindowLoaded = false
+
 var g_cued_time_ms = 0
 var g_current_video_id = ''
 var g_current_dj = ''
@@ -17,8 +20,11 @@ var g_data = null
 var g_video_info_dic = null
 var g_playlist_info_list = null
 
+var g_setting_auto_login = false
+
 /* 접속 되었을 때 실행 */
 socket.on('connect', function () {
+	g_isConnected = true
 	if(g_isLogin)
 	{
 		add_message({type: 'system_message', message: '연결 끊김. 새로고침(Ctrl+F5)하고 다시 로그인 해주세요.'})
@@ -27,8 +33,23 @@ socket.on('connect', function () {
 
 	g_isLogin = false
 
-	// g_nick = '넌못자' + (Math.random() * 1000).toFixed(0) + '호'
-	g_nick = prompt('닉네임을 입력해주세요', '')
+	/* 로그인창 */
+	if(g_isWindowLoaded)
+	{
+		login_bg.style.display = 'block'
+		login_id.style.display = 'block'
+		login_pw.style.display = 'block'
+		login_button.style.display = 'block'
+		resize()
+		login_id.focus()
+	}
+	
+	if(!g_setting_auto_login)
+		return
+
+	g_nick = '토깽' + (Math.random() * 1000).toFixed(0) + '호'
+	//g_nick = prompt('닉네임을 입력해주세요', '')
+	// g_nick = ''
 	g_nick = g_nick.replace(/(\'|\")/g, '')
 
 	// 이름이 빈칸인 경우
@@ -45,6 +66,23 @@ socket.on('connect', function () {
 	}
 })
 
+function login()
+{
+	login_button.style.display = 'none'
+
+	g_nick = login_id.value
+	g_nick = g_nick.replace(/(\'|\")/g, '')
+	if(!g_nick)
+	{
+		login_id.value = ''
+		login_button.style.display = 'block'
+		return
+	}
+
+	console.log('window에서 login')
+	socket.emit('login', g_nick)
+}
+
 /* 서버로부터 로그인 인증을 받은 경우 */
 socket.on('login', function(isSuccess) {
 	console.log('login 리시브', g_isLogin, '->', isSuccess)
@@ -53,12 +91,21 @@ socket.on('login', function(isSuccess) {
 	g_isLogin = isSuccess
 	if(!isSuccess)
 	{
-		add_system_message('인증 실패! 이미 로그인 되어있습니다.\n새로고침(Ctrl+F5) 해주세요.')
+		alert('인증 실패! 이미 로그인 되어있습니다.\n다시 시도하거나 새로고침(Ctrl+F5) 해주세요.')
+		login_button.style.display = 'block'
 		return
 	}
 
 	g_isLogin = true
-	add_system_message('인증 완료')
+
+	// 로그인 창 숨기기
+	init_block.style.opacity = 1
+	disappear_login_scene()
+	login_bg.style.display = 'none'
+	login_id.style.display = 'none'
+	login_pw.style.display = 'none'
+	login_button.style.display = 'none'
+
 	add_system_message('후원 랭킹\n'
 						+ '★ 0. Lily(샤르프로젝트) 님 ★\n' 
 						+ '1. 랠래 님\n'
@@ -71,6 +118,20 @@ socket.on('login', function(isSuccess) {
 
 	chat_input.focus()
 })
+
+function disappear_login_scene()
+{
+	init_block.style.opacity -= 0.0125
+
+	if(init_block.style.opacity > 0)
+	{
+		setTimeout(disappear_login_scene, 5)
+		return
+	}
+
+	init_block.style.display = 'none'
+}
+
 
 /* 서버로부터 채팅 데이터 받은 경우 */
 socket.on('chat_update', function (data) {
@@ -383,13 +444,32 @@ function youtube_url_parse(url_or_id)
 
 /* 채팅창 엔터 단축키 */
 function chat_keydown() {
-  if (window.event.keyCode == 13)
-	send()
+	if (window.event.keyCode == 13)
+		send()
+}
+
+/* 로그인창 엔터 단축키 */
+function login_keydown()
+{
+	if (window.event.keyCode == 13)
+		login()
 }
 
 window.onload = function() {
+	g_isWindowLoaded = true
+
 	initial_resize()
-	init_block.style.display = 'none'
+	
+	if(g_isConnected && !g_isLogin)
+	{
+		login_bg.style.display = 'block'
+		login_id.style.display = 'block'
+		login_pw.style.display = 'block'
+		login_button.style.display = 'block'
+		resize()
+		login_id.focus()
+	}
+
 	loop_func(update_video_time, 100)
 }
 window.onresize = resize
@@ -419,6 +499,20 @@ function resize() {
 	var window_height = window.innerHeight
 
 	var bottom_height = 86 // 하단 박스 높이
+
+	/* 로그인 창 */
+	login_bg.style.left = (window_width - login_bg.clientWidth) / 2
+	login_bg.style.top = (window_height - login_bg.clientHeight) / 2
+
+	login_id.style.left = (window_width - login_bg.clientWidth) / 2 + 13
+	login_id.style.top = window_height / 2 - login_id.clientHeight - 7.5
+
+	login_pw.style.left = (window_width - login_bg.clientWidth) / 2 + 13
+	login_pw.style.top = window_height / 2 + 7.5
+
+	login_button.style.left = (window_width - login_bg.clientWidth) / 2 + 13 + login_id.clientWidth + 15
+	login_button.style.top = window_height / 2 - login_id.clientHeight - 8
+
 
 	/* 채팅 */
 	mainchat.style.marginLeft = (window_width - mainchat.clientWidth) // 350

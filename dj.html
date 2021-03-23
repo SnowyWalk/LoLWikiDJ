@@ -4,6 +4,7 @@
 <head>
   <meta charset="UTF-8">
 
+  <link rel="preload" href="$_localhost/static/bg.jpg" as="image">
   <link rel="shortcut icon" href="$_localhost/static/favicon.ico" type="image/x-icon">
   <link rel="stylesheet" href="$_localhost/static/index.css">
   <script src="$_localhost/node_modules/socket.io/client-dist/socket.io.js"></script>
@@ -27,9 +28,18 @@
 </head>
 
 <body>
+
+ <!-- 초기화 전 전체블록 -->
+  <div id="init_block" style="background-image: url('$_localhost/static/bg.jpg')">
+    <div id="login_bg"></div>
+    <input type="text" id="login_id" placeholder="ID" onkeydown="login_keydown()">
+    <input type="text" id="login_pw" placeholder="PW (미구현)" onkeydown="login_keydown()" disabled>
+    <div id="login_button" class="nanum bold" onclick="login()">Login</div>
+  </div>
+
+  <!-- 채팅 메시지 영역 -->
   <div id="mainchat">
     <div id="chat">
-      <!-- 채팅 메시지 영역 -->
     </div>
     <div>
       <input type="text" id="chat_input" onkeydown="chat_keydown()" placeholder="메시지를 입력해주세요..">
@@ -37,27 +47,38 @@
     </div>
   </div>
 
-
-  <div id="current_playlist_info_box">
+  <!-- 좌하단 재생목록 정보 -->
+  <div id="current_playlist_info_box" onclick="toggle_playlist_control_panel()">
     <div class="nanum bold" id="current_playlist_name_const">선택된 재생목록</div>
     <div id="current_playlist_name">나의 재생목록 1 (4)</div>
     <div id="current_playlist_video_name">벌칙으로 공포게임을 했습니다.. 이은도의저주.... [팡이요, 종합게임]</div>
   </div>
 
+  <!-- 하단 영상 정보 -->
   <div id="video_info">
     <div id="video_info_dj">-<font color=gray><b><a id="video_link" href='#' onclick='show_video_link()'></a></b></font></div>
     <div id="video_info_name">재생 중인 영상이 없습니다.</div>
-    
     <div id="my_progress_bar"></div>
     <div id="my_progress_bar_after"></div>
     <div id="video_info_time">--:-- / --:--</div>
   </div>
 
-  <div id="current_video_rating_box">
-
+  <!-- 영상 플레이어 -->
   <div id="block_video">재생 중인 영상이 없습니다.</div>
   <div id="video_player"></div>
 
+  <!-- 우하단 기타  -->
+  <div id="etc_box">
+    <div id="etc_skip_button"></div>
+    <div id="etc_dj_button"></div>
+    <div id="etc_good_button"></div>
+    <div id="etc_good_count"></div>
+    <div id="etc_bad_button"></div>
+    <div id="etc_bad_count"></div>
+  </div>
+
+
+  <!-- 재생목록 컨트롤 패널 -->
   <div id="playlist_control_panel"></div>
 
   <script src="https://www.youtube.com/iframe_api"></script>
