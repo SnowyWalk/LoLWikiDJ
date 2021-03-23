@@ -203,8 +203,6 @@ io.sockets.on('connection', function(socket)
 		video_id : 'NvvYPLGN8Ag'
 		*/
 
-		console.log(data)
-
 		try
 		{
 			var youtube_data = await request_youtube_data(data.video_id).then(parse_youtube_response_data)
@@ -374,14 +372,17 @@ io.sockets.on('connection', function(socket)
 			}
 			video_index_list = [...new Set(video_index_list)] // 중복 제거
 
-			// Videos DB에 비디오 정보를 한번에 조회
-			var video_info_list = await db_select('Id, Name, VideoId, Length, Thumbnail', 'Videos', format('Id IN ({0})', video_index_list.join(', '))).then(JSON.stringify).then(JSON.parse)
-			console.log(video_info_list)
-
-			// Video 정보를 Dic형태로 재구성
 			var video_info_dic = {}
-			for(var e of video_info_list)
-				video_info_dic[e.Id] = { Name: e.Name, VideoId: e.VideoId, Length: e.Length, Thumbnail: e.Thumbnail }
+			if(video_index_list.length > 0)
+			{
+				// Videos DB에 비디오 정보를 한번에 조회
+				var video_info_list = await db_select('Id, Name, VideoId, Length, Thumbnail', 'Videos', format('Id IN ({0})', video_index_list.join(', '))).then(JSON.stringify).then(JSON.parse)
+				console.log(video_info_list)
+
+				// Video 정보를 Dic형태로 재구성
+				for(var e of video_info_list)
+					video_info_dic[e.Id] = { Name: e.Name, VideoId: e.VideoId, Length: e.Length, Thumbnail: e.Thumbnail }
+			}
 
 			socket.emit('update_playlist', [video_info_dic, playlist_info_list])
 		}
@@ -649,8 +650,6 @@ function update_current_video(dest_socket)
 /* 플레이 대기열 알림 발사 */
 function update_current_queue(dest_socket)
 {
-	console.log('update_current_queue')
-	console.log(g_queue)
 	if(g_queue.length == 0)
 	{
 		dest_socket.emit('chat_update', {type: 'system_message', time: GetTime(), message: '플레이 대기열 없음.' })

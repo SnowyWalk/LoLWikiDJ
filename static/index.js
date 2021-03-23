@@ -350,7 +350,7 @@ function send() {
 		return
 	}
 
-	if(message.toLowerCase() == '/q')
+	if(message.toLowerCase() == '/q' || message == '/ㅂ')
 	{
 		socket.emit('queue_list')
 		return
