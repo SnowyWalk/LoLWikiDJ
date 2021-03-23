@@ -139,7 +139,7 @@ io.sockets.on('connection', function(socket)
 		{
 			console.log(exception.stack)
 			await db_rollback()
-			log('ERROR_CATCH', 'login', socket.name + ' 로그인 실패. 에러 : ' + JSON.stringify(err))
+			log('ERROR_CATCH', 'login', socket.name + ' 로그인 실패. 에러 : ' + JSON.stringify(exception))
 			socket.name = ''
 			socket.emit('login', false)
 		}
