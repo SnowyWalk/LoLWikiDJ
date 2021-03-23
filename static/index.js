@@ -293,19 +293,20 @@ function add_system_message(message)
 
 
 /* 메시지 전송 함수 */
-var playReg = /^\/(play|ㅔㅣ묘) (\S+)/
-var rewindReg = /^\/(rewind|되감기) (\d+)/
-var forwardReg = /^\/(fwd|빨리감기) (\d+)/
-var requestReg = /^\/request (\S+)/
-var selectPlaylistReg = /^\/select_playlist (\d+)/
-var pushReg = /^\/push (\S+) (\d+)/
-var queryReg = /^\/query (.+)/
+var playReg = /^\/(p|ㅔ|play|ㅔㅣ묘) (\S+)/i
+var queueReg = /^\/(q|ㅂ|queue|벼뎓) (\S+)/i
+var rewindReg = /^\/(r|rewind|ㄱㄷ쟈ㅜㅇ|ㄱ|되감기) (\d+)/i
+var forwardReg = /^\/(f|fwd|ㄹㅈㅇ|ㄹ|빨리감기) (\d+)/i
+var requestReg = /^\/request (\S+)/i
+var selectPlaylistReg = /^\/select_playlist (\d+)/i
+var pushReg = /^\/push (\S+) (\d+)/i
+var queryReg = /^\/query (.+)/i
 function send() {
 	if(!g_isLogin)
 		return
 
 	// 입력되어있는 데이터 가져오기
-	var message = chat_input.value
+	var message = chat_input.value 
 
 	// 가져왔으니 데이터 빈칸으로 변경
 	chat_input.value = ''
@@ -316,14 +317,16 @@ function send() {
 
 	if(message == '/?' || message == '/help')
 	{
-		add_system_message('명령어 목록\n' 
-							+ '/play (유튜브주소) : 해당 영상 재생\n'
-							+ '/list : 참가자 목록 보기\n'
-							+ '/dj : 디제이 대기열 보기\n'
+		add_system_message('명령어 목록 (대소문자 구분 X)\n' 
+							+ '/(p)lay {유튜브주소} : 해당 영상 즉시 재생\n'
+							+ '/(q)ueue {유튜브주소} : 해당 영상 대기열에 추가\n'
+							+ '/q : 현재 영상 대기열 확인\n'
+							+ '/(l)ist : 참가자 목록 보기\n'
+							// + '/dj : 디제이 대기열 보기(미구현)\n'
 							+ '/playing : 재생 싱크 맞추기\n'
-							+ '/skip : 현재 영상 스킵\n'
-							+ '/rewind 10 : 10초 되감기 (/되감기 10 도 가능)\n'
-							+ '/fwd 10 : 10초 빨리감기 (/빨리감기 10 도 가능)\n'
+							+ '/(s)kip : 현재 영상 스킵\n'
+							+ '/(r)ewind 10 : 10초 되감기 (/되감기 10 도 가능)\n'
+							+ '/(f)wd 10 : 10초 빨리감기 (/빨리감기 10 도 가능)\n'
 							+ '/맥심')
 		return
 	}
@@ -335,6 +338,21 @@ function send() {
 		var video_id = youtube_url_parse(url)
 
 		socket.emit('play', {dj: g_nick, video_id: video_id})
+		return
+	}
+
+	if(queueReg.test(message))
+	{
+		var url = queueReg.exec(message)[2]
+		var video_id = youtube_url_parse(url)
+
+		socket.emit('queue', {dj: g_nick, video_id: video_id})
+		return
+	}
+
+	if(message.toLowerCase() == '/q')
+	{
+		socket.emit('queue_list')
 		return
 	}
 
@@ -352,18 +370,18 @@ function send() {
 		return
 	}
 
-	if(message == '/playing' || message == '/ㅔㅣ묘ㅑㅜㅎ')
+	if(message.toLowerCase() == '/playing' || message == '/ㅔㅣ묘ㅑㅜㅎ')
 	{
 		socket.emit('playing')
 		return
 	}
 
-	if(message == '/playlist')
+	if(message.toLowerCase() == '/playlist')
 	{
 		socket.emit('playlist')
 	}
 
-	if(message == '/newplaylist')
+	if(message.toLowerCase() == '/newplaylist')
 	{
 		socket.emit('new_playlist')
 		return
@@ -375,19 +393,19 @@ function send() {
 		socket.emit('select_playlist', id)
 	}
 
-	if(message == '/list' || message == '/ㅣㅑㄴㅅ')
+	if(message.toLowerCase() == '/list' || message == '/ㅣㅑㄴㅅ' || message.toLowerCase() == '/l')
 	{
 		socket.emit('users')
 		return
 	}
 
-	if(message == '/dj' || message == '/어')
+	if(message.toLowerCase() == '/dj' || message == '/어')
 	{
 		socket.emit('djs')
 		return
 	}
 
-	if(message == '/skip' || message == '/나ㅑㅔ')
+	if(message.toLowerCase() == '/skip' || message == '/나ㅑㅔ' || message.toLowerCase() == '/s')
 	{
 		socket.emit('skip')
 	}

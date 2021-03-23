@@ -59,9 +59,11 @@ g_video_duration = 0
 g_played_time_ms = 0 // ms
 g_end_timer = null
 
-
 /* DJ 순서 목록 */
 g_djs = []
+
+/* 임시: QUEUE */
+g_queue = []
 
 // app.get('/static/fonts/*', function(request, response, next) {
 // 	response.header( "Access-Control-Allow-Origin", "*")
@@ -133,7 +135,8 @@ io.sockets.on('connection', function(socket)
 			// 로그인 성공
 			await db_commit()
 			socket.emit('login', true)
-			update_current_video(socket)
+			update_current_video(socket) // 플레이 영상 데이터 보내기
+			update_current_queue(socket) // 플레이 대기열 알림
 		}
 		catch (exception)
 		{
@@ -191,6 +194,56 @@ io.sockets.on('connection', function(socket)
 
 		// 나가는 사람을 제외한 나머지 유저에게 메시지 전송
 		socket.broadcast.emit('chat_update', {type: 'disconnect', message: socket.name + '님이 나가셨습니다.'});
+	})
+
+	/* TEST: QUEUE에 비디오 추가 */
+	socket.on('queue', async function(data) {
+		/* data
+		dj : '천아연'
+		video_id : 'NvvYPLGN8Ag'
+		*/
+
+		console.log(data)
+
+		try
+		{
+			var youtube_data = await request_youtube_data(data.video_id).then(parse_youtube_response_data)
+			
+			if(!g_video_id)
+			{
+				log('INFO', 'play', youtube_data.title)
+				g_current_dj = data.dj
+				g_video_id = data.video_id
+				g_video_title = youtube_data.title
+				g_video_duration = youtube_data.duration
+				g_played_time_ms = Date.now()
+	
+				// 영상 종료 타이머 설정
+				if(g_video_duration != 0)
+					set_timeout_end_of_video()
+	
+				// 모두에게 영상 갱신
+				update_current_video(io.sockets)
+			}
+			else
+			{
+				g_queue.push( { dj: data.dj, video_id: data.video_id, data: youtube_data } )
+
+				// 모두에게 플레이 대기열 알림
+				update_current_queue(io.sockets)
+			}
+		}
+		catch (exception)
+		{
+			log('THROW_CATCH', 'queue', exception.err + '\n' + exception.message + '\n' + exception.stack)
+			io.sockets.emit('chat_update', {type:'system_message', time: GetTime(), message: '유튜브 영상 조회 에러!'})
+		}
+
+	})
+
+	/* 현재 플레이 대기열 목록 알려주기 */
+	socket.on('queue_list', function() {
+		update_current_queue(socket)
 	})
 
 	/* TEST: 특정 비디오 재생 명령 */
@@ -538,16 +591,47 @@ function parse_duration_to_second(pt_time)
 
 function end_of_video() {
 	// TODO: 끝낼게 아니라 다음 영상을 재생
-	g_current_dj = ''
-	g_video_id = ''
-	g_video_duration = 0
-	g_video_title = ''
 	if(g_end_timer != null)
 		clearTimeout(g_end_timer)
 	g_end_timer = null
 
 	log('INFO', 'end_of_video', 'end of video')
-	io.sockets.emit('update_current_video', null)
+
+	if(g_queue.length > 0)
+	{
+		var next_queue_data = g_queue[0]
+		g_queue.splice(0, 1)
+
+		g_current_dj = next_queue_data.dj
+
+		if(g_users.indexOf(g_current_dj) == -1) // 없는 유저라면
+		{
+			g_current_dj = ''
+			return end_of_video()
+		}
+		g_video_id = next_queue_data.video_id
+		g_video_duration = next_queue_data.data.duration
+		g_video_title = next_queue_data.data.title
+		g_played_time_ms = Date.now()
+
+		// 영상 종료 타이머 설정
+		if(g_video_duration != 0)
+			set_timeout_end_of_video()
+
+		// 모두에게 영상 갱신
+		update_current_video(io.sockets)
+
+		// 모두에게 플레이 대기열 알림
+		update_current_queue(io.sockets)
+	}
+	else
+	{
+		g_current_dj = ''
+		g_video_id = ''
+		g_video_duration = 0
+		g_video_title = ''
+		io.sockets.emit('update_current_video', null)
+	}
 }
 
 /* 현재 영상 전송 */
@@ -562,6 +646,26 @@ function update_current_video(dest_socket)
 	})
 }
 
+/* 플레이 대기열 알림 발사 */
+function update_current_queue(dest_socket)
+{
+	console.log('update_current_queue')
+	console.log(g_queue)
+	if(g_queue.length == 0)
+	{
+		dest_socket.emit('chat_update', {type: 'system_message', time: GetTime(), message: '플레이 대기열 없음.' })
+		return
+	}
+
+	var str = '플레이 대기열\n'
+	for(var e of g_queue)
+	{
+		str += format('{0}. {1} - {2} ({3})\n', g_queue.indexOf(e) + 1, e.dj, e.data.title, second_to_string(e.data.duration))
+	}
+
+	dest_socket.emit('chat_update', {type: 'system_message', time: GetTime(), message: str })
+}
+
 /* 영상 종료 타이머 설정  */
 function set_timeout_end_of_video()
 {
@@ -570,6 +674,24 @@ function set_timeout_end_of_video()
 	var seek_time = Date.now() - g_played_time_ms
 	// log('INFO', 'set_timeout_end_of_video', format('duration : {0}s, seek : {1}ms, newTimeout : {2}ms', g_video_duration, seek_time, (g_video_duration + 2) * 1000 - seek_time))
 	g_end_timer = setTimeout(end_of_video, (g_video_duration + 2) * 1000 - seek_time)
+}
+
+function second_to_string(sec) 
+{
+	sec = Math.round(sec)
+	var h = Math.floor(sec / 3600)
+	sec -= h * 60 * 60
+	var m = Math.floor(sec / 60)
+	sec -= m * 60
+	var s = sec
+
+	if(m < 10)
+		m = '0' + m.toString()
+	if(s < 10)
+		s = '0' + s.toString()
+	if(h > 0)
+		return h + ':' + m + ':' + s
+	return m + ':' + s
 }
 
 /* ================================== QUERY =========================================*/
