@@ -352,6 +352,6 @@ body {
   left: 0px;
   top: 0px;
   z-index: 10;
-  background-color: dodgerblue;
+  background-color: rgb(160, 224, 57);
   display: none;
 }

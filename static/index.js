@@ -685,14 +685,17 @@ function onPlayerStateChange(event)
 
 	 if(event.data == 1)
 	 {
-		 var currentTime_s = player.getCurrentTime()
-		 var diff = Math.abs(currentTime_s - (Date.now() - g_cued_time_ms) / 1000)
-		//  add_system_message('player state : 재생\n플레이어 시간 : ' + player.getCurrentTime().toFixed(1)
-		//  					+ '\n원본 시간 : ' + new_seekTo.toFixed(1)
-		// 					+ '\n차이 : ' + diff.toFixed(1))
+		if(g_current_duration > 0) // 생방(실시간) 일때는 싱크 맞추지 않음
+		{
+			var currentTime_s = player.getCurrentTime()
+			var diff = Math.abs(currentTime_s - (Date.now() - g_cued_time_ms) / 1000)
+			//  add_system_message('player state : 재생\n플레이어 시간 : ' + player.getCurrentTime().toFixed(1)
+			//  					+ '\n원본 시간 : ' + new_seekTo.toFixed(1)
+			// 					+ '\n차이 : ' + diff.toFixed(1))
 
-		if(diff >= 0.5)
-			player.seekTo((Date.now() - g_cued_time_ms) / 1000, true)
+			if(diff >= 0.5)
+				player.seekTo((Date.now() - g_cued_time_ms) / 1000, true)
+		}
 		SetVideoBlock(!g_current_video_id)
 	 }
 
