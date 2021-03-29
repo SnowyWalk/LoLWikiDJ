@@ -294,7 +294,7 @@ function add_message(data)
 		img.classList.add('chat_img')
 		img.src = img_url
 		img.onerror = function() { img.style.height = '0px'; }
-		img.onload = function() { chat.scrollTop = chat.scrollHeight; }
+		img.onload = scrollDown
 		g_data = text
 		text = text.replace(imgReg, '')
 	}
@@ -308,7 +308,7 @@ function add_message(data)
 		message.appendChild(img)
 	chat.appendChild(message)
 
-	chat.scrollTop = chat.scrollHeight
+	scrollDown()
 }
 /* 채팅창에 시스템 메시지 추가 함수 */
 function add_system_message(message)
@@ -471,6 +471,7 @@ function send() {
 
 	// 서버로 message 이벤트 전달 + 데이터와 함께
 	socket.emit('chat_message', { type: 'message', message: message })
+	scrollDown(true)
 }
 
 var youtubeReg = /(\?|&)v=([^&\?]+)/
@@ -1007,4 +1008,10 @@ function format()
 { 
 	var args = Array.prototype.slice.call (arguments, 1); 
 	return arguments[0].replace (/\{(\d+)\}/g, function (match, index) { return args[index]; }); 
+}
+
+function scrollDown(isForce = false)
+{
+	if(chat.scrollHeight - (chat.scrollTop + chat.clientHeight) < chat.clientHeight || isForce)
+		chat.scrollTop = chat.scrollHeight
 }
