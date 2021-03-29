@@ -103,6 +103,7 @@ body {
   text-overflow: ellipsis;
   margin-top: 4px;
   margin-left: 5px;
+  text-align: center;
 }
 
 /* =================== 하단 ========================= */
@@ -373,19 +374,19 @@ body {
 }
 
 .playlist_button.odd {
-  background-color: rgb(124, 192, 234);
+  background-color: rgb(96, 197, 230);
 }
 
 .playlist_button.odd:hover {
-  background-color: rgb(94, 162, 204);
+  background-color: rgb(66, 167, 200);
 }
 
 .playlist_button.even {
-  background-color: rgb(149, 207, 243);
+  background-color: rgb(137, 209, 232);
 }
 
 .playlist_button.even:hover {
-  background-color: rgb(119, 177, 213);
+  background-color: rgb(107, 179, 202);
 }
 
 .playlist_button[selected] {
@@ -415,14 +416,16 @@ body {
 
 .videolist_button > img {
   float: left;
-  height: 100px;
+  height: 109px;
+  width: 194px;
   margin: 5px;
+  margin-top: 0px;
+  margin-bottom: 1px;
 }
 
 .videolist_button > .text {
   float: left;
   line-height: 100px;
-  width: 70%;
   margin: 5px;
   white-space: nowrap;
   overflow: hidden;
