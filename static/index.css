@@ -352,6 +352,98 @@ body {
   left: 0px;
   top: 0px;
   z-index: 10;
-  background-color: rgb(160, 224, 57);
+  background-color: lightskyblue;
   display: none;
+  border: solid 1px;
+  box-sizing: border-box;
+  border-top: 0;
+  border-left: 0;
+}
+
+/* 재생목록 리스트 */
+#playlist_control_panel_playlist_header {
+  width: 250px;
+}
+
+.playlist_button {
+  height: 60px;
+  line-height: 60px;
+  padding-left: 11px;
+  cursor: pointer;
+}
+
+.playlist_button.odd {
+  background-color: rgb(124, 192, 234);
+}
+
+.playlist_button.odd:hover {
+  background-color: rgb(94, 162, 204);
+}
+
+.playlist_button.even {
+  background-color: rgb(149, 207, 243);
+}
+
+.playlist_button.even:hover {
+  background-color: rgb(119, 177, 213);
+}
+
+.playlist_button[selected] {
+  background-color: rgb(160, 224, 57) !important ;
+}
+
+/* 영상 목록 리스트 */
+#playlist_control_panel_videolist_header {
+  position: absolute;
+  left: 250px;
+  top: 0px;
+  overflow-y: auto;
+}
+
+.videolist_button {
+  height: 110px;
+  clear: both;
+}
+
+.videolist_button.even {
+  background-color: rgb(137, 209, 232);
+}
+
+.videolist_button.odd {
+  background-color: rgb(96, 197, 230);
+}
+
+.videolist_button > img {
+  float: left;
+  height: 100px;
+  margin: 5px;
+}
+
+.videolist_button > .text {
+  float: left;
+  line-height: 100px;
+  width: 70%;
+  margin: 5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.delete_button {
+  background-image: url('delete.png');
+  width: 100px;
+  height: 100px;
+  padding: 5px;
+  background-size: 50%;
+  background-repeat: no-repeat;
+  background-position: center;
+  cursor: pointer;
+}
+
+.even > .delete_button:hover {
+  background-color: rgb(107, 179, 202);
+}
+
+.odd > .delete_button:hover {
+  background-color: rgb(66, 167, 200);
 }

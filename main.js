@@ -48,6 +48,11 @@ app.use('/static', express.static('./static'))
 // app.use('/js', express.static('./static/js'))
 // app.use('/fonts', express.static('./static/fonts'))
 
+
+/* 공지말 */
+g_port = 8080
+g_notice = ''
+
 /* 유저 목록 */
 g_users = []
 
@@ -144,6 +149,10 @@ io.sockets.on('connection', function(socket)
 			update_current_video(socket) // 플레이 영상 데이터 보내기
 			update_current_queue(socket) // 플레이 대기열 알림
 			update_current_rating(socket) // 좋/싫 알림
+			update_playlist(socket) // 플레이리스트 정보 전송
+
+			if(g_notice)
+				socket.emit('chat_update', {type: 'connect', name: 'SERVER', message: g_notice})
 		}
 		catch (exception)
 		{
@@ -355,13 +364,20 @@ io.sockets.on('connection', function(socket)
 	})
 
 	/* 플레이리스트 요청 */
-	socket.on('playlist', async function() {
-		// TODO: 그냥 업데이트_플레이리스트 로 바꿔도 될듯. 이 함수는 임시 함수가 될 가능성이 높다.
+	socket.on('playlist', function() {
+		update_playlist(socket)
+	})
 
+	/* 해당 유저에게 플레이리스트 갱신 */
+	async function update_playlist(socket)
+	{
+		// 플레이리스트들의 제목과 곡정보들 리스트 보내주면 될 듯 [playlist_id1: {name:"내 재생목록", list:[{title:"언더테일 브금", duration:90}, {title:"천아연유튜브소개영상", duration:10}]}]
 		try
 		{
 			// 해당 계정의 재생목록ID 전체를 가져옴
-			var playlist_id_list = await select_playlists(socket.name).then( (ret) => JSON.parse(ret[0].Playlists) )
+			var acccount_data = await db_select('Playlists, CurrentPlaylist', 'Accounts', format('Name = "{0}"', socket.name), 'LIMIT 1').then( (ret) => ret[0] )
+			var current_playlist = JSON.parse(acccount_data.CurrentPlaylist)
+			var playlist_id_list = JSON.parse(acccount_data.Playlists)
 			console.log(playlist_id_list)
 
 			// 해당 재생목록들의 내용을 가져옴 [ { Name:내 재생목록, VideoList:[2134,2345,12,1] } , ... ]
@@ -391,20 +407,13 @@ io.sockets.on('connection', function(socket)
 					video_info_dic[e.Id] = { Name: e.Name, VideoId: e.VideoId, Length: e.Length, Thumbnail: e.Thumbnail }
 			}
 
-			socket.emit('update_playlist', [video_info_dic, playlist_info_list])
+			socket.emit('update_playlist', [video_info_dic, playlist_info_list, current_playlist])
 		}
 		catch (exception)
 		{
 			log('THROW_CATCH', 'playlist', exception.name + ' --> ' + exception.message)
 			log('ERROR_CATCH', 'playlist', exception.stack)
 		}
-	})
-
-	/* 해당 유저에게 플레이리스트 갱신 */
-	function update_playlist(socket)
-	{
-		// TODO: 플레이리스트들의 제목과 곡정보들 리스트 보내주면 될 듯 [playlist_id1: {name:"내 재생목록", list:[{title:"언더테일 브금", duration:90}, {title:"천아연유튜브소개영상", duration:10}]}]
-		socket.emit('update_playlist', null)
 	}
 
 	/* 새 재생목록 추가하기 */
@@ -592,7 +601,7 @@ io.sockets.on('connection', function(socket)
 }) 
 
 /* 서버를 8080 포트로 listen */
-server.listen(8080, function() {
+server.listen(g_port, function() {
 	console.log('======================== 서버 실행 중.. ============================')
 })
 

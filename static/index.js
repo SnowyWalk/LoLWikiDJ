@@ -21,6 +21,7 @@ var g_player_ready = false
 
 /* 반응형 패널 상태 */
 var g_show_playlist_control_panel = false
+var g_playlist_control_panel_current_playlist_id = 0 // 현재 컨트롤 중인 플레이리스트 아이디 (영상 추가 삭제 등 수정 시에 쓰임)
 
 /* DEBUG용 전역변수 */
 var g_data = null
@@ -28,6 +29,7 @@ var g_data = null
 /* 재생목록 데이터 */
 var g_video_info_dic = null
 var g_playlist_info_list = null
+var g_current_playlist_id = 0
 
 /* DEBUG: 랜덤 닉네임 모드 */
 var g_setting_auto_login = false
@@ -213,6 +215,7 @@ socket.on('rating', function(data) {
 socket.on('update_playlist', function(data) {
 	g_video_info_dic = data[0]
 	g_playlist_info_list = data[1]
+	g_current_playlist_id = data[2]
 
 	console.log('update_playlist', g_video_info_dic, g_playlist_info_list)
 })
@@ -612,18 +615,131 @@ function resize() {
 
 	/* 플레이리스트 패널 */
 	if(g_show_playlist_control_panel)
-	{
-		playlist_control_panel.style.width = (window_width - mainchat.clientWidth)
-		playlist_control_panel.style.height = (window_height - bottom_height)
-	}
+		control_panel_resize()
+}
+
+function control_panel_resize()
+{
+	var window_width = window.innerWidth
+	var window_height = window.innerHeight
+	var bottom_height = 86 // 하단 박스 높이
+
+	playlist_control_panel.style.width = (window_width - mainchat.clientWidth)
+	playlist_control_panel.style.height = (window_height - bottom_height)
+
+	playlist_control_panel_videolist_header.style.width = (window_width - playlist_control_panel_playlist_header.clientWidth - mainchat.clientWidth - 11)
+	playlist_control_panel_videolist_header.style.height = (window_height - bottom_height - 1)
 }
 
 /* 플레이리스트 컨트롤패널 열기/닫기 */
 function show_playlist_control_panel(isShow) 
 {
+	g_show_playlist_control_panel = isShow
+	if(isShow)
+	{
+		if(g_playlist_info_list)
+		{
+			// 자식 노드들 추가
+			for(var e of g_playlist_info_list)
+			{
+				var div = document.createElement('div')
+				div.innerText = format('{0} ({1})', e.Name, e.VideoList.length)
+				div.classList.add('playlist_button')
+				div.classList.add(g_playlist_info_list.indexOf(e) % 2 == 0 ? 'even' : 'odd')
+				div.setAttribute('playlist_id', e.Id)
+				div.onclick = onclick_playlist_button
+				playlist_control_panel_playlist_header.appendChild(div)
+			}
+
+			// 현재재생목록을 선택해서 리스트를 보여줌
+			select_playlist_button(g_current_playlist_id)
+		}
+	}
+	else
+	{
+		// 모든 자식 노드 삭제
+		while ( playlist_control_panel_playlist_header.hasChildNodes() ) 
+			playlist_control_panel_playlist_header.removeChild( playlist_control_panel_playlist_header.firstChild )
+	}
+
 	playlist_control_panel.style.display = isShow ? 'block' : 'none'
-	resize()
+	control_panel_resize()
 }
+function onclick_playlist_button()
+{
+	var thisElement = event.target
+	var playlist_id = thisElement.getAttribute('playlist_id')
+
+	select_playlist_button(playlist_id)
+}
+function select_playlist_button(playlist_id)
+{
+	// 선택된 플레이리스트 Id 저장
+	g_playlist_control_panel_current_playlist_id = playlist_id
+
+	// 해당 엘리먼트 찾기
+	var thisElement = playlist_control_panel_playlist_header.querySelector(format('[playlist_id="{0}"]', playlist_id))
+
+	// 리스트 선택 selected 속성 적용
+	for(var e of playlist_control_panel_playlist_header.children)
+		e.toggleAttribute('selected', false)
+	thisElement.toggleAttribute('selected', true)
+
+
+	// 비디오 리스트의 모든 자식 노드 삭제
+	while ( playlist_control_panel_videolist_header.hasChildNodes() ) 
+		playlist_control_panel_videolist_header.removeChild( playlist_control_panel_videolist_header.firstChild )
+
+	// 해당 재생목록 데이터 찾기
+	var thisPlaylist = null
+	for(var e of g_playlist_info_list)
+	{
+		if(e.Id == playlist_id)
+		{
+			thisPlaylist = e
+			break
+		}
+	}
+
+	// 영상 목록 갱신
+	var i = 0
+	for(var e of thisPlaylist.VideoList)
+	{
+		var thisData = g_video_info_dic[e]
+		
+		var div = document.createElement('div')
+
+		// 이미지 생성 후 추가
+		var img = document.createElement('img')
+		img.src = thisData.Thumbnail
+		img.innerText = format('{0} ({1})', thisData.Name, second_to_string(thisData.Length))
+		div.appendChild(img)
+
+		// 영상 이름 텍스트 생성 후 추가
+		var text = document.createElement('div')
+		text.innerText = format('{0} ({1})', thisData.Name, second_to_string(thisData.Length))
+		text.classList.add('text') // 쿼리를 위해
+		div.appendChild(text)
+
+		// 삭제 버튼 추가
+		var del = document.createElement('div')
+		del.classList.add('delete_button')
+		del.style.float = 'right'
+		div.appendChild(del)
+
+		div.classList.add('videolist_button')
+		div.classList.add(i % 2 == 0 ? 'even' : 'odd')
+		div.setAttribute('VideoIndex', e)
+		div.setAttribute('videoId', thisData.VideoId)
+
+		playlist_control_panel_videolist_header.appendChild(div)
+
+		i++
+	}
+
+	control_panel_resize()
+}
+
 function toggle_playlist_control_panel()
 {
 	g_show_playlist_control_panel = !g_show_playlist_control_panel
@@ -854,4 +970,10 @@ function selectRange(obj)
 		range.moveToElementText(obj)
 		range.select()
 	}
+}
+
+function format() 
+{ 
+	var args = Array.prototype.slice.call (arguments, 1); 
+	return arguments[0].replace (/\{(\d+)\}/g, function (match, index) { return args[index]; }); 
 }
