@@ -378,11 +378,9 @@ io.sockets.on('connection', function(socket)
 			var acccount_data = await db_select('Playlists, CurrentPlaylist', 'Accounts', format('Name = "{0}"', socket.name), 'LIMIT 1').then( (ret) => ret[0] )
 			var current_playlist = JSON.parse(acccount_data.CurrentPlaylist)
 			var playlist_id_list = JSON.parse(acccount_data.Playlists)
-			console.log(playlist_id_list)
 
 			// 해당 재생목록들의 내용을 가져옴 [ { Name:내 재생목록, VideoList:[2134,2345,12,1] } , ... ]
 			var playlist_info_list = await db_select('Id, Name, VideoList', 'Playlists', format('Id IN ({0})', playlist_id_list.join(', '))).then(JSON.stringify).then(JSON.parse)
-			console.log(playlist_info_list)
 
 			socket.emit('data', playlist_info_list)
 
@@ -400,7 +398,6 @@ io.sockets.on('connection', function(socket)
 			{
 				// Videos DB에 비디오 정보를 한번에 조회
 				var video_info_list = await db_select('Id, Name, VideoId, Length, Thumbnail', 'Videos', format('Id IN ({0})', video_index_list.join(', '))).then(JSON.stringify).then(JSON.parse)
-				console.log(video_info_list)
 
 				// Video 정보를 Dic형태로 재구성
 				for(var e of video_info_list)
