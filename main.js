@@ -158,7 +158,7 @@ io.sockets.on('connection', function(socket)
 		{
 			console.log(exception.stack)
 			await db_rollback()
-			log('ERROR_CATCH', 'login', socket.name + ' 로그인 실패. 에러 : ' + JSON.stringify(exception))
+			log_exception('login', exception, socket.name + ' 로그인 실패. 에러 : ' + JSON.stringify(exception))
 			socket.name = ''
 			socket.emit('login', false)
 		}
@@ -249,7 +249,7 @@ io.sockets.on('connection', function(socket)
 		}
 		catch (exception)
 		{
-			log('THROW_CATCH', 'queue', exception.err + '\n' + exception.message + '\n' + exception.stack)
+			log_exception('queue', exception)
 			io.sockets.emit('chat_update', {type:'system_message', time: GetTime(), message: '유튜브 영상 조회 에러!'})
 		}
 
@@ -300,8 +300,7 @@ io.sockets.on('connection', function(socket)
 		}
 		catch(exception)
 		{
-			console.log(exception.stack)
-			log('ERROR', 'play', body)
+			log_exception('play', exception, body)
 			io.sockets.emit('chat_update', {type:'system_message', time: GetTime(), message: '유튜브 영상 조회 에러!'})
 		}
 	})
@@ -408,8 +407,7 @@ io.sockets.on('connection', function(socket)
 		}
 		catch (exception)
 		{
-			log('THROW_CATCH', 'playlist', exception.name + ' --> ' + exception.message)
-			log('ERROR_CATCH', 'playlist', exception.stack)
+			log_exception('playlist', exception)
 		}
 	}
 
@@ -432,24 +430,24 @@ io.sockets.on('connection', function(socket)
 		}
 		catch (exception)
 		{
-			log('ERROR_CATCH', 'new_playlist', exception.stack)
+			log_exception('new_playlist', exception)
 			await db_rollback()
 		}		
 	})
 
 	/* 재생목록 선택 */
-	socket.on('select_playlist', function(playlist_id) {
-		// playlist_id는 반드시 존재하는 플레이리스트여야함 (없을 시 크리티컬)
-		console.log()
-		db.query(format('UPDATE `Accounts` SET `CurrentPlaylist` = {0} WHERE (`Name` = "{1}")', playlist_id, socket.name), function(err, result) {
-			if(err)
-			{
-				log('ERROR', 'select_playlist', err)
-				return
-			}
+	// playlist_id는 반드시 존재하는 플레이리스트여야함 (없을 시 크리티컬)
+	socket.on('select_playlist', async function(playlist_id) {
+		try
+		{
+			await db_update('Accounts', format('CurrentPlaylist = {0}', playlist_id), format('Name = "{0}"', socket.name))
 
 			update_playlist(socket)
-		})
+		}
+		catch (exception)
+		{
+			log_exception('select_playlist', exception)
+		}
 	})
 
 	/*  특정 재생목록에 video 추가  */
@@ -509,8 +507,7 @@ io.sockets.on('connection', function(socket)
 		}
 		catch (exception)
 		{
-			log('ERROR_CATCH', 'push_video', exception.message + ' --> ' + exception.err)
-			log('THROW_CATCH', 'push_video', exception.stack)
+			log_exception('push_video', exception)
 			socket.emit('push_video_result', {isSuccess: false, message: '영상을 추가하는 중에 오류가 발생했습니다.\n' + exception.err})
 		}
 	})
@@ -590,8 +587,7 @@ io.sockets.on('connection', function(socket)
 				io.sockets.emit('chat_update', { type: 'system_message', message: format('/img {0} {1}?tags={2}', ret, url, tag) })
 			})
 			.catch( err => {
-				console.log(err.stack)
-				log('EXCEPTION', 'zzal', format('https://danbooru.donmai.us/posts/random?tags={0}', tag))
+				log_exception('zzal', exception, format('https://danbooru.donmai.us/posts/random?tags={0}', tag))
 				io.sockets.emit('chat_update', { type: 'system_message', message: format('{0} 짤 불러오기 실패', tag) })
 			})
 	})
@@ -611,7 +607,7 @@ io.sockets.on('connection', function(socket)
 		}
 		catch (exception)
 		{
-			log('CATCH', 'request_video_info', error)
+			log_exception('request_video_info', exception)
 		}
 	})
 
@@ -639,6 +635,12 @@ function log(type, function_name, message, isChat = false)
 	if(isChat)
 		return console.log(format('({0}) [{1}] {2} :', GetTime(), type, function_name), message)
 	return console.log(format('({0}) [{1}] \'{2}\' :', GetTime(), type, function_name), message)
+}
+
+function log_exception(function_name, exception, message = null)
+{
+	log('ERROR_CATCH', function_name, format('\nName : {0}\nERROR : {1}\nMessage : {2}\nStack : {3}\nComment : {4}', exception.name, exception.err, exception.message, exception.stack, message))
+	io.sockets.emit('throw_data', exception)
 }
 
 function format() 
@@ -787,12 +789,6 @@ function second_to_string(sec)
 }
 
 /* ================================== QUERY =========================================*/
-
-/* 특정 유저의 Playlists 데이터 쿼리 */
-function select_playlists(nick)
-{
-	return db_select('Playlists', 'Accounts', format('Name = "{0}"', nick), 'LIMIT 1')
-}
 
 /* 유튜브 영상 정보 조회 쿼리(Promise) */
 function request_youtube_data(video_id)

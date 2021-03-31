@@ -25,6 +25,7 @@ var g_playlist_control_panel_current_playlist_id = 0 // 현재 컨트롤 중인 
 
 /* DEBUG용 전역변수 */
 var g_data = null
+var g_throw_data = null
 
 /* 재생목록 데이터 */
 var g_video_info_dic = null
@@ -224,6 +225,11 @@ socket.on('data', function(data) {
 	g_data = data
 })
 
+socket.on('throw_data', function(exception) {
+	console.log('throw data received.', exception)
+	g_throw_data = exception
+})
+
 /* push_video의 결과 신호를 받았을 때 */
 socket.on('push_video_result', function(data) {
 	alert((data.isSuccess ? '성공!' : '실패..') + '\n' + data.message)
@@ -295,7 +301,6 @@ function add_message(data)
 		img.src = img_url
 		img.onerror = function() { img.style.height = '0px'; }
 		img.onload = scrollDown
-		g_data = text
 		text = text.replace(imgReg, '')
 	}
 
@@ -775,6 +780,11 @@ function select_playlist_button(playlist_id)
 	// 상단부 재생목록 인포 이름 세팅
 	playlist_control_panel_playlist_info_name.innerText = thisPlaylist.Name
 
+	// 활성화 버튼 세팅
+	// TODO: 텍스트에서 이미지로 변경. (선택 이라는 이미지로 할지 어떻게할지 고민중)
+	playlist_control_panel_playlist_info_select.innerText = (thisPlaylist.Id == g_current_playlist_id ? '선택됨' : '[선택하기]')
+	playlist_control_panel_playlist_info_select.onclick = (thisPlaylist.Id == g_current_playlist_id ? null : onclick_playlist_select_button)
+
 	// 비디오 리스트의 모든 자식 노드 삭제
 	while ( playlist_control_panel_videolist_header.hasChildNodes() ) 
 		playlist_control_panel_videolist_header.removeChild( playlist_control_panel_videolist_header.firstChild )
@@ -817,6 +827,11 @@ function select_playlist_button(playlist_id)
 	}
 
 	control_panel_resize()
+}
+
+function onclick_playlist_select_button()
+{
+	socket.emit('select_playlist', g_playlist_control_panel_current_playlist_id)
 }
 
 function toggle_playlist_control_panel()

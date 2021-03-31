@@ -10,6 +10,10 @@ body {
   font-weight: bold;
 }
 
+.hover {
+  background-color: rgba(0, 0, 0, 0.118);
+}
+
 /* * { font-family: "Nanum Gothic" !important; } */
 
 /* 초기화 전 블록 */
@@ -438,11 +442,28 @@ body {
 }
 
 #playlist_control_panel_playlist_info_name {
-
+  float: left;
 }
 
 #playlist_control_panel_playlist_info_select {
   float: right;
+  padding-left: 20px;
+  padding-right: 20px;
+  cursor: pointer;
+}
+
+#playlist_control_panel_playlist_info_select:hover {
+  background-color: rgb(105, 176, 220);
+}
+
+#playlist_control_panel_playlist_info_new_video_button {
+  float: right;
+  padding-left: 20px;
+  padding-right: 20px;
+  cursor: pointer;
+}
+#playlist_control_panel_playlist_info_new_video_button:hover {
+  background-color: rgb(105, 176, 220);
 }
 
 /* 영상 목록 리스트 */
