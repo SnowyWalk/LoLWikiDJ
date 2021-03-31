@@ -2,16 +2,14 @@ body {
   margin: 0;
   padding: 0;
 }
-
 .nanum {
   font-family: "Nanum Gothic";
 }
 .bold {
   font-weight: bold;
 }
-
-.hover {
-  background-color: rgba(0, 0, 0, 0.118);
+.hover:hover {
+  background-color: rgba(0, 0, 0, 0.118) !important;
 }
 
 /* * { font-family: "Nanum Gothic" !important; } */
@@ -155,6 +153,7 @@ body {
 #video_link {
   padding-left: 10px;
   font-family: "Nanum Gothic";
+  cursor: pointer;
 }
 
 /* 영상 시간 프로그레스 바 */
@@ -383,17 +382,17 @@ body {
   background-color: rgb(96, 197, 230);
 }
 
-.playlist_button.odd:hover {
+/* .playlist_button.odd:hover {
   background-color: rgb(66, 167, 200);
-}
+} */
 
 .playlist_button.even {
   background-color: rgb(137, 209, 232);
 }
 
-.playlist_button.even:hover {
+/* .playlist_button.even:hover {
   background-color: rgb(107, 179, 202);
-}
+} */
 
 .playlist_button[selected] {
   background-color: rgb(160, 224, 57) !important ;
@@ -441,6 +440,10 @@ body {
   padding-left: 30px;
 }
 
+#playlist_control_panel_playlist_info > div {
+  height: 100%;
+}
+
 #playlist_control_panel_playlist_info_name {
   float: left;
 }
@@ -452,9 +455,13 @@ body {
   cursor: pointer;
 }
 
-#playlist_control_panel_playlist_info_select:hover {
-  background-color: rgb(105, 176, 220);
+#playlist_control_panel_playlist_info_select[selected] {
+  background-color: rgb(160, 224, 57);
 }
+
+/* #playlist_control_panel_playlist_info_select:hover {
+  background-color: rgb(105, 176, 220);
+} */
 
 #playlist_control_panel_playlist_info_new_video_button {
   float: right;
@@ -462,8 +469,12 @@ body {
   padding-right: 20px;
   cursor: pointer;
 }
-#playlist_control_panel_playlist_info_new_video_button:hover {
-  background-color: rgb(105, 176, 220);
+
+#playlist_control_panel_playlist_info_rename_button {
+  float: right;
+  padding-left: 20px;
+  padding-right: 20px;
+  cursor: pointer;
 }
 
 /* 영상 목록 리스트 */
@@ -471,6 +482,10 @@ body {
   position: absolute;
   top: 100px;
   overflow-y: auto;
+}
+
+#playlist_control_panel_videolist_header > div > img {
+  cursor: pointer;
 }
 
 .videolist_button {
@@ -515,10 +530,10 @@ body {
   cursor: pointer;
 }
 
-.even > .delete_button:hover {
+/* .even > .delete_button:hover {
   background-color: rgb(107, 179, 202);
 }
 
 .odd > .delete_button:hover {
   background-color: rgb(66, 167, 200);
-}
+} */

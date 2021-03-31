@@ -704,6 +704,7 @@ function update_playlist(keep_preview = false)
 		div.appendChild(text)
 
 		div.classList.add('playlist_button')
+		div.classList.add('hover')
 		div.classList.add(g_playlist_info_list.indexOf(e) % 2 == 0 ? 'even' : 'odd')
 		if(e.Id == g_current_playlist_id)
 		{
@@ -721,6 +722,7 @@ function update_playlist(keep_preview = false)
 	var text = document.createElement('div')
 	text.classList.add('text')
 	text.classList.add('create_button')
+	div.classList.add('hover')
 	text.innerText = '+'
 	div.appendChild(text)
 	div.classList.add('playlist_button')
@@ -777,13 +779,15 @@ function select_playlist_button(playlist_id)
 		e.toggleAttribute('selected', false)
 	thisElement.toggleAttribute('selected', true)
 
-	// 상단부 재생목록 인포 이름 세팅
+	// 상단부 재생목록 인포 이름, 색상 세팅
 	playlist_control_panel_playlist_info_name.innerText = thisPlaylist.Name
-
+	playlist_control_panel_playlist_info.style.background = (thisPlaylist.Id == g_current_playlist_id ? 'linear-gradient(0deg, #a0e0393b, #a0e0391f)' : '')
+	
 	// 활성화 버튼 세팅
 	// TODO: 텍스트에서 이미지로 변경. (선택 이라는 이미지로 할지 어떻게할지 고민중)
 	playlist_control_panel_playlist_info_select.innerText = (thisPlaylist.Id == g_current_playlist_id ? '선택됨' : '[선택하기]')
 	playlist_control_panel_playlist_info_select.onclick = (thisPlaylist.Id == g_current_playlist_id ? null : onclick_playlist_select_button)
+	playlist_control_panel_playlist_info_select.toggleAttribute('selected', (thisPlaylist.Id == g_current_playlist_id))
 
 	// 비디오 리스트의 모든 자식 노드 삭제
 	while ( playlist_control_panel_videolist_header.hasChildNodes() ) 
@@ -801,6 +805,8 @@ function select_playlist_button(playlist_id)
 		var img = document.createElement('img')
 		img.src = thisData.Thumbnail
 		img.innerText = format('{0} ({1})', thisData.Name, second_to_string(thisData.Length))
+		img.setAttribute('videoId', thisData.VideoId)
+		img.onclick = _ => window.open(format('https://www.youtube.com/watch?v={0}', event.target.getAttribute('videoId')))
 		div.appendChild(img)
 
 		// 영상 이름 텍스트 생성 후 추가
@@ -812,6 +818,7 @@ function select_playlist_button(playlist_id)
 		// 삭제 버튼 추가
 		var del = document.createElement('div')
 		del.classList.add('delete_button')
+		del.classList.add('hover')
 		del.style.float = 'right'
 		div.appendChild(del)
 
@@ -833,6 +840,35 @@ function onclick_playlist_select_button()
 {
 	socket.emit('select_playlist', g_playlist_control_panel_current_playlist_id)
 }
+function onclick_new_video_button()
+{
+	var url = prompt('추가할 영상의 주소를 넣어주세요.\nex)\nhttps://www.youtube.com/watch?v=RwPHsDrYM80\n또는 RwPHsDrYM80')
+	var video_id = youtube_url_parse(url)
+	if(!url || !video_id)
+		return
+
+	socket.emit('push_video', {video_id: video_id, playlist_id: g_playlist_control_panel_current_playlist_id})
+}
+
+function onclick_playlist_rename_button()
+{
+	// 해당 재생목록 데이터 찾기
+	var thisPlaylist = null
+	for(var e of g_playlist_info_list)
+	{
+		if(e.Id == g_playlist_control_panel_current_playlist_id)
+		{
+			thisPlaylist = e
+			break
+		}
+	}
+
+	var new_name = prompt('변경할 재생목록 이름을 넣어주세요.', thisPlaylist.Name)
+	if(new_name == null)
+		return
+	
+	socket.emit('rename_playlist', {name: new_name, playlist_id: g_playlist_control_panel_current_playlist_id})
+}	
 
 function toggle_playlist_control_panel()
 {

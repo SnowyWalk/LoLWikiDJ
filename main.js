@@ -450,6 +450,21 @@ io.sockets.on('connection', function(socket)
 		}
 	})
 
+	/* 재생목록 이름 변경 */
+	socket.on('rename_playlist', async function(data) {
+		/* data : { name: 새이름, playlist_id: 변경할 재생목록 id } */
+		try
+		{
+			await db_update('Playlists', format('Name = "{0}"', data.name), format('Id = {0}', data.playlist_id))
+
+			update_playlist(socket)
+		}
+		catch (exception)
+		{
+			log_exception('rename_playlist', exception)
+		}
+	})
+
 	/*  특정 재생목록에 video 추가  */
 	// 유효한 영상이어야한다. (삭제된 영상이 아니어야한다. Embedding 비허용 영상은 상관 없음.) 
 	socket.on('push_video', async function(data) {
@@ -504,6 +519,7 @@ io.sockets.on('connection', function(socket)
 			// 3. socket.emit('push_video_result', {isSuccess: true}) 실행
 			log('INFO', 'push_video_result', format('SUCCESS! VideoID. {0} -> Playlist. {1} ({2})', db_video_id, playlist_id, video_title) )
 			socket.emit('push_video_result', {isSuccess: true, message: video_title})
+			update_playlist(socket)
 		}
 		catch (exception)
 		{

@@ -71,9 +71,9 @@
   <div id="etc_box">
     <div id="etc_skip_button"></div>
     <div id="etc_dj_button"></div>
-    <div id="etc_good_button" onclick="onclick_good_button()"></div>
+    <div id="etc_good_button" class="hover" onclick="onclick_good_button()"></div>
     <div id="etc_good_count" class="nanum bold">0</div>
-    <div id="etc_bad_button" onclick="onclick_bad_button()"></div>
+    <div id="etc_bad_button" class="hover" onclick="onclick_bad_button()"></div>
     <div id="etc_bad_count" class="nanum bold">0</div>
   </div>
 
@@ -87,8 +87,9 @@
     <!-- 영상목록 상단부 / 재생목록 이름변경, 삭제, 활성화 등 -->
     <div id="playlist_control_panel_playlist_info">
       <div id="playlist_control_panel_playlist_info_name" class="nanum bold">아영찌의 재생목록 뿌잉</div>
-      <div id="playlist_control_panel_playlist_info_new_video_button" class="nanum bold">[+]</div>
-      <div id="playlist_control_panel_playlist_info_select" class="nanum bold">[선택하기]</div>
+      <div id="playlist_control_panel_playlist_info_select" class="nanum bold hover">[선택하기]</div>
+      <div id="playlist_control_panel_playlist_info_rename_button" onclick="onclick_playlist_rename_button()" class="nanum bold hover">[이름변경]</div>
+      <div id="playlist_control_panel_playlist_info_new_video_button" onclick="onclick_new_video_button()" class="nanum bold hover">[+]</div>
     </div> 
 
     <!-- 영상목록 리스트 헤더 -->
