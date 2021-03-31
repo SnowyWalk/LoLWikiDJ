@@ -554,6 +554,7 @@ io.sockets.on('connection', function(socket)
 
 		if(g_bad_list.length >= 5)
 		{
+			io.sockets.emit('chat_update', {type: 'system_message', time: GetTime(), message: '싫어요 5개 이상 투표를 받아 스킵되었습니다.' })
 			log('INFO', 'socket.rating', 'skipped by bad rating.')
 			end_of_video()
 		}
