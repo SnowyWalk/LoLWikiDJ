@@ -326,6 +326,7 @@ var requestReg = /^\/request (\S+)/i
 var selectPlaylistReg = /^\/select_playlist (\d+)/i
 var pushReg = /^\/push (\S+) (\d+)/i
 var queryReg = /^\/query (.+)/i
+var zzalReg = /^\/짤 (.+)/i
 function send() {
 	if(!g_isLogin)
 		return
@@ -352,10 +353,16 @@ function send() {
 							+ '/(s)kip : 현재 영상 스킵\n'
 							+ '/(r)ewind 10 : 10초 되감기 (/되감기 10 도 가능)\n'
 							+ '/(f)wd 10 : 10초 빨리감기 (/빨리감기 10 도 가능)\n'
-							+ '/맥심 : 랜덤 맥심 이미지\n'
+							+ '/짤 {검색어} : 랜덤 이미지 (단부루)\n'
 							+ '/img  {이미지주소} : 이미지 채팅'
 							)
 		return
+	}
+
+	if(zzalReg.test(message))
+	{
+		var tag = zzalReg.exec(message)[1]
+		socket.emit('zzal', tag)
 	}
 
 	// play url 테스트

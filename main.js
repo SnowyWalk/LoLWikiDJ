@@ -562,17 +562,37 @@ io.sockets.on('connection', function(socket)
 
 	/* 맥심 */
 	var imgReg = /window\.open\('\.(\/file\/\S+?)\'/
-	socket.on('maxim', function() {
-		var random_int = Math.floor(Math.random() * 214) + 1
-		request(format('https://www.maximkorea.net/magdb/magdb_view.php?lib=M&number={0}', random_int))
+	socket.on('maxim', function(no) {
+		io.sockets.emit('chat_update', { type: 'system_message', message: '맥심 막힘. ㅠㅠ' })
+		// if(!no)
+		// 	no = Math.floor(Math.random() * 236) + 1
+		// request(format('https://www.maximkorea.net/magdb/magdb_view.php?lib=M&number={0}', no))
+		// 	.then( ret => {
+		// 		ret = 'https://www.maximkorea.net/magdb' + imgReg.exec(ret)[1]
+		// 		io.sockets.emit('chat_update', { type: 'system_message', message: format('/img {0} 맥심 {1}호', ret, no) })
+		// 	})
+		// 	.catch( err => {
+		// 		console.log(err.stack)
+		// 		log('EXCEPTION', 'maxim', format('https://www.maximkorea.net/magdb/magdb_view.php?lib=M&number={0}', no))
+		// 		io.sockets.emit('chat_update', { type: 'system_message', message: format('맥심 {0}호 불러오기 실패', no) })
+		// 	})
+	})
+
+	var zzalReg = /<picture>.*?srcset="(https?\:\/\/(?:cdn|danbooru)\.donmai\.us\/(?:data\/)?(?:sample|original).*?)"/i
+	var zzalUrlReg = /<link rel="canonical" href="(.*?)">/
+	socket.on('zzal', function(tag) {
+		tag = tag.replace(/ /g, '_')
+		request(format('https://danbooru.donmai.us/posts/random?tags={0}', tag))
 			.then( ret => {
-				ret = 'https://www.maximkorea.net/magdb' + imgReg.exec(ret)[1]
-				io.sockets.emit('chat_update', { type: 'system_message', message: format('/img {0} 맥심 {1}호', ret, random_int) })
+				url = zzalUrlReg.exec(ret)[1]
+				console.log('zzal url : ' + url)
+				ret = zzalReg.exec(ret)[1]
+				io.sockets.emit('chat_update', { type: 'system_message', message: format('/img {0} {1}?tags={2}', ret, url, tag) })
 			})
 			.catch( err => {
 				console.log(err.stack)
-				log('EXCEPTION', 'maxim', format('https://www.maximkorea.net/magdb/magdb_view.php?lib=M&number={0}', random_int))
-				io.sockets.emit('chat_update', { type: 'system_message', message: format('맥심 {0}호 불러오기 실패', random_int) })
+				log('EXCEPTION', 'zzal', format('https://danbooru.donmai.us/posts/random?tags={0}', tag))
+				io.sockets.emit('chat_update', { type: 'system_message', message: format('{0} 짤 불러오기 실패', tag) })
 			})
 	})
 
