@@ -541,13 +541,14 @@ function initial_resize()
 	mainchat.style.width = 350
 
 	/* 좌하단 재생목록 정보 */
-	current_playlist_info_box.style.width = 232
+	current_playlist_info_box.style.width = 232 + 100
 	current_playlist_info_box.style.height = bottom_height
 
 	/* 하단 현재 영상 정보 */
 	video_info.style.left = current_playlist_info_box.clientWidth
 	my_progress_bar.style.left = current_playlist_info_box.clientWidth + 11 // 프로그레스 바 패딩 : 양옆 11px
 	my_progress_bar_after.style.left = current_playlist_info_box.clientWidth + 11
+	video_info_time.style.left = current_playlist_info_box.clientWidth + 11
 
 	/* 우하단 기타 박스 */
 	etc_box.style.width = 216
@@ -842,7 +843,7 @@ function onclick_playlist_select_button()
 }
 function onclick_new_video_button()
 {
-	var url = prompt('추가할 영상의 주소를 넣어주세요.\nex)\nhttps://www.youtube.com/watch?v=RwPHsDrYM80\n또는 RwPHsDrYM80')
+	var url = prompt('추가할 영상의 주소를 넣어주세요.\nex)\nhttps://www.youtube.com/watch?v=FRO3EX3zAss\n또는 FRO3EX3zAss')
 	var video_id = youtube_url_parse(url)
 	if(!url || !video_id)
 		return

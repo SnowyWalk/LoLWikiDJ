@@ -180,8 +180,8 @@ body {
 #video_info_time {
   text-align: right;
   position: fixed;
-  left: 243px;
-  width: 601px;
+  /* left: 243px; */
+  /* width: 601px; */
   font-size: 14;
   font-weight: bold;
   font-family: "Nanum Gothic";
