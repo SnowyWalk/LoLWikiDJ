@@ -596,26 +596,30 @@ io.sockets.on('connection', function(socket)
 
 	var zzalReg = /<picture>.*?srcset="(https?\:\/\/(?:cdn|danbooru)\.donmai\.us\/(?:data\/)?(?:sample|original).*?)"/i
 	var zzalUrlReg = /<link rel="canonical" href="(.*?)">/
-	var noZzalReg = /That record was not found\./
-	socket.on('zzal', function(tag) {
-		tag = tag.replace(/ /g, '_')
-		request(format('https://danbooru.donmai.us/posts/random?tags={0}', tag))
-			.then( ret => {
-				if(noZzalReg.test(ret))
-				{
-					io.sockets.emit('chat_update', { type: 'system_message', message: format('{0} 짤 검색결과 없음!', tag) })
-					return
-				}
+	socket.on('zzal', async function(tag) {
+		try
+		{
+			tag = tag.replace(/ /g, '_')
+			await request(format('https://danbooru.donmai.us/posts/random?tags={0}', tag))
+				.then( ret => {
+					url = zzalUrlReg.exec(ret)[1]
+					console.log('zzal url : ' + url)
+					ret = zzalReg.exec(ret)[1]
+					io.sockets.emit('chat_update', { type: 'system_message', message: format('/img {0} {1}?tags={2}', ret, url, tag) })
+				})
+				.catch( exception => { throw exception } )
+		}
+		catch (exception)
+		{
+			if(exception.statusCode == 404)
+			{
+				io.sockets.emit('chat_update', { type: 'system_message', message: format('{0} 짤 검색결과 없음!', tag) })
+				return
+			}
 
-				url = zzalUrlReg.exec(ret)[1]
-				console.log('zzal url : ' + url)
-				ret = zzalReg.exec(ret)[1]
-				io.sockets.emit('chat_update', { type: 'system_message', message: format('/img {0} {1}?tags={2}', ret, url, tag) })
-			})
-			.catch( exception => {
-				log_exception('zzal', exception, format('https://danbooru.donmai.us/posts/random?tags={0}', tag))
-				io.sockets.emit('chat_update', { type: 'system_message', message: format('{0} 짤 불러오기 실패', tag) })
-			})
+			log_exception('zzal', exception, format('https://danbooru.donmai.us/posts/random?tags={0}', tag))
+			io.sockets.emit('chat_update', { type: 'system_message', message: format('{0} 짤 불러오기 실패', tag) })
+		}
 	})
 
 	/* TEST: 인스턴트 쿼리 */
