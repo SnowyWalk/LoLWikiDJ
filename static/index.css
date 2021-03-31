@@ -363,14 +363,16 @@ body {
 
 /* 재생목록 리스트 */
 #playlist_control_panel_playlist_header {
-  width: 250px;
+  overflow-y: auto;
 }
 
 .playlist_button {
   height: 60px;
   line-height: 60px;
   padding-left: 11px;
+  padding-right: 11px;
   cursor: pointer;
+  clear: both;
 }
 
 .playlist_button.odd {
@@ -393,11 +395,60 @@ body {
   background-color: rgb(160, 224, 57) !important ;
 }
 
+.playlist_button > .text {
+  /* float: left; */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: 100%;
+}
+
+.playlist_button > .text.create_button {
+  width: 100%;
+  text-align: center;
+  font-size: 50px;
+  color: rgb(84, 128, 130);
+  line-height: 1;
+}
+
+.playlist_button > .playing_img {
+  background-image: url('play2.png');
+  width: 40px;
+  height: 40px;
+  padding: 0px;
+  padding-top: 10px;
+  padding-bottom: 10px;
+  background-size: 50%;
+  background-repeat: no-repeat;
+  background-position: center;
+  cursor: pointer;
+  float: left;
+}
+
+
+/* 재생목록 인포 */
+#playlist_control_panel_playlist_info {
+  top: 0px;
+  position: absolute;
+  border-bottom: 4px solid cadetblue;
+  box-sizing: border-box;
+  font-size: 30px;
+  line-height: 100px;
+  padding-left: 30px;
+}
+
+#playlist_control_panel_playlist_info_name {
+
+}
+
+#playlist_control_panel_playlist_info_select {
+  float: right;
+}
+
 /* 영상 목록 리스트 */
 #playlist_control_panel_videolist_header {
   position: absolute;
-  left: 250px;
-  top: 0px;
+  top: 100px;
   overflow-y: auto;
 }
 

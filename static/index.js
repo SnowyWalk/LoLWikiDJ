@@ -216,7 +216,7 @@ socket.on('update_playlist', function(data) {
 
 	update_current_playlist()
 	if(g_show_playlist_control_panel)
-		update_playlist()
+		update_playlist(true) 
 })
 
 socket.on('data', function(data) {
@@ -548,6 +548,12 @@ function initial_resize()
 	etc_box.style.width = 216
 	etc_box.style.height = bottom_height
 
+	/* 재생목록 컨트롤 패널 */
+	playlist_control_panel_playlist_header.style.width = 300
+	playlist_control_panel_videolist_header.style.left = 300 // 위와 같아야 함.
+	playlist_control_panel_playlist_info.style.left = 300 // 위와 같아야 함.
+	playlist_control_panel_playlist_info.style.height = 100
+
 	resize()
 }
 
@@ -631,17 +637,25 @@ function control_panel_resize()
 	var window_height = window.innerHeight
 	var bottom_height = 86 // 하단 박스 높이
 
+	var t_playlist_control_panel_playlist_header_width = playlist_control_panel_playlist_header.getBoundingClientRect().width
+
 	// 패널 판크기 조절
 	playlist_control_panel.style.width = (window_width - mainchat.clientWidth)
 	playlist_control_panel.style.height = (window_height - bottom_height)
 
+	// 재생목록 헤더 크기 조절
+	playlist_control_panel_playlist_header.style.height = (window_height - bottom_height - 1)
+
+	// 재생목록 인포 크기 조절
+	playlist_control_panel_playlist_info.style.width = (window_width - t_playlist_control_panel_playlist_header_width - mainchat.clientWidth - 1)
+
 	// 영상 목록 헤더 크기 조절
-	playlist_control_panel_videolist_header.style.width = (window_width - playlist_control_panel_playlist_header.clientWidth - mainchat.clientWidth - 1)
-	playlist_control_panel_videolist_header.style.height = (window_height - bottom_height - 1)
+	playlist_control_panel_videolist_header.style.width = (window_width - t_playlist_control_panel_playlist_header_width - mainchat.clientWidth - 1)
+	playlist_control_panel_videolist_header.style.height = (window_height - bottom_height - playlist_control_panel_videolist_header.offsetTop - 1)
 
 	// 영상 목록의 텍스트 길이 조절
 	for(var e of document.getElementsByClassName('videolist_button'))
-		e.getElementsByClassName('text')[0].style.width = (window_width - playlist_control_panel_playlist_header.clientWidth - mainchat.clientWidth - 204 - 120 - 10 - 10 - 1)
+		e.getElementsByClassName('text')[0].style.width = (window_width - t_playlist_control_panel_playlist_header_width - mainchat.clientWidth - 204 - 120 - 10 - 10 - 1)
 }
 
 /* 플레이리스트 컨트롤패널 열기/닫기 */
@@ -659,7 +673,7 @@ function show_playlist_control_panel(isShow)
 	playlist_control_panel.style.display = isShow ? 'block' : 'none'
 	control_panel_resize()
 }
-function update_playlist()
+function update_playlist(keep_preview = false)
 {
 	// 모든 자식 노드 삭제
 	while ( playlist_control_panel_playlist_header.hasChildNodes() ) 
@@ -669,21 +683,68 @@ function update_playlist()
 	for(var e of g_playlist_info_list)
 	{
 		var div = document.createElement('div')
-		div.innerText = format('{0} ({1})', e.Name, e.VideoList.length)
+
+		// 선택 이미지
+		if(e.Id == g_current_playlist_id)
+		{
+			var sel = document.createElement('div')
+			sel.classList.add('playing_img')
+			div.appendChild(sel)	
+		}
+
+		// 이름 
+		var text = document.createElement('div')
+		text.classList.add('text')
+		text.innerText = format('{0} ({1})', e.Name, e.VideoList.length)
+		div.appendChild(text)
+
 		div.classList.add('playlist_button')
 		div.classList.add(g_playlist_info_list.indexOf(e) % 2 == 0 ? 'even' : 'odd')
+		if(e.Id == g_current_playlist_id)
+		{
+			div.style.paddingLeft = 0
+			text.style.width = 'auto'
+		}
+		
 		div.setAttribute('playlist_id', e.Id)
 		div.onclick = onclick_playlist_button
 		playlist_control_panel_playlist_header.appendChild(div)
 	}
 
+	// 마지막에 새 재생목록 버튼도 추가
+	var div = document.createElement('div')
+	var text = document.createElement('div')
+	text.classList.add('text')
+	text.classList.add('create_button')
+	text.innerText = '+'
+	div.appendChild(text)
+	div.classList.add('playlist_button')
+	div.classList.add(g_playlist_info_list.length % 2 == 0 ? 'even' : 'odd')
+	div.onclick = onclick_playlist_create_button
+	playlist_control_panel_playlist_header.appendChild(div)
+
 	// 현재재생목록을 선택해서 리스트를 보여줌
-	select_playlist_button(g_current_playlist_id)
+	if(keep_preview)
+		select_playlist_button(g_playlist_control_panel_current_playlist_id)
+	else
+		select_playlist_button(g_current_playlist_id)
+}
+/* 새 재생목록 추가 버튼 */
+function onclick_playlist_create_button()
+{
+	socket.emit('new_playlist')
 }
 function onclick_playlist_button()
 {
 	var thisElement = event.target
+
+	while(!thisElement.getAttribute('playlist_id')) // 하위 노드가 클릭된 경우
+		thisElement = thisElement.parentElement
+
 	var playlist_id = thisElement.getAttribute('playlist_id')
+
+	if(g_playlist_control_panel_current_playlist_id == playlist_id)
+		return
 
 	select_playlist_button(playlist_id)
 }
@@ -691,18 +752,6 @@ function select_playlist_button(playlist_id)
 {
 	// 선택된 플레이리스트 Id 저장
 	g_playlist_control_panel_current_playlist_id = playlist_id
-
-	// 해당 엘리먼트 찾기
-	var thisElement = playlist_control_panel_playlist_header.querySelector(format('[playlist_id="{0}"]', playlist_id))
-
-	// 리스트 선택 selected 속성 적용
-	for(var e of playlist_control_panel_playlist_header.children)
-		e.toggleAttribute('selected', false)
-	thisElement.toggleAttribute('selected', true)
-
-	// 비디오 리스트의 모든 자식 노드 삭제
-	while ( playlist_control_panel_videolist_header.hasChildNodes() ) 
-		playlist_control_panel_videolist_header.removeChild( playlist_control_panel_videolist_header.firstChild )
 
 	// 해당 재생목록 데이터 찾기
 	var thisPlaylist = null
@@ -714,6 +763,21 @@ function select_playlist_button(playlist_id)
 			break
 		}
 	}
+
+	// 해당 엘리먼트 찾기
+	var thisElement = playlist_control_panel_playlist_header.querySelector(format('[playlist_id="{0}"]', playlist_id))
+
+	// 리스트 선택 selected 속성 적용
+	for(var e of playlist_control_panel_playlist_header.children)
+		e.toggleAttribute('selected', false)
+	thisElement.toggleAttribute('selected', true)
+
+	// 상단부 재생목록 인포 이름 세팅
+	playlist_control_panel_playlist_info_name.innerText = thisPlaylist.Name
+
+	// 비디오 리스트의 모든 자식 노드 삭제
+	while ( playlist_control_panel_videolist_header.hasChildNodes() ) 
+		playlist_control_panel_videolist_header.removeChild( playlist_control_panel_videolist_header.firstChild )
 
 	// 영상 목록 갱신
 	var i = 0
@@ -926,7 +990,10 @@ function update_current_playlist()
 	}
 
 	current_playlist_name.innerText = format('{0} ({1})', current_data.Name, current_data.VideoList.length)
-	current_playlist_video_name.innerText = g_video_info_dic[current_data.VideoList[0]].Name
+	if(current_data.VideoList.length == 0)
+		current_playlist_video_name.innerText = '[여기를 눌러 곡을 등록]'
+	else
+		current_playlist_video_name.innerText = g_video_info_dic[current_data.VideoList[0]].Name
 }
 
 function second_to_string(sec) 
