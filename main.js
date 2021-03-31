@@ -554,6 +554,12 @@ io.sockets.on('connection', function(socket)
 
 		// 모두에게 좋/싫 알림
 		update_current_rating(io.sockets)
+
+		if(g_bad_list.length >= 5)
+		{
+			log('INFO', 'socket.rating', 'skipped by bad rating.')
+			end_of_video()
+		}
 	})
 
 	/* 맥심 */
