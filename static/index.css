@@ -477,6 +477,13 @@ body {
   cursor: pointer;
 }
 
+#playlist_control_panel_playlist_info_delete_button {
+  float: right;
+  padding-left: 20px;
+  padding-right: 20px;
+  cursor: pointer;
+}
+
 /* 영상 목록 리스트 */
 #playlist_control_panel_videolist_header {
   position: absolute;
