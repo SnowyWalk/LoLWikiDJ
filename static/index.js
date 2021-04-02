@@ -35,6 +35,8 @@ var g_current_playlist_id = 0
 /* DEBUG: 랜덤 닉네임 모드 */
 var g_setting_auto_login = false
 
+/* 기타 캐싱 */
+var g_progress_bar_width = 0
 
 
 /* 접속 되었을 때 실행 */
@@ -610,6 +612,7 @@ function resize() {
 	video_info.style.width = video_info_width
 
 	my_progress_bar.style.width = (video_info_width - 22)
+	g_progress_bar_width = (video_info_width - 22) // 위와 같음
 	my_progress_bar.style.top = (window_height - 29)
 	
 	my_progress_bar_after.style.top = (window_height - 29)
@@ -1010,14 +1013,14 @@ function update_video_time()
 	var duration = g_current_duration
 	if(duration == 0)
 	{
-		my_progress_bar_after.style.width = (window.innerWidth - 820)
+		my_progress_bar_after.style.width = g_progress_bar_width
 		video_info_time.innerText = '실시간'
 		return
 }
 	var currentTime = (Date.now() - g_cued_time_ms) / 1000
 	if(duration < currentTime)
 		currentTime = duration
-	my_progress_bar_after.style.width = (window.innerWidth - 820) * (currentTime / duration)
+	my_progress_bar_after.style.width = g_progress_bar_width * (currentTime / duration)
 	video_info_time.innerText = second_to_string(currentTime) + " / " + second_to_string(duration)
 }
 
