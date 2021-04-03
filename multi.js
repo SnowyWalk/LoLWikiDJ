@@ -132,7 +132,7 @@ io.sockets.on('connection', function(socket)
 			if(!is_exist_user) // 기존 유저가 아니라면 등록
 			{
 				// 일단 새 재생목록 생성
-				var new_playlist_id = await db_insert('Playlists', ['Name', 'VideoList'], ['새 재생목록', '[]']).then(ret => ret.insertId)
+				var new_playlist_id = await db_insert('Playlists', ['Name', 'VideoList'], [format('{0}의 재생목록', socket.name), '[]']).then(ret => ret.insertId)
 
 				// 새 유저 등록
 				await db_insert('Accounts', ['Name', 'Playlists', 'CurrentPlaylist'], [socket.name, JSON.stringify([new_playlist_id]), new_playlist_id])
@@ -158,7 +158,7 @@ io.sockets.on('connection', function(socket)
 		{
 			console.log(exception.stack)
 			await db_rollback()
-			log('ERROR_CATCH', 'login', socket.name + ' 로그인 실패. 에러 : ' + JSON.stringify(exception))
+			log_exception('login', exception, socket.name + ' 로그인 실패. 에러 : ' + JSON.stringify(exception))
 			socket.name = ''
 			socket.emit('login', false)
 		}
@@ -249,7 +249,7 @@ io.sockets.on('connection', function(socket)
 		}
 		catch (exception)
 		{
-			log('THROW_CATCH', 'queue', exception.err + '\n' + exception.message + '\n' + exception.stack)
+			log_exception('queue', exception)
 			io.sockets.emit('chat_update', {type:'system_message', time: GetTime(), message: '유튜브 영상 조회 에러!'})
 		}
 
@@ -300,8 +300,7 @@ io.sockets.on('connection', function(socket)
 		}
 		catch(exception)
 		{
-			console.log(exception.stack)
-			log('ERROR', 'play', body)
+			log_exception('play', exception, body)
 			io.sockets.emit('chat_update', {type:'system_message', time: GetTime(), message: '유튜브 영상 조회 에러!'})
 		}
 	})
@@ -378,11 +377,9 @@ io.sockets.on('connection', function(socket)
 			var acccount_data = await db_select('Playlists, CurrentPlaylist', 'Accounts', format('Name = "{0}"', socket.name), 'LIMIT 1').then( (ret) => ret[0] )
 			var current_playlist = JSON.parse(acccount_data.CurrentPlaylist)
 			var playlist_id_list = JSON.parse(acccount_data.Playlists)
-			console.log(playlist_id_list)
 
 			// 해당 재생목록들의 내용을 가져옴 [ { Name:내 재생목록, VideoList:[2134,2345,12,1] } , ... ]
 			var playlist_info_list = await db_select('Id, Name, VideoList', 'Playlists', format('Id IN ({0})', playlist_id_list.join(', '))).then(JSON.stringify).then(JSON.parse)
-			console.log(playlist_info_list)
 
 			socket.emit('data', playlist_info_list)
 
@@ -400,7 +397,6 @@ io.sockets.on('connection', function(socket)
 			{
 				// Videos DB에 비디오 정보를 한번에 조회
 				var video_info_list = await db_select('Id, Name, VideoId, Length, Thumbnail', 'Videos', format('Id IN ({0})', video_index_list.join(', '))).then(JSON.stringify).then(JSON.parse)
-				console.log(video_info_list)
 
 				// Video 정보를 Dic형태로 재구성
 				for(var e of video_info_list)
@@ -411,8 +407,7 @@ io.sockets.on('connection', function(socket)
 		}
 		catch (exception)
 		{
-			log('THROW_CATCH', 'playlist', exception.name + ' --> ' + exception.message)
-			log('ERROR_CATCH', 'playlist', exception.stack)
+			log_exception('playlist', exception)
 		}
 	}
 
@@ -432,27 +427,119 @@ io.sockets.on('connection', function(socket)
 
 			// 업데이트
 			update_playlist(socket)
+
+			log('INFO', 'new_playlist', format('{0} 이(가) 새 재생목록을 생성', socket.name))
 		}
 		catch (exception)
 		{
-			log('ERROR_CATCH', 'new_playlist', exception.stack)
+			log_exception('new_playlist', exception)
 			await db_rollback()
 		}		
 	})
 
 	/* 재생목록 선택 */
-	socket.on('select_playlist', function(playlist_id) {
-		// playlist_id는 반드시 존재하는 플레이리스트여야함 (없을 시 크리티컬)
-		console.log()
-		db.query(format('UPDATE `Accounts` SET `CurrentPlaylist` = {0} WHERE (`Name` = "{1}")', playlist_id, socket.name), function(err, result) {
-			if(err)
-			{
-				log('ERROR', 'select_playlist', err)
-				return
-			}
+	// playlist_id는 반드시 존재하는 플레이리스트여야함 (없을 시 크리티컬)
+	socket.on('select_playlist', async function(playlist_id) {
+		try
+		{
+			await db_update('Accounts', format('CurrentPlaylist = {0}', playlist_id), format('Name = "{0}"', socket.name))
 
 			update_playlist(socket)
-		})
+		}
+		catch (exception)
+		{
+			log_exception('select_playlist', exception)
+		}
+	})
+
+	/* 재생목록 이름 변경 */
+	socket.on('rename_playlist', async function(data) {
+		/* data : { name: 새이름, playlist_id: 변경할 재생목록 id } */
+		try
+		{
+			await db_update('Playlists', format('Name = "{0}"', data.name), format('Id = {0}', data.playlist_id))
+
+			update_playlist(socket)
+			log('INFO', 'rename_playlist', format('{0} 이(가) 재생목록명을 변경 -> {1}', socket.name, data.name))
+		}
+		catch (exception)
+		{
+			log_exception('rename_playlist', exception)
+		}
+	})
+
+	socket.on('delete_playlist', async function(playlist_id) {
+		try
+		{
+			await db_beginTransaction()
+
+			var my_playlists = await db_select('Playlists', 'Accounts', format('Name="{0}"', socket.name), 'LIMIT 1').then(ret => ret[0].Playlists).then(JSON.parse)
+			my_playlists.splice(my_playlists.indexOf(playlist_id), 1)
+
+			await db_update('Accounts', format('Playlists = "{0}"', JSON.stringify(my_playlists)), format('Name = "{0}"', socket.name))
+			await db_update('Playlists', format('Deleted = "1"'), format('Id = "{0}"', playlist_id))
+
+			await db_commit()
+
+			update_playlist(socket)
+		}
+		catch (exception)
+		{
+			log_exception('delete_playlist', exception)
+			await db_rollback()
+		}
+	})
+
+	/* 특정 재생목록의 특정 인덱스 영상 삭제 */
+	socket.on('delete_video', async function(data) {
+		/*
+			{
+				playlist_id: 대상 재생목록 id, 
+				index: 대상 VideoList의 순서index, 
+				video_id: 검증용 VideoId(DB에서의 순서index -> `Videos.Id`)
+			}
+		*/
+
+		// 1. 해당 플레이리스트의 비디오 목록 가져오기
+		// 2. 해당 플레이리스트에 삭제 대상 비디오가 하나만 있는지 체크
+		//	하나만 있다 -> 검증없이 video_id 찾아서 제거
+		//	여러개 있다 -> 해당 index의 숫자가 video_id와 같은지 검증 후 제거 (검증 실패 시, alert 보내기)
+		// 3. 성공 했을 때만 재생목록 업뎃
+
+		try
+		{
+			await db_beginTransaction()
+
+			var video_list = await db_select('VideoList', 'Playlists', format('Id = {0}', data.playlist_id)).then(ret => ret[0].VideoList).then(JSON.parse)
+			var dest_count = video_list.filter(x => x == data.video_id).length
+			if(dest_count == 0)
+				throw {message: format('플레이리스트에 해당 영상이 없음. {0} not in {1}', data.video_id, JSON.stringify(video_list))}
+
+			// 여러개 있는지 체크 -> 있으면 검증필요
+			if(dest_count > 1) 
+			{
+				if(video_list[data.index] != data.video_id)
+					throw {message: format('검증 실패. {0} not at {1}[{2}]', data.video_id, JSON.stringify(video_list), data.index)}
+
+				video_list.splice(data.index, 1)
+			}
+			else
+			{
+				video_list.splice(video_list.indexOf(data.video_id), 1)
+			}
+
+			await db_update('Playlists', format('VideoList = "{0}"', JSON.stringify(video_list)), format('Id = {0}', data.playlist_id))
+
+			await db_commit()
+			
+			log('INFO', 'delete_video', format('{0} 이(가) {1}번 재생목록에서 Id: {2} 영상을 삭제', socket.name, data.playlist_id, data.video_id))
+			update_playlist(socket)
+		}
+		catch (exception)
+		{
+			log_exception('delete_video', exception, data)
+			await db_rollback()
+		}
 	})
 
 	/*  특정 재생목록에 video 추가  */
@@ -509,11 +596,11 @@ io.sockets.on('connection', function(socket)
 			// 3. socket.emit('push_video_result', {isSuccess: true}) 실행
 			log('INFO', 'push_video_result', format('SUCCESS! VideoID. {0} -> Playlist. {1} ({2})', db_video_id, playlist_id, video_title) )
 			socket.emit('push_video_result', {isSuccess: true, message: video_title})
+			update_playlist(socket)
 		}
 		catch (exception)
 		{
-			log('ERROR_CATCH', 'push_video', exception.message + ' --> ' + exception.err)
-			log('THROW_CATCH', 'push_video', exception.stack)
+			log_exception('push_video', exception)
 			socket.emit('push_video_result', {isSuccess: false, message: '영상을 추가하는 중에 오류가 발생했습니다.\n' + exception.err})
 		}
 	})
@@ -554,22 +641,59 @@ io.sockets.on('connection', function(socket)
 
 		// 모두에게 좋/싫 알림
 		update_current_rating(io.sockets)
+
+		if(g_bad_list.length >= 5)
+		{
+			io.sockets.emit('chat_update', {type: 'system_message', time: GetTime(), message: '싫어요 5개 이상 투표를 받아 스킵되었습니다.' })
+			log('INFO', 'socket.rating', 'skipped by bad rating.')
+			end_of_video()
+		}
 	})
 
 	/* 맥심 */
 	var imgReg = /window\.open\('\.(\/file\/\S+?)\'/
-	socket.on('maxim', function() {
-		var random_int = Math.floor(Math.random() * 214) + 1
-		request(format('https://www.maximkorea.net/magdb/magdb_view.php?lib=M&number={0}', random_int))
-			.then( ret => {
-				ret = 'https://www.maximkorea.net/magdb' + imgReg.exec(ret)[1]
-				io.sockets.emit('chat_update', { type: 'system_message', message: format('/img {0} 맥심 {1}호', ret, random_int) })
-			})
-			.catch( err => {
-				console.log(err.stack)
-				log('EXCEPTION', 'maxim', format('https://www.maximkorea.net/magdb/magdb_view.php?lib=M&number={0}', random_int))
-				io.sockets.emit('chat_update', { type: 'system_message', message: format('맥심 {0}호 불러오기 실패', random_int) })
-			})
+	socket.on('maxim', function(no) {
+		io.sockets.emit('chat_update', { type: 'system_message', message: '맥심 막힘. ㅠㅠ' })
+		// if(!no)
+		// 	no = Math.floor(Math.random() * 236) + 1
+		// request(format('https://www.maximkorea.net/magdb/magdb_view.php?lib=M&number={0}', no))
+		// 	.then( ret => {
+		// 		ret = 'https://www.maximkorea.net/magdb' + imgReg.exec(ret)[1]
+		// 		io.sockets.emit('chat_update', { type: 'system_message', message: format('/img {0} 맥심 {1}호', ret, no) })
+		// 	})
+		// 	.catch( err => {
+		// 		console.log(err.stack)
+		// 		log('EXCEPTION', 'maxim', format('https://www.maximkorea.net/magdb/magdb_view.php?lib=M&number={0}', no))
+		// 		io.sockets.emit('chat_update', { type: 'system_message', message: format('맥심 {0}호 불러오기 실패', no) })
+		// 	})
+	})
+
+	var zzalReg = /<picture>.*?srcset="(https?\:\/\/(?:cdn|danbooru)\.donmai\.us\/(?:data\/)?(?:sample|original).*?)"/i
+	var zzalUrlReg = /<link rel="canonical" href="(.*?)">/
+	socket.on('zzal', async function(tag) {
+		try
+		{
+			tag = tag.replace(/ /g, '_')
+			await request(format('https://danbooru.donmai.us/posts/random?tags={0}', tag))
+				.then( ret => {
+					url = zzalUrlReg.exec(ret)[1]
+					console.log('zzal url : ' + url)
+					ret = zzalReg.exec(ret)[1]
+					io.sockets.emit('chat_update', { type: 'system_message', message: format('/img {0} {1}?tags={2}', ret, url, tag) })
+				})
+				.catch( exception => { throw exception } )
+		}
+		catch (exception)
+		{
+			if(exception.statusCode == 404)
+			{
+				io.sockets.emit('chat_update', { type: 'system_message', message: format('{0} 짤 검색결과 없음!', tag) })
+				return
+			}
+
+			log_exception('zzal', exception, format('https://danbooru.donmai.us/posts/random?tags={0}', tag))
+			io.sockets.emit('chat_update', { type: 'system_message', message: format('{0} 짤 불러오기 실패', tag) })
+		}
 	})
 
 	/* TEST: 인스턴트 쿼리 */
@@ -587,7 +711,7 @@ io.sockets.on('connection', function(socket)
 		}
 		catch (exception)
 		{
-			log('CATCH', 'request_video_info', error)
+			log_exception('request_video_info', exception)
 		}
 	})
 
@@ -602,7 +726,7 @@ io.sockets.on('connection', function(socket)
 
 /* 서버를 8080 포트로 listen */
 server.listen(g_port, function() {
-	console.log('======================== 서버 실행 중.. ============================')
+	console.log('\x1b[42m======================== 서버 실행 중.. ============================\x1b[0m')
 })
 
 function GetTime() 
@@ -613,8 +737,23 @@ function GetTime()
 function log(type, function_name, message, isChat = false)
 {
 	if(isChat)
-		return console.log(format('({0}) [{1}] {2} :', GetTime(), type, function_name), message)
-	return console.log(format('({0}) [{1}] \'{2}\' :', GetTime(), type, function_name), message)
+		return console.log(format('\x1b[47m\x1b[30m({0})\x1b[0m\x1b[40m {1} :', GetTime(), function_name), message, '\x1b[0m')
+
+	var color = 'x1b[37m'
+	if(type == 'INFO')
+		color = '\x1b[32m'
+	else if(type == 'ERROR' || type == 'ERROR_CATCH')
+		color = '\x1b[31m'
+
+	return console.log(format('\x1b[47m\x1b[30m({0})\x1b[0m\x1b[40m [{2}]{1}', GetTime(), color, function_name), message, '\x1b[0m')
+}
+
+function log_exception(function_name, exception, message = null)
+{
+	if(typeof(message) == 'object')
+		message = JSON.stringify(message)
+	log('ERROR_CATCH', function_name, format('\nName : {0}\nERROR : {1}\nMessage : {2}\nStack : {3}\nComment : {4}', exception.name, exception.err, exception.message, exception.stack, message))
+	io.sockets.emit('throw_data', exception)
 }
 
 function format() 
@@ -763,12 +902,6 @@ function second_to_string(sec)
 }
 
 /* ================================== QUERY =========================================*/
-
-/* 특정 유저의 Playlists 데이터 쿼리 */
-function select_playlists(nick)
-{
-	return db_select('Playlists', 'Accounts', format('Name = "{0}"', nick), 'LIMIT 1')
-}
 
 /* 유튜브 영상 정보 조회 쿼리(Promise) */
 function request_youtube_data(video_id)

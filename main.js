@@ -477,6 +477,7 @@ io.sockets.on('connection', function(socket)
 			my_playlists.splice(my_playlists.indexOf(playlist_id), 1)
 
 			await db_update('Accounts', format('Playlists = "{0}"', JSON.stringify(my_playlists)), format('Name = "{0}"', socket.name))
+			await db_update('Playlists', format('Deleted = "1"'), format('Id = "{0}"', playlist_id))
 
 			await db_commit()
 
@@ -485,6 +486,58 @@ io.sockets.on('connection', function(socket)
 		catch (exception)
 		{
 			log_exception('delete_playlist', exception)
+			await db_rollback()
+		}
+	})
+
+	/* 특정 재생목록의 특정 인덱스 영상 삭제 */
+	socket.on('delete_video', async function(data) {
+		/*
+			{
+				playlist_id: 대상 재생목록 id, 
+				index: 대상 VideoList의 순서index, 
+				video_id: 검증용 VideoId(DB에서의 순서index -> `Videos.Id`)
+			}
+		*/
+
+		// 1. 해당 플레이리스트의 비디오 목록 가져오기
+		// 2. 해당 플레이리스트에 삭제 대상 비디오가 하나만 있는지 체크
+		//	하나만 있다 -> 검증없이 video_id 찾아서 제거
+		//	여러개 있다 -> 해당 index의 숫자가 video_id와 같은지 검증 후 제거 (검증 실패 시, alert 보내기)
+		// 3. 성공 했을 때만 재생목록 업뎃
+
+		try
+		{
+			await db_beginTransaction()
+
+			var video_list = await db_select('VideoList', 'Playlists', format('Id = {0}', data.playlist_id)).then(ret => ret[0].VideoList).then(JSON.parse)
+			var dest_count = video_list.filter(x => x == data.video_id).length
+			if(dest_count == 0)
+				throw {message: format('플레이리스트에 해당 영상이 없음. {0} not in {1}', data.video_id, JSON.stringify(video_list))}
+
+			// 여러개 있는지 체크 -> 있으면 검증필요
+			if(dest_count > 1) 
+			{
+				if(video_list[data.index] != data.video_id)
+					throw {message: format('검증 실패. {0} not at {1}[{2}]', data.video_id, JSON.stringify(video_list), data.index)}
+
+				video_list.splice(data.index, 1)
+			}
+			else
+			{
+				video_list.splice(video_list.indexOf(data.video_id), 1)
+			}
+
+			await db_update('Playlists', format('VideoList = "{0}"', JSON.stringify(video_list)), format('Id = {0}', data.playlist_id))
+
+			await db_commit()
+			
+			log('INFO', 'delete_video', format('{0} 이(가) {1}번 재생목록에서 Id: {2} 영상을 삭제', socket.name, data.playlist_id, data.video_id))
+			update_playlist(socket)
+		}
+		catch (exception)
+		{
+			log_exception('delete_video', exception, data)
 			await db_rollback()
 		}
 	})
@@ -697,6 +750,8 @@ function log(type, function_name, message, isChat = false)
 
 function log_exception(function_name, exception, message = null)
 {
+	if(typeof(message) == 'object')
+		message = JSON.stringify(message)
 	log('ERROR_CATCH', function_name, format('\nName : {0}\nERROR : {1}\nMessage : {2}\nStack : {3}\nComment : {4}', exception.name, exception.err, exception.message, exception.stack, message))
 	io.sockets.emit('throw_data', exception)
 }

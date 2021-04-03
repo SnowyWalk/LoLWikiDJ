@@ -830,11 +830,12 @@ function select_playlist_button(playlist_id)
 		del.classList.add('delete_button')
 		del.classList.add('hover')
 		del.style.float = 'right'
+		del.onclick = onclick_video_delete_button
 		div.appendChild(del)
 
 		div.classList.add('videolist_button')
 		div.classList.add(i % 2 == 0 ? 'even' : 'odd')
-		div.setAttribute('itemIndex', i)
+		div.setAttribute('ItemIndex', i)
 		div.setAttribute('VideoIndex', e)
 		div.setAttribute('videoId', thisData.VideoId)
 
@@ -844,6 +845,34 @@ function select_playlist_button(playlist_id)
 	}
 
 	control_panel_resize()
+}
+
+function onclick_video_delete_button()
+{
+	var index = event.target.parentElement.getAttribute('ItemIndex')
+	
+	var thisPlaylist = null
+	for(var e of g_playlist_info_list)
+	{
+		if(e.Id == g_playlist_control_panel_current_playlist_id)
+		{
+			thisPlaylist = e
+			break
+		}
+	}
+
+	if(!thisPlaylist)
+	{
+		console.log('error on onclick_video_delete_button')
+		return
+	}
+
+	var video_index = thisPlaylist.VideoList[index]
+	var yes = confirm(format('[{0}] 영상을 삭제합니다.', g_video_info_dic[video_index].Name))
+	if(!yes)
+		return
+
+	socket.emit('delete_video', {playlist_id: thisPlaylist.Id, index: index, video_id: video_index})
 }
 
 function onclick_playlist_select_button()
