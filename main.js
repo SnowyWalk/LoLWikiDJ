@@ -700,6 +700,7 @@ io.sockets.on('connection', function(socket)
 	socket.on('query', function(query) {
 		db.query(query, (error, result) => { 
 				error ? console.log(error) : console.log(result)
+				io.sockets.emit('chat_update', {type:'system_message', message: result})
 		})
 	})
 
