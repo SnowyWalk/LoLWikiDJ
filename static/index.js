@@ -793,6 +793,12 @@ function select_playlist_button(playlist_id)
 	playlist_control_panel_playlist_info_select.onclick = (thisPlaylist.Id == g_current_playlist_id ? null : onclick_playlist_select_button)
 	playlist_control_panel_playlist_info_select.toggleAttribute('selected', (thisPlaylist.Id == g_current_playlist_id))
 
+	// 재생목록 삭제 버튼 세팅 (선택된 놈은 삭제못함)
+	if(g_playlist_control_panel_current_playlist_id == g_current_playlist_id)
+		playlist_control_panel_playlist_info_delete_button.style.display = 'none'
+	else
+		playlist_control_panel_playlist_info_delete_button.style.display = 'block'
+
 	// 비디오 리스트의 모든 자식 노드 삭제
 	while ( playlist_control_panel_videolist_header.hasChildNodes() ) 
 		playlist_control_panel_videolist_header.removeChild( playlist_control_panel_videolist_header.firstChild )
@@ -873,6 +879,34 @@ function onclick_playlist_rename_button()
 	
 	socket.emit('rename_playlist', {name: new_name, playlist_id: g_playlist_control_panel_current_playlist_id})
 }	
+
+function onclick_playlist_delete_button()
+{
+	// 현재 디제잉 중인 재생목록은 삭제 불가
+	if(g_playlist_control_panel_current_playlist_id == g_current_playlist_id)
+	{
+		alert('선택 중인 재생목록은 삭제할 수 없습니다.')
+		return
+	}	
+
+	// 해당 재생목록 데이터 찾기
+	var thisPlaylist = null
+	for(var e of g_playlist_info_list)
+	{
+		if(e.Id == g_playlist_control_panel_current_playlist_id)
+		{
+			thisPlaylist = e
+			break
+		}
+	}
+	var yes = confirm(format('[{0}] 재생목록을 삭제합니다.', thisPlaylist.Name))
+	if(!yes)
+		return
+
+	var delete_playlist_id = g_playlist_control_panel_current_playlist_id
+	select_playlist_button(g_current_playlist_id)
+	socket.emit('delete_playlist', delete_playlist_id)
+}
 
 function toggle_playlist_control_panel()
 {

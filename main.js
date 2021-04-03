@@ -132,7 +132,7 @@ io.sockets.on('connection', function(socket)
 			if(!is_exist_user) // 기존 유저가 아니라면 등록
 			{
 				// 일단 새 재생목록 생성
-				var new_playlist_id = await db_insert('Playlists', ['Name', 'VideoList'], ['새 재생목록', '[]']).then(ret => ret.insertId)
+				var new_playlist_id = await db_insert('Playlists', ['Name', 'VideoList'], [format('{0}의 재생목록', socket.name), '[]']).then(ret => ret.insertId)
 
 				// 새 유저 등록
 				await db_insert('Accounts', ['Name', 'Playlists', 'CurrentPlaylist'], [socket.name, JSON.stringify([new_playlist_id]), new_playlist_id])
@@ -428,7 +428,7 @@ io.sockets.on('connection', function(socket)
 			// 업데이트
 			update_playlist(socket)
 
-			log('INFO', 'rename_playlist', format('{0} 이(가) 새 재생목록을 생성', socket.name))
+			log('INFO', 'new_playlist', format('{0} 이(가) 새 재생목록을 생성', socket.name))
 		}
 		catch (exception)
 		{
@@ -465,6 +465,27 @@ io.sockets.on('connection', function(socket)
 		catch (exception)
 		{
 			log_exception('rename_playlist', exception)
+		}
+	})
+
+	socket.on('delete_playlist', async function(playlist_id) {
+		try
+		{
+			await db_beginTransaction()
+
+			var my_playlists = await db_select('Playlists', 'Accounts', format('Name="{0}"', socket.name), 'LIMIT 1').then(ret => ret[0].Playlists).then(JSON.parse)
+			my_playlists.splice(my_playlists.indexOf(playlist_id), 1)
+
+			await db_update('Accounts', format('Playlists = "{0}"', JSON.stringify(my_playlists)), format('Name = "{0}"', socket.name))
+
+			await db_commit()
+
+			update_playlist(socket)
+		}
+		catch (exception)
+		{
+			log_exception('delete_playlist', exception)
+			await db_rollback()
 		}
 	})
 
@@ -652,7 +673,7 @@ io.sockets.on('connection', function(socket)
 
 /* 서버를 8080 포트로 listen */
 server.listen(g_port, function() {
-	console.log('======================== 서버 실행 중.. ============================')
+	console.log('\x1b[42m======================== 서버 실행 중.. ============================\x1b[0m')
 })
 
 function GetTime() 
@@ -663,8 +684,15 @@ function GetTime()
 function log(type, function_name, message, isChat = false)
 {
 	if(isChat)
-		return console.log(format('({0}) [{1}] {2} :', GetTime(), type, function_name), message)
-	return console.log(format('({0}) [{1}] \'{2}\' :', GetTime(), type, function_name), message)
+		return console.log(format('\x1b[47m\x1b[30m({0})\x1b[0m\x1b[40m {1} :', GetTime(), function_name), message, '\x1b[0m')
+
+	var color = 'x1b[37m'
+	if(type == 'INFO')
+		color = '\x1b[32m'
+	else if(type == 'ERROR' || type == 'ERROR_CATCH')
+		color = '\x1b[31m'
+
+	return console.log(format('\x1b[47m\x1b[30m({0})\x1b[0m\x1b[40m [{2}]{1}', GetTime(), color, function_name), message, '\x1b[0m')
 }
 
 function log_exception(function_name, exception, message = null)

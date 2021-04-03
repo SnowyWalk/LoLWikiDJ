@@ -438,6 +438,7 @@ body {
   font-size: 30px;
   line-height: 100px;
   padding-left: 30px;
+  border-left: 1px solid cadetblue;
 }
 
 #playlist_control_panel_playlist_info > div {
@@ -489,6 +490,8 @@ body {
   position: absolute;
   top: 100px;
   overflow-y: auto;
+  box-sizing: border-box;
+  border-left: 1px solid cadetblue;
 }
 
 #playlist_control_panel_videolist_header > div > img {
