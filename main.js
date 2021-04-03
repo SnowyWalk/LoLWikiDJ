@@ -99,6 +99,7 @@ app.get('/', function(request, response, next) {
 io.sockets.on('connection', function(socket) 
 {
 	/* 로그인 */
+	var ipReg = /((?:\d+\.){3}\d+)/
 	socket.on('login', async function(nick) {
 		// 소켓에 이름 저장해두기 
 		socket.name = nick
@@ -126,25 +127,69 @@ io.sockets.on('connection', function(socket)
 		{
 			await db_beginTransaction()
 
+			var current_date = GetDate()
+
+			 // 기존 유저가 아니라면 등록
 			var is_exist_user = await db_select('COUNT(*) as cnt', 'Accounts', format('Name = "{0}"', socket.name), 'LIMIT 1')
 									.then(ret => ret[0].cnt > 0)
-
-			if(!is_exist_user) // 기존 유저가 아니라면 등록
+			if(!is_exist_user)
 			{
 				// 일단 새 재생목록 생성
 				var new_playlist_id = await db_insert('Playlists', ['Name', 'VideoList'], [format('{0}의 재생목록', socket.name), '[]']).then(ret => ret.insertId)
 
 				// 새 유저 등록
 				await db_insert('Accounts', ['Name', 'Playlists', 'CurrentPlaylist'], [socket.name, JSON.stringify([new_playlist_id]), new_playlist_id])
-				log('INFO', 'login', socket.name + ' 신규유저 로그인 성공.')
 			}
-			else
+
+			// Secure 데이터 등록
+			var socket_ip = socket.handshake.address.match(ipReg)[1]
+			var secureData = await db_select('ConnectData', 'Secures', format('IP = "{0}"', socket_ip), 'LIMIT 1') // secure data 가져오기
+			var is_exist_secure = (secureData.length > 0)
+			var connectCount = 0
+			var is_exist_secure_data = false
+			if(!is_exist_secure) // 새로 등록
 			{
-				log('INFO', 'login', socket.name + ' 기존유저 로그인 성공.')
+				await db_insert('Secures', ['IP', 'ConnectData'], [socket_ip, JSON.stringify([{Name: socket.name, ConnectCount: 1, CreationDate: current_date, LastLoginDate: current_date}])])
+				connectCount = 1
+			}
+			else // 기존꺼에 추가
+			{
+				// 해당 Name이 존재하는지 체크
+				secureData = JSON.parse(secureData[0].ConnectData)
+				console.log(secureData)
+
+				var thisSecureData = null
+				for(var e of secureData)
+				{
+					if(e.Name == socket.name)
+					{
+						thisSecureData = e
+						break
+					}
+				}
+
+				is_exist_secure_data = (thisSecureData != null)
+				if(is_exist_secure_data) // 이미 있는 데이터면 커넥트카운트 올려주고 라스트로그인 갱신
+				{
+					thisSecureData.ConnectCount += 1
+					thisSecureData.LastLoginDate = current_date
+					connectCount = thisSecureData.ConnectCount
+				}
+				else // 없던 데이터라면 새로 세팅
+				{
+					secureData.push({Name: socket.name, ConnectCount: 1, CreationDate: current_date, LastLoginDate: current_date})
+					connectCount = 1
+				}
+				await db_update('Secures', format("ConnectData = '{0}'", JSON.stringify(secureData)), format('IP = "{0}"', socket_ip))
 			}
 
 			// 로그인 성공
 			await db_commit()
+
+			var text1 = (is_exist_user ? '기존' : '신규')
+			var text4 = (is_exist_user && !is_exist_secure_data ? '아이디 도용 가능성 감지' : '')
+			log('INFO', 'login', format('{0} {1}유저 {2}번째 로그인 : ({3}) {4}', socket.name, text1, connectCount, socket_ip, text4))
+
 			socket.emit('login', true)
 			update_current_video(socket) // 플레이 영상 데이터 보내기
 			update_current_queue(socket) // 플레이 대기열 알림
@@ -156,7 +201,6 @@ io.sockets.on('connection', function(socket)
 		}
 		catch (exception)
 		{
-			console.log(exception.stack)
 			await db_rollback()
 			log_exception('login', exception, socket.name + ' 로그인 실패. 에러 : ' + JSON.stringify(exception))
 			socket.name = ''
@@ -214,6 +258,8 @@ io.sockets.on('connection', function(socket)
 
 	/* TEST: QUEUE에 비디오 추가 */
 	socket.on('queue', async function(data) {
+		if(!socket.name)
+			return
 		/* data
 		dj : '천아연'
 		video_id : 'NvvYPLGN8Ag'
@@ -262,6 +308,8 @@ io.sockets.on('connection', function(socket)
 
 	/* TEST: 특정 비디오 재생 명령 */
 	socket.on('play', async function(data) {
+		if(!socket.name)
+			return
 		/* data
 		dj : '천아연'
 		video_id : 'NvvYPLGN8Ag'
@@ -315,6 +363,9 @@ io.sockets.on('connection', function(socket)
 
 	/* 되감기 */
 	socket.on('rewind', function(data) {
+		if(!socket.name)
+			return
+
 		g_played_time_ms += 1000 * data.sec
 		if(Date.now() < g_played_time_ms)
 			g_played_time_ms = Date.now()
@@ -331,6 +382,9 @@ io.sockets.on('connection', function(socket)
 	})
 
 	socket.on('forward', function(data) {
+		if(!socket.name)
+			return
+
 		g_played_time_ms -= 1000 * data.sec
 		if(Date.now() < g_played_time_ms)
 			g_played_time_ms = Date.now()
@@ -348,6 +402,9 @@ io.sockets.on('connection', function(socket)
 
 	/* 현재 영상 스킵 */
 	socket.on('skip', function() {
+		if(!socket.name)
+			return
+
 		log('INFO', 'socket.skip', 'skipped on demand.')
 		end_of_video()
 	})
@@ -364,6 +421,9 @@ io.sockets.on('connection', function(socket)
 
 	/* 플레이리스트 요청 */
 	socket.on('playlist', function() {
+		if(!socket.name)
+			return
+			
 		update_playlist(socket)
 	})
 
@@ -380,8 +440,6 @@ io.sockets.on('connection', function(socket)
 
 			// 해당 재생목록들의 내용을 가져옴 [ { Name:내 재생목록, VideoList:[2134,2345,12,1] } , ... ]
 			var playlist_info_list = await db_select('Id, Name, VideoList', 'Playlists', format('Id IN ({0})', playlist_id_list.join(', '))).then(JSON.stringify).then(JSON.parse)
-
-			socket.emit('data', playlist_info_list)
 
 			// VideoList의 원소들을 모은다 (Videos DB에 한번에 요청하기 위해)
 			video_index_list = []
@@ -413,6 +471,9 @@ io.sockets.on('connection', function(socket)
 
 	/* 새 재생목록 추가하기 */
 	socket.on('new_playlist', async function() {
+		if(!socket.name)
+			return
+
 		try
 		{
 			await db_beginTransaction()
@@ -440,6 +501,9 @@ io.sockets.on('connection', function(socket)
 	/* 재생목록 선택 */
 	// playlist_id는 반드시 존재하는 플레이리스트여야함 (없을 시 크리티컬)
 	socket.on('select_playlist', async function(playlist_id) {
+		if(!socket.name)
+			return
+
 		try
 		{
 			await db_update('Accounts', format('CurrentPlaylist = {0}', playlist_id), format('Name = "{0}"', socket.name))
@@ -454,6 +518,9 @@ io.sockets.on('connection', function(socket)
 
 	/* 재생목록 이름 변경 */
 	socket.on('rename_playlist', async function(data) {
+		if(!socket.name)
+			return
+
 		/* data : { name: 새이름, playlist_id: 변경할 재생목록 id } */
 		try
 		{
@@ -469,6 +536,9 @@ io.sockets.on('connection', function(socket)
 	})
 
 	socket.on('delete_playlist', async function(playlist_id) {
+		if(!socket.name)
+			return
+
 		try
 		{
 			await db_beginTransaction()
@@ -492,6 +562,9 @@ io.sockets.on('connection', function(socket)
 
 	/* 특정 재생목록의 특정 인덱스 영상 삭제 */
 	socket.on('delete_video', async function(data) {
+		if(!socket.name)
+			return
+
 		/*
 			{
 				playlist_id: 대상 재생목록 id, 
@@ -545,6 +618,9 @@ io.sockets.on('connection', function(socket)
 	/*  특정 재생목록에 video 추가  */
 	// 유효한 영상이어야한다. (삭제된 영상이 아니어야한다. Embedding 비허용 영상은 상관 없음.) 
 	socket.on('push_video', async function(data) {
+		if(!socket.name)
+			return
+
 		// 1. Videos DB에 이미 있는 곡인지 확인
 		//  있다면 -> Id 가져오기
 		//  없다면 -> 
@@ -607,6 +683,8 @@ io.sockets.on('connection', function(socket)
 
 	/* 좋아요/싫어요 투표 신호 */
 	socket.on('rating', function(isGood) {
+		if(!socket.name)
+			return
 
 		// 비디오 재생중 체크
 		if(!g_video_id)
@@ -732,8 +810,13 @@ server.listen(g_port, function() {
 
 function GetTime() 
 {
-	return new Date(Date.now() + 1000 * 60 * 60 * 9).toFormat('HH24:MI')
+	return new Date().addHours(9).toFormat('HH24:MI')
 }
+function GetDate() 
+{
+	return new Date().addHours(9).toFormat('YYYY-MM-DD HH24:MI:SS')
+}
+
 
 function log(type, function_name, message, isChat = false)
 {
@@ -950,8 +1033,8 @@ function db_insert(into, columns, values)
 	columns = '`' + columns + '`'
 
 	if(typeof(values) == 'object')
-		values = values.join('", "')
-	values = '"' + values + '"'
+		values = values.join("', '")
+	values = "'" + values + "'"
 
 	var query = format('INSERT INTO {0} ({1}) VALUES ({2})', into, columns, values)
 	return new Promise( function(resolve, reject) {
