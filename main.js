@@ -157,7 +157,6 @@ io.sockets.on('connection', function(socket)
 			{
 				// 해당 Name이 존재하는지 체크
 				secureData = JSON.parse(secureData[0].ConnectData)
-				console.log(secureData)
 
 				var thisSecureData = null
 				for(var e of secureData)
@@ -256,7 +255,6 @@ io.sockets.on('connection', function(socket)
 		log('INFO', '현 접속자', g_users)
 
 		// 현재 재생중인 dj라면 재생 종료
-		console.log(g_current_dj, socket.name)
 		if(g_current_dj == socket.name)
 			end_of_video()
 
@@ -924,13 +922,10 @@ async function end_of_video() {
 			g_djs.push(this_dj) // 맨 뒤에 다시 추가
 
 			var playlist_id = await db_select('CurrentPlaylist', 'Accounts', format('Name = "{0}"', this_dj), 'LIMIT 1').then(ret => ret[0].CurrentPlaylist)
-			console.log(playlist_id)
 			var video_list = await db_select('VideoList', 'Playlists', format('Id = {0}', playlist_id), 'LIMIT 1').then(ret => ret[0].VideoList).then(JSON.parse)
-			console.log(video_list)
 			var first_video_id = video_list.splice(0, 1)[0]
 			video_list.push(first_video_id)
 			var video_info = await db_select('Id, Name, VideoId, Length', 'Videos', format('Id = {0}', first_video_id), 'LIMIT 1').then(ret => ret[0])
-			console.log(video_info)
 			
 			// 재생목록의 영상 순서 순환
 			await db_update('Playlists', format('VideoList = "{0}"', JSON.stringify(video_list)), format('Id = {0}', playlist_id))
