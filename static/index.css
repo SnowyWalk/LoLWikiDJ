@@ -199,6 +199,30 @@ body {
   border-style: solid;
 }
 
+#etc_dj_button {
+  float: left;
+  text-align: center;
+  width: 100%;
+  top: 5px;
+  height: 40px;
+  line-height: 40px;
+  cursor: pointer;
+  font-size: 20px;
+}
+
+#etc_skip_button {
+  float: right;
+  text-align: center;
+  width: 30%;
+  top: 5px;
+  height: 40px;
+  line-height: 40px;
+  cursor: pointer;
+  font-size: 20px;
+  background-color: #0000001a;
+  display: none;
+}
+
 /* 좋아요 이미지 */
 #etc_good_button {
   position: fixed;

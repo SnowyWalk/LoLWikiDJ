@@ -51,10 +51,11 @@ app.use('/static', express.static('./static'))
 
 /* 공지말 */
 g_port = 8080
-g_notice = ''
+g_notice = '대기열 기능이 완료되었습니당\n이제 /q나 /p 말고 대기열로 재생할 수 있음'
 
 /* 유저 목록 */
 g_users = []
+g_sockets = []
 
 /* 현재 재생중인 비디오 정보 */
 g_current_dj = ''
@@ -190,6 +191,7 @@ io.sockets.on('connection', function(socket)
 			var text4 = (is_exist_user && !is_exist_secure_data ? '아이디 도용 가능성 감지' : '')
 			log('INFO', 'login', format('{0} {1}유저 {2}번째 로그인 : ({3}) {4}', socket.name, text1, connectCount, socket_ip, text4))
 
+			g_sockets.push(socket)
 			socket.emit('login', true)
 			update_current_video(socket) // 플레이 영상 데이터 보내기
 			update_current_queue(socket) // 플레이 대기열 알림
@@ -244,11 +246,17 @@ io.sockets.on('connection', function(socket)
 			return
 
 		log('INFO', 'disconnect', socket.name + '님이 나가셨습니다.')
-		g_users.splice(g_users.indexOf(socket.name), 1)
+		if(g_users.indexOf(socket.name) != -1)
+			g_users.splice(g_users.indexOf(socket.name), 1)
+		if(g_sockets.indexOf(g_sockets.filter(x => x.name == socket.name)[0]) != -1)
+			g_sockets.splice(g_sockets.indexOf(g_sockets.filter(x => x.name == socket.name)[0]), 1)
+		if(g_djs.indexOf(socket.name) != -1)
+			g_djs.splice(g_djs.indexOf(socket.name), 1)
 
 		log('INFO', '현 접속자', g_users)
 
 		// 현재 재생중인 dj라면 재생 종료
+		console.log(g_current_dj, socket.name)
 		if(g_current_dj == socket.name)
 			end_of_video()
 
@@ -427,48 +435,6 @@ io.sockets.on('connection', function(socket)
 		update_playlist(socket)
 	})
 
-	/* 해당 유저에게 플레이리스트 갱신 */
-	async function update_playlist(socket)
-	{
-		// 플레이리스트들의 제목과 곡정보들 리스트 보내주면 될 듯 [playlist_id1: {name:"내 재생목록", list:[{title:"언더테일 브금", duration:90}, {title:"천아연유튜브소개영상", duration:10}]}]
-		try
-		{
-			// 해당 계정의 재생목록ID 전체를 가져옴
-			var acccount_data = await db_select('Playlists, CurrentPlaylist', 'Accounts', format('Name = "{0}"', socket.name), 'LIMIT 1').then( (ret) => ret[0] )
-			var current_playlist = JSON.parse(acccount_data.CurrentPlaylist)
-			var playlist_id_list = JSON.parse(acccount_data.Playlists)
-
-			// 해당 재생목록들의 내용을 가져옴 [ { Name:내 재생목록, VideoList:[2134,2345,12,1] } , ... ]
-			var playlist_info_list = await db_select('Id, Name, VideoList', 'Playlists', format('Id IN ({0})', playlist_id_list.join(', '))).then(JSON.stringify).then(JSON.parse)
-
-			// VideoList의 원소들을 모은다 (Videos DB에 한번에 요청하기 위해)
-			video_index_list = []
-			for(var e of playlist_info_list)
-			{
-				e.VideoList = JSON.parse(e.VideoList)
-				video_index_list.push(...e.VideoList)
-			}
-			video_index_list = [...new Set(video_index_list)] // 중복 제거
-
-			var video_info_dic = {}
-			if(video_index_list.length > 0)
-			{
-				// Videos DB에 비디오 정보를 한번에 조회
-				var video_info_list = await db_select('Id, Name, VideoId, Length, Thumbnail', 'Videos', format('Id IN ({0})', video_index_list.join(', '))).then(JSON.stringify).then(JSON.parse)
-
-				// Video 정보를 Dic형태로 재구성
-				for(var e of video_info_list)
-					video_info_dic[e.Id] = { Name: e.Name, VideoId: e.VideoId, Length: e.Length, Thumbnail: e.Thumbnail }
-			}
-
-			socket.emit('update_playlist', [video_info_dic, playlist_info_list, current_playlist])
-		}
-		catch (exception)
-		{
-			log_exception('playlist', exception)
-		}
-	}
-
 	/* 새 재생목록 추가하기 */
 	socket.on('new_playlist', async function() {
 		if(!socket.name)
@@ -578,6 +544,7 @@ io.sockets.on('connection', function(socket)
 		//	하나만 있다 -> 검증없이 video_id 찾아서 제거
 		//	여러개 있다 -> 해당 index의 숫자가 video_id와 같은지 검증 후 제거 (검증 실패 시, alert 보내기)
 		// 3. 성공 했을 때만 재생목록 업뎃
+		// 4. 디제잉 중이었던 유저고, 해당 재생목록이 비게 되었으면 dj목록에서 제거한 후 알려준다.
 
 		try
 		{
@@ -607,6 +574,13 @@ io.sockets.on('connection', function(socket)
 			
 			log('INFO', 'delete_video', format('{0} 이(가) {1}번 재생목록에서 Id: {2} 영상을 삭제', socket.name, data.playlist_id, data.video_id))
 			update_playlist(socket)
+
+			// 디제잉 중이었던 유저고, 해당 재생목록이 비게 되었으면 dj목록에서 제거한 후 알려준다.
+			if(g_djs.indexOf(socket.name) != -1 && video_list.length == 0)
+			{
+				g_djs.splice(g_djs.indexOf(socket.name), 1)
+				socket.emit('dj_state', false)
+			}
 		}
 		catch (exception)
 		{
@@ -728,6 +702,31 @@ io.sockets.on('connection', function(socket)
 		}
 	})
 
+	/* DJ 시작 요청 */
+	socket.on('dj_enter', function() {
+		if(g_djs.indexOf(socket.name) == -1)
+			g_djs.push(socket.name)
+
+		log('INFO', 'dj_enter', g_djs)
+		socket.emit('dj_state', true)
+
+		if(!g_video_id)
+			end_of_video() // 루프 시작
+	})
+
+	/* DJ 나가기 요청 */
+	socket.on('dj_quit', function() {
+		if(g_djs.indexOf(socket.name) != -1)
+			g_djs.splice(g_djs.indexOf(socket.name), 1)
+
+		log('INFO', 'dj_quit', g_djs)
+
+		socket.emit('dj_state', false)
+
+		if(g_current_dj == socket.name)
+			end_of_video()
+	})
+
 	/* 맥심 */
 	var imgReg = /window\.open\('\.(\/file\/\S+?)\'/
 	socket.on('maxim', function(no) {
@@ -772,6 +771,17 @@ io.sockets.on('connection', function(socket)
 			log_exception('zzal', exception, format('https://danbooru.donmai.us/posts/random?tags={0}', tag))
 			io.sockets.emit('chat_update', { type: 'system_message', message: format('{0} 짤 불러오기 실패', tag) })
 		}
+	})
+
+	socket.on('test_begin', async function() {
+		io.sockets.emit('chat_update', {type: 'system_message', message: 'begin 진입한다'})
+		var ret = await db_query('BEGIN')
+		io.sockets.emit('chat_update', {type: 'system_message', message: 'begin 성공 ' + JSON.stringify(ret)})
+	})
+	socket.on('test_commit', async function() {
+		io.sockets.emit('chat_update', {type: 'system_message', message: 'commit 진입한다'})
+		var ret = await db_query('COMMIT')
+		io.sockets.emit('chat_update', {type: 'system_message', message: 'commit 성공 ' + JSON.stringify(ret)})
 	})
 
 	/* TEST: 인스턴트 쿼리 */
@@ -867,8 +877,7 @@ function parse_duration_to_second(pt_time)
 	return s
 }
 
-function end_of_video() {
-	// TODO: 끝낼게 아니라 다음 영상을 재생
+async function end_of_video() {
 	if(g_end_timer != null)
 		clearTimeout(g_end_timer)
 	g_end_timer = null
@@ -907,6 +916,51 @@ function end_of_video() {
 		// 모두에게 플레이 대기열 알림
 		update_current_queue(io.sockets)
 	}
+	else if(g_djs.length > 0)
+	{
+		try 
+		{
+			var this_dj = g_djs.splice(0, 1)[0] // 맨 앞 디제이 뽑음
+			g_djs.push(this_dj) // 맨 뒤에 다시 추가
+
+			var playlist_id = await db_select('CurrentPlaylist', 'Accounts', format('Name = "{0}"', this_dj), 'LIMIT 1').then(ret => ret[0].CurrentPlaylist)
+			console.log(playlist_id)
+			var video_list = await db_select('VideoList', 'Playlists', format('Id = {0}', playlist_id), 'LIMIT 1').then(ret => ret[0].VideoList).then(JSON.parse)
+			console.log(video_list)
+			var first_video_id = video_list.splice(0, 1)[0]
+			video_list.push(first_video_id)
+			var video_info = await db_select('Id, Name, VideoId, Length', 'Videos', format('Id = {0}', first_video_id), 'LIMIT 1').then(ret => ret[0])
+			console.log(video_info)
+			
+			// 재생목록의 영상 순서 순환
+			await db_update('Playlists', format('VideoList = "{0}"', JSON.stringify(video_list)), format('Id = {0}', playlist_id))
+
+			g_current_dj = this_dj
+			g_video_id = video_info.VideoId
+			g_video_duration = video_info.Length
+			g_video_title = video_info.Name
+			g_played_time_ms = Date.now()
+
+			// 영상 종료 타이머 설정
+			if(g_video_duration != 0)
+				set_timeout_end_of_video()
+
+			log('INFO', 'dj_play', format('{0} -> {1} ({2})', g_current_dj, g_video_title, g_video_duration))
+
+			// 모두에게 영상 갱신
+			update_current_video(io.sockets)
+
+			// 모두에게 플레이 대기열 알림
+			update_current_queue(io.sockets)
+
+			// 이번 DJ에게 재생목록 데이터 변경을 알림
+			update_playlist(g_sockets.filter(x => x.name == this_dj)[0])
+		}
+		catch (exception)
+		{
+			log_exception(exception)
+		}
+	}
 	else
 	{
 		g_current_dj = ''
@@ -914,8 +968,11 @@ function end_of_video() {
 		g_video_duration = 0
 		g_video_title = ''
 		io.sockets.emit('update_current_video', null)
-
 	}
+
+	// 모든 소켓들에게 dj 상태 갱신
+	for(var e of g_sockets)
+		e.emit('dj_state', g_djs.indexOf(e.name) != -1)
 
 	// 모두에게 좋/싫 알림
 	update_current_rating(io.sockets)
@@ -955,6 +1012,48 @@ function update_current_queue(dest_socket)
 function update_current_rating(dest_socket)
 {
 	dest_socket.emit('rating', {good: g_good_list, bad: g_bad_list})
+}
+
+/* 해당 유저에게 플레이리스트 갱신 */
+async function update_playlist(socket)
+{
+	// 플레이리스트들의 제목과 곡정보들 리스트 보내주면 될 듯 [playlist_id1: {name:"내 재생목록", list:[{title:"언더테일 브금", duration:90}, {title:"천아연유튜브소개영상", duration:10}]}]
+	try
+	{
+		// 해당 계정의 재생목록ID 전체를 가져옴
+		var acccount_data = await db_select('Playlists, CurrentPlaylist', 'Accounts', format('Name = "{0}"', socket.name), 'LIMIT 1').then( (ret) => ret[0] )
+		var current_playlist = JSON.parse(acccount_data.CurrentPlaylist)
+		var playlist_id_list = JSON.parse(acccount_data.Playlists)
+
+		// 해당 재생목록들의 내용을 가져옴 [ { Name:내 재생목록, VideoList:[2134,2345,12,1] } , ... ]
+		var playlist_info_list = await db_select('Id, Name, VideoList', 'Playlists', format('Id IN ({0})', playlist_id_list.join(', '))).then(JSON.stringify).then(JSON.parse)
+
+		// VideoList의 원소들을 모은다 (Videos DB에 한번에 요청하기 위해)
+		video_index_list = []
+		for(var e of playlist_info_list)
+		{
+			e.VideoList = JSON.parse(e.VideoList)
+			video_index_list.push(...e.VideoList)
+		}
+		video_index_list = [...new Set(video_index_list)] // 중복 제거
+
+		var video_info_dic = {}
+		if(video_index_list.length > 0)
+		{
+			// Videos DB에 비디오 정보를 한번에 조회
+			var video_info_list = await db_select('Id, Name, VideoId, Length, Thumbnail', 'Videos', format('Id IN ({0})', video_index_list.join(', '))).then(JSON.stringify).then(JSON.parse)
+
+			// Video 정보를 Dic형태로 재구성
+			for(var e of video_info_list)
+				video_info_dic[e.Id] = { Name: e.Name, VideoId: e.VideoId, Length: e.Length, Thumbnail: e.Thumbnail }
+		}
+
+		socket.emit('update_playlist', [video_info_dic, playlist_info_list, current_playlist])
+	}
+	catch (exception)
+	{
+		log_exception('playlist', exception)
+	}
 }
 
 /* 영상 종료 타이머 설정  */

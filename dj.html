@@ -50,8 +50,8 @@
   <!-- 좌하단 재생목록 정보 -->
   <div id="current_playlist_info_box" onclick="toggle_playlist_control_panel()">
     <div class="nanum bold" id="current_playlist_name_const">선택된 재생목록</div>
-    <div id="current_playlist_name">나의 재생목록 1 (4)</div>
-    <div id="current_playlist_video_name">벌칙으로 공포게임을 했습니다.. 이은도의저주.... [팡이요, 종합게임]</div>
+    <div id="current_playlist_name">재생목록 이름</div>
+    <div id="current_playlist_video_name">영상 제목</div>
   </div>
 
   <!-- 하단 영상 정보 -->
@@ -69,8 +69,8 @@
 
   <!-- 우하단 기타  -->
   <div id="etc_box">
-    <div id="etc_skip_button"></div>
-    <div id="etc_dj_button"></div>
+    <div id="etc_dj_button" class="hover nanum bold" onclick="onclick_dj_button()">[대기열 입장]</div>
+    <div id="etc_skip_button" class="hover nanum bold" onclick="onclick_skip_button()">[스킵]</div>
     <div id="etc_good_button" class="hover" onclick="onclick_good_button()"></div>
     <div id="etc_good_count" class="nanum bold">0</div>
     <div id="etc_bad_button" class="hover" onclick="onclick_bad_button()"></div>
@@ -86,7 +86,7 @@
 
     <!-- 영상목록 상단부 / 재생목록 이름변경, 삭제, 활성화 등 -->
     <div id="playlist_control_panel_playlist_info">
-      <div id="playlist_control_panel_playlist_info_name" class="nanum bold">아영찌의 재생목록 뿌잉</div>
+      <div id="playlist_control_panel_playlist_info_name" class="nanum bold">-</div>
       <div id="playlist_control_panel_playlist_info_select" class="nanum bold hover">[선택하기]</div>
       <div id="playlist_control_panel_playlist_info_rename_button" onclick="onclick_playlist_rename_button()" class="nanum bold hover">[이름변경]</div>
       <div id="playlist_control_panel_playlist_info_delete_button" onclick="onclick_playlist_delete_button()" class="nanum bold hover">[재생목록 삭제]</div>

@@ -10,6 +10,7 @@ var g_current_video_id = ''
 var g_current_dj = ''
 var g_current_title = ''
 var g_current_duration = 0
+var g_is_djing = false
 
 var g_good_list = [] // 좋아요 누른 사람 닉네임 목록
 var g_bad_list = [] // 싫어요 목록
@@ -192,6 +193,7 @@ socket.on('update_current_video', function(data) {
 	g_current_dj = data.dj
 	update_current_dj()
 	update_current_video_name()
+	update_dj_state()
 	console.log(Date.now() - data.seek * 1000)
 	g_cued_time_ms = Date.now() - data.seek_s * 1000
 	var seek_time_s = (Date.now() - g_cued_time_ms) / 1000
@@ -220,6 +222,12 @@ socket.on('update_playlist', function(data) {
 	update_current_playlist()
 	if(g_show_playlist_control_panel)
 		update_playlist(true) 
+})
+
+socket.on('dj_state', function(isDJing) {
+	g_is_djing = isDJing
+
+	update_dj_state()
 })
 
 socket.on('data', function(data) {
@@ -476,6 +484,16 @@ function send() {
 	{
 		socket.emit('kimchi')
 		return
+	}
+
+	if(message == '/begin')
+	{
+		socket.emit('test_begin')
+	}
+
+	if(message == '/commit')
+	{
+		socket.emit('test_commit')
 	}
 
 	if(queryReg.test(message))
@@ -942,6 +960,49 @@ function toggle_playlist_control_panel()
 	g_show_playlist_control_panel = !g_show_playlist_control_panel
 	show_playlist_control_panel(g_show_playlist_control_panel)
 }
+
+function onclick_dj_button()
+{
+	if(!g_is_djing) // 이제 디제잉 시작하려는 경우, 등록된 영상이 0개이면 못하게 막아야 함.
+	{
+		if(g_playlist_info_list.filter(x => x.Id == g_current_playlist_id)[0].VideoList.length == 0)
+		{
+			alert('재생목록에 영상을 등록해주세요.')
+			return
+		}
+	}
+
+	if(g_is_djing)
+		socket.emit('dj_quit')
+	else
+		socket.emit('dj_enter')
+}
+
+/* DJ 입장했는지 상태 업데이트 */
+function update_dj_state()
+{
+	if(g_current_dj == g_nick)
+	{
+		etc_skip_button.style.display = 'block'
+		etc_dj_button.style.width = '70%'
+	}
+	else
+	{
+		etc_skip_button.style.display = 'none'
+		etc_dj_button.style.width = '100%'
+	}
+
+	if(g_is_djing)
+		etc_dj_button.innerText = '[대기열 나가기]'
+	else
+		etc_dj_button.innerText = '[대기열 입장]'
+}
+function onclick_skip_button()
+{
+	if(g_current_dj == g_nick)
+		socket.emit('skip')
+}
+
 function onclick_good_button()
 {
 	socket.emit('rating', true)
