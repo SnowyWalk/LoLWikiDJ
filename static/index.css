@@ -484,6 +484,13 @@ body {
   background-color: rgb(160, 224, 57);
 }
 
+#playlist_control_panel_playlist_info_shuffle {
+  float: right;
+  padding-left: 20px;
+  padding-right: 20px;
+  cursor: pointer;
+}
+
 /* #playlist_control_panel_playlist_info_select:hover {
   background-color: rgb(105, 176, 220);
 } */
@@ -562,6 +569,21 @@ body {
   background-repeat: no-repeat;
   background-position: center;
   cursor: pointer;
+}
+
+.sort_button {
+  background-image: url('arrow.png');
+  width: 100px;
+  height: 100px;
+  padding: 5px;
+  background-size: 50%;
+  background-repeat: no-repeat;
+  background-position: center;
+  cursor: pointer;
+}
+
+.sort_button.down {
+  transform: scaleY(-1);
 }
 
 /* .even > .delete_button:hover {

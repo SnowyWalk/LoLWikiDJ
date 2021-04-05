@@ -194,7 +194,6 @@ socket.on('update_current_video', function(data) {
 	update_current_dj()
 	update_current_video_name()
 	update_dj_state()
-	console.log(Date.now() - data.seek * 1000)
 	g_cued_time_ms = Date.now() - data.seek_s * 1000
 	var seek_time_s = (Date.now() - g_cued_time_ms) / 1000
 	player.cueVideoById(data.video_id, seek_time_s, 'low')
@@ -534,7 +533,6 @@ function chat_onpaste() {
 	var reader = new FileReader()
 	reader.onload = function(ev) { 
 		var ret = ev.target.result
-		console.log(format('/img {0}', ret))
 		socket.emit('chat_message', { type: 'message', message: format('/img {0}', ret) })
 		scrollDown(true)
 	}
@@ -708,7 +706,7 @@ function control_panel_resize()
 
 	// 영상 목록의 텍스트 길이 조절
 	for(var e of document.getElementsByClassName('videolist_button'))
-		e.getElementsByClassName('text')[0].style.width = (window_width - t_playlist_control_panel_playlist_header_width - mainchat.clientWidth - 204 - 120 - 10 - 10 - 1)
+		e.getElementsByClassName('text')[0].style.width = (window_width - t_playlist_control_panel_playlist_header_width - mainchat.clientWidth - 204 - 120 - 10 - 10 - 1 - 110 * 2)
 }
 
 /* 플레이리스트 컨트롤패널 열기/닫기 */
@@ -877,6 +875,28 @@ function select_playlist_button(playlist_id)
 		del.onclick = onclick_video_delete_button
 		div.appendChild(del)
 
+		// 순서 정렬 버튼 추가
+		var sort_down = document.createElement('div')
+		sort_down.classList.add('sort_button')
+		sort_down.classList.add('down')
+		sort_down.classList.add('hover')
+		sort_down.style.float = 'right'
+		if(i == thisPlaylist.VideoList.length - 1)
+			sort_down.style.filter = 'brightness(3)'
+		sort_down.onclick = onclick_video_sort_down_button
+		div.appendChild(sort_down)
+
+		var sort_up = document.createElement('div')
+		sort_up.classList.add('sort_button')
+		sort_up.classList.add('up')
+		sort_up.classList.add('hover')
+		sort_up.style.float = 'right'
+		if(i == 0)
+			sort_up.style.filter = 'brightness(3)'
+		sort_up.onclick = onclick_video_sort_up_button
+		div.appendChild(sort_up)
+		
+
 		div.classList.add('videolist_button')
 		div.classList.add(i % 2 == 0 ? 'even' : 'odd')
 		div.setAttribute('ItemIndex', i)
@@ -919,6 +939,41 @@ function onclick_video_delete_button()
 	socket.emit('delete_video', {playlist_id: thisPlaylist.Id, index: index, video_id: video_index})
 }
 
+function onclick_video_sort_up_button()
+{
+	request_change_video_sort(event.target, false)
+}
+function onclick_video_sort_down_button()
+{
+	request_change_video_sort(event.target, true)
+}
+function request_change_video_sort(element, isDown)
+{
+	var index = element.parentElement.getAttribute('ItemIndex')
+	if(index == null)
+		index = element.parentElement.parentElement.getAttribute('ItemIndex')
+	
+	if(index == null)
+	{
+		console.log('좋버그 발생 request_change_video_sort')
+		return
+	}
+	index = eval(index)
+
+	var thisPlaylist = g_playlist_info_list.filter(x => x.Id == g_playlist_control_panel_current_playlist_id)[0]
+	if(!thisPlaylist)
+	{
+		console.log('error on request_change_video_sort')
+		return
+	}
+
+	// if(!isDown && index == 0 || isDown && index == thisPlaylist.VideoList.length - 1) // 범위를 넘어가는 정렬
+	// 	return
+
+	var video_id = thisPlaylist.VideoList[index]
+	socket.emit('change_video_order', {playlist_id: thisPlaylist.Id, video_index: index, video_id: video_id, isDown: isDown })
+}
+
 function onclick_playlist_select_button()
 {
 	socket.emit('select_playlist', g_playlist_control_panel_current_playlist_id)
@@ -931,6 +986,12 @@ function onclick_new_video_button()
 		return
 
 	socket.emit('push_video', {video_id: video_id, playlist_id: g_playlist_control_panel_current_playlist_id})
+}
+
+function onclick_playlist_shuffle_button()
+{
+	var thisPlaylist = g_playlist_info_list.filter(x => x.Id == g_playlist_control_panel_current_playlist_id)[0]
+	socket.emit('shuffle', thisPlaylist.Id)
 }
 
 function onclick_playlist_rename_button()
