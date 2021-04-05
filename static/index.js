@@ -526,11 +526,35 @@ function chat_keydown() {
 		send()
 }
 
+function chat_onpaste() {
+	pasteObj = (event.clipboardData || window.clipboardData); 
+	var blob = pasteObj.files[0]
+	if(!blob)
+		return
+	var reader = new FileReader()
+	reader.onload = function(ev) { 
+		var ret = ev.target.result
+		console.log(format('/img {0}', ret))
+		socket.emit('chat_message', { type: 'message', message: format('/img {0}', ret) })
+		scrollDown(true)
+	}
+	reader.readAsDataURL(blob)
+}
+
 /* 로그인창 엔터 단축키 */
 function login_keydown()
 {
 	if (window.event.keyCode == 13)
 		login()
+}
+
+function window_keydown()
+{
+	if(!g_isLogin)
+		return
+
+	if (window.event.keyCode == 13)
+		chat_input.focus()
 }
 
 window.onload = function() {
@@ -551,6 +575,8 @@ window.onload = function() {
 	loop_func(update_video_time, 100)
 }
 window.onresize = resize
+window.onkeydown = window_keydown
+
 
 
 function initial_resize()

@@ -1,7 +1,6 @@
 /* 설치한 express 모듈 불러오기 */
 const express = require('express')
-/* 설치한 socket.io 모듈 불러오기 */
-const socket = require('socket.io')
+
 /* Node.js 기본 내장 모듈 불러오기 */
 const http = require('http')
 /* Node.js 기본 내장 모듈 불러오기 */
@@ -13,8 +12,10 @@ var cors = require('cors')
 app.use(cors())
 /* express http 서버 생성 */
 const server = http.createServer(app)
+/* 설치한 socket.io 모듈 불러오기 */
+const socket = require('socket.io')
 /* 생성된 서버를 socket.io에 바인딩 */
-const io = socket(server)
+const io = socket(server, {maxHttpBufferSize: 1e8})
 /* os */
 const os = require('os')
 /* API 요청 모듈 불러오기 */
@@ -233,7 +234,10 @@ io.sockets.on('connection', function(socket)
 		data.name = socket.name
 		data.time = GetTime()
 
-		log('CHAT', data.name, data.message, true)
+		log_message = data.message
+		if(log_message.length > 100)
+			log_message = format('{0} ... ({1} bytes)', log_message.substr(0, 100), log_message.length)
+		log('CHAT', data.name, log_message, true)
 
 		/* 보낸 사람을 제외한 나머지 유저에게 메시지 전송 */
 		io.sockets.emit('chat_update', data);
@@ -703,7 +707,7 @@ io.sockets.on('connection', function(socket)
 	/* DJ 시작 요청 */
 	socket.on('dj_enter', function() {
 		if(g_djs.indexOf(socket.name) == -1)
-			g_djs.push(socket.name)
+			g_djs.splice(-1, 0, socket.name)
 
 		log('INFO', 'dj_enter', g_djs)
 		socket.emit('dj_state', true)

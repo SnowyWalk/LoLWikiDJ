@@ -8,13 +8,14 @@ const http = require('http')
 const fs = require('fs')
 /* express 객체 생성 */
 const app = express()
+app.set('maxHttpBufferSize', 1e8)
 /* CORS 설정 */
 var cors = require('cors')
 app.use(cors())
 /* express http 서버 생성 */
 const server = http.createServer(app)
 /* 생성된 서버를 socket.io에 바인딩 */
-const io = socket(server)
+const io = socket(server, {maxHttpBufferSize: 1e8})
 /* os */
 const os = require('os')
 /* API 요청 모듈 불러오기 */
@@ -233,7 +234,10 @@ io.sockets.on('connection', function(socket)
 		data.name = socket.name
 		data.time = GetTime()
 
-		log('CHAT', data.name, data.message, true)
+		log_message = data.message
+		if(log_message.length > 100)
+			log_message = format('{0} ... ({1} bytes)', log_message.substr(0, 100), log_message.length)
+		log('CHAT', data.name, log_message, true)
 
 		/* 보낸 사람을 제외한 나머지 유저에게 메시지 전송 */
 		io.sockets.emit('chat_update', data);
@@ -702,8 +706,11 @@ io.sockets.on('connection', function(socket)
 
 	/* DJ 시작 요청 */
 	socket.on('dj_enter', function() {
+		if(!socket.name)
+			return
+
 		if(g_djs.indexOf(socket.name) == -1)
-			g_djs.push(socket.name)
+			g_djs.splice(-1, 0, socket.name)
 
 		log('INFO', 'dj_enter', g_djs)
 		socket.emit('dj_state', true)
@@ -714,6 +721,9 @@ io.sockets.on('connection', function(socket)
 
 	/* DJ 나가기 요청 */
 	socket.on('dj_quit', function() {
+		if(!socket.name)
+			return
+
 		if(g_djs.indexOf(socket.name) != -1)
 			g_djs.splice(g_djs.indexOf(socket.name), 1)
 
@@ -949,6 +959,7 @@ async function end_of_video() {
 			update_current_queue(io.sockets)
 
 			// 이번 DJ에게 재생목록 데이터 변경을 알림
+			log('INFO', 'end_of_video - g_sockets', g_sockets.map(x => x.name))
 			update_playlist(g_sockets.filter(x => x.name == this_dj)[0])
 		}
 		catch (exception)

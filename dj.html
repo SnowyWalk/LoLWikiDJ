@@ -42,7 +42,7 @@
     <div id="chat">
     </div>
     <div>
-      <input type="text" id="chat_input" onkeydown="chat_keydown()" placeholder="메시지를 입력해주세요..">
+      <input type="text" id="chat_input" onpaste="chat_onpaste()" onkeydown="chat_keydown()" placeholder="메시지를 입력해주세요..">
       <button id="chat_send" onclick="send()">전송</button>
     </div>
   </div>
