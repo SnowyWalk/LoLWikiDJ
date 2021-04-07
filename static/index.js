@@ -132,7 +132,6 @@ socket.on('login', function(isSuccess) {
 	add_system_message('명령어 목록은 /? 을 입력해 볼 수 있습니다.')
 
 	socket.emit('chat_newUser')
-	add_message({type:'disconnect', message:'서버 수정 중이라서 서버 재부팅 가끔 일어날 수 있음.'})
 
 	chat_input.focus()
 })

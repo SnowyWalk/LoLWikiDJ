@@ -52,7 +52,7 @@ app.use('/static', express.static('./static'))
 
 /* 공지말 */
 g_port = 8080
-g_notice = '대기열 기능이 완료되었습니당\n이제 /q나 /p 말고 대기열로 재생할 수 있음'
+g_notice = '재생목록 셔플 기능 추가됨'
 
 /* 유저 목록 */
 g_users = []
