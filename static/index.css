@@ -530,7 +530,7 @@ body {
 }
 
 .videolist_button {
-  height: 110px;
+  height: 80px;
   clear: both;
 }
 
@@ -544,8 +544,8 @@ body {
 
 .videolist_button > img {
   float: left;
-  height: 109px;
-  width: 194px;
+  height: 79px;
+  width: 140.438px;
   margin: 5px;
   margin-top: 0px;
   margin-bottom: 1px;
@@ -553,7 +553,7 @@ body {
 
 .videolist_button > .text {
   float: left;
-  line-height: 100px;
+  line-height: 70px;
   margin: 5px;
   white-space: nowrap;
   overflow: hidden;
@@ -562,8 +562,8 @@ body {
 
 .delete_button {
   background-image: url('delete.png');
-  width: 100px;
-  height: 100px;
+  width: 70px;
+  height: 70px;
   padding: 5px;
   background-size: 50%;
   background-repeat: no-repeat;
@@ -573,8 +573,8 @@ body {
 
 .sort_button {
   background-image: url('arrow.png');
-  width: 100px;
-  height: 100px;
+  width: 70px;
+  height: 70px;
   padding: 5px;
   background-size: 50%;
   background-repeat: no-repeat;
