@@ -173,14 +173,12 @@ function send() {
 	{
 		var sec = rewindReg.exec(message)[2]
 		socket.emit('rewind', {nick: g_nick, sec: sec, message: message})
-		return
 	}
 
 	if(forwardReg.test(message))
 	{
 		var sec = forwardReg.exec(message)[2]
 		socket.emit('forward', {nick: g_nick, sec: sec, message: message})
-		return
 	}
 
 	if(message.toLowerCase() == '/playing' || message == '/ㅔㅣ묘ㅑㅜㅎ')
@@ -192,12 +190,6 @@ function send() {
 	if(message.toLowerCase() == '/playlist')
 	{
 		socket.emit('playlist')
-	}
-
-	if(message.toLowerCase() == '/newplaylist')
-	{
-		socket.emit('new_playlist')
-		return
 	}
 
 	if(selectPlaylistReg.test(message))
@@ -244,12 +236,6 @@ function send() {
 		socket.emit('maxim')
 	}
 
-	if(message == '/김치')
-	{
-		socket.emit('kimchi')
-		return
-	}
-
 	if(message == '/begin')
 	{
 		socket.emit('test_begin')
@@ -266,7 +252,7 @@ function send() {
 	}
 
 	// 서버로 message 이벤트 전달 + 데이터와 함께
-	socket.emit('chat_message', { type: 'message', message: message })
+	socket.emit('chat_message', { type: 'message', message: message, icon_id: g_icon_id })
 	scrollDown(true)
 }
 

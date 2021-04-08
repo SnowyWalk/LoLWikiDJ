@@ -446,7 +446,7 @@ io.sockets.on('connection', function(socket)
 			g_played_time_ms = Date.now()
 
 		// 챗 알림
-		io.sockets.emit('chat_update', { type: 'message', message: data.message, name: socket.name, time: GetTime()});
+		// io.sockets.emit('chat_update', { type: 'message', message: data.message, name: socket.name, time: GetTime()});
 		io.sockets.emit('chat_update', { type: 'system_message', message: '영상을 ' + data.sec + '초 되감았습니다.', name: socket.name, time: GetTime()});
 
 		// 영상 종료 타이머 설정
@@ -465,7 +465,7 @@ io.sockets.on('connection', function(socket)
 			g_played_time_ms = Date.now()
 
 		// 챗 알림
-		io.sockets.emit('chat_update', { type: 'message', message: data.message, name: socket.name, time: GetTime()});
+		// io.sockets.emit('chat_update', { type: 'message', message: data.message, name: socket.name, time: GetTime()});
 		io.sockets.emit('chat_update', { type: 'system_message', message: '영상을 ' + data.sec + '초 넘겼습니다.', name: socket.name, time: GetTime()});
 
 		// 영상 종료 타이머 설정
@@ -949,14 +949,6 @@ io.sockets.on('connection', function(socket)
 			log_exception('request_video_info', exception)
 		}
 	})
-
-	/* 히든 키워드 : 김치 */
-	socket.on('kimchi', function() {
-		io.sockets.emit('chat_update', {name: 'MC무현', type:'connect', message: 'MC무현님이 접속하였습니다.', time: GetTime()});
-		io.sockets.emit('chat_update', {name: 'MC무현', type:'message', message: '판깨잔 판깨잔', time: GetTime()});
-		io.sockets.emit('chat_update', {name: 'MC무현', type:'disconnect', message: 'MC무현님이 나가셨습니다.', time: GetTime()});
-	})
-
 }) 
 
 /* 서버를 8080 포트로 listen */
