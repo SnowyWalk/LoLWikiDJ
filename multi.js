@@ -76,27 +76,62 @@ g_queue = []
 g_good_list = []
 g_bad_list = []
 
+/* DEBUG 용 */
+g_last_query = ''
+
 // app.get('/static/fonts/*', function(request, response, next) {
 // 	response.header( "Access-Control-Allow-Origin", "*")
 // })
 
 /* Get 방식으로 / 경로에 접속하면 실행 됨 */
-app.get('/', function(request, response, next) {
-	fs.readFile('./dj.html', function(err, data) {
-		if(err) {
-			response.send('서버가 고장남!!! Kakao ID: AnsanSuperstar 로 문의하세요')
-		} else {
-			if(!request.headers.host)
-				return
-			response.writeHead(200, {'Content-Type':'text/html'})
-			var text = data.toString()
-						.replace(/\$_localhost/g, 'http://' + request.headers.host.substr(0, request.headers.host.length-5))
-						.replace(/\$_version/g, new Date().getTime())
-			response.write(text)
-			response.end()
+app.get('/', async function(request, response, next) {
+	if(!request.headers.host) // 봇 쳐내
+		return
+
+	try
+	{
+		var data = await read_file_async('dj.html')
+		var text = data.toString()
+					.replace(/\$_localhost/g, 'http://' + request.headers.host.substr(0, request.headers.host.length-5))
+
+		for(var e of text.match(/\/[^\/]*?\$_version/g))
+		{
+			var matchs = e.match(/\/(.*?)(\?.*)\$_version/)
+			var file_name = matchs[1]
+			var other_str = matchs[2]
+			var stat = await stat_file_async(format('./static/{0}', file_name))
+			stat = stat.toJSON().replace(/\D/g, '')
+			text = text.replace(e, format('/{0}{1}{2}', file_name, other_str, stat))
 		}
-	})
+
+		response.writeHead(200, {'Content-Type':'text/html'})
+		response.write(text)
+		response.end()
+	}
+	catch (exception)
+	{
+		log_exception('app.get', exception)
+		response.send('서버가 고장남!!! Kakao ID: AnsanSuperstar 로 문의하세요' + '<p><p>에러 내용 : <p>' + format('<p>Name : {0}<p>ERROR : {1}<p>Message : {2}<p>Stack : {3}', exception.name, exception.err, exception.message, exception.stack))
+	}
 })
+
+function stat_file_async(file_name)
+{
+	return new Promise(function (resolve, reject) {
+		fs.stat(file_name, function(err, data) {
+			err ? reject(err) : resolve(data.mtime)
+		})
+	})
+}
+
+function read_file_async(file_name)
+{
+	return new Promise(function (resolve, reject) {
+		fs.readFile(file_name, function(err, data) {
+			err ? reject(err) : resolve(data)
+		})
+	})
+}
 
 io.sockets.on('connection', function(socket) 
 {
@@ -313,7 +348,7 @@ io.sockets.on('connection', function(socket)
 
 	/* 현재 플레이 대기열 목록 알려주기 */
 	socket.on('queue_list', function() {
-		update_current_queue(socket)
+		update_current_queue(socket, true)
 	})
 
 	/* TEST: 특정 비디오 재생 명령 */
@@ -591,6 +626,79 @@ io.sockets.on('connection', function(socket)
 		}
 	})
 
+	/* 재생 목록 셔플 */
+	socket.on('shuffle', async function(playlist_id) {
+		try
+		{
+			var video_list = await db_select('VideoList', 'Playlists', format('Id = {0}', playlist_id), 'LIMIT 1') .then(ret => ret[0].VideoList).then(JSON.parse)
+			shuffle(video_list)
+			await db_update('Playlists', format('VideoList = "{0}"', JSON.stringify(video_list)), format('Id = {0}', playlist_id))
+
+			update_playlist(socket)
+		}
+		catch(exception)
+		{
+			log_exception('shuffle', exception)
+		}
+	})
+
+	/* 비디오 순서 변경 (위아래) */
+	socket.on('change_video_order', async function(data) {
+		/* 
+		{
+			playlist_id: 플레이리스트 아이디, 
+			video_index: 배열에서의 해당 비디오의 인덱스
+			video_id: 검증용 Videos 인덱스
+			isDown: 위로 올릴건지, 아래로 내릴건지
+		} 
+		*/
+
+		// 1. 해당 플레이리스트의 VideoList를 가져온다
+		// 2. 검증 필요 여부 확인 (해당 VideoList안에 검증용 video_id의 갯수 체크)
+		//	- 0개 : 에러
+		//	- 1개 : 검증 필요 X
+		//	- 2개 이상 : 검증 필요 O
+		// 3. 해당 video를 배열에서 꺼내서 위나 아래에 넣는다. (0이거나 끝자리일 때 오버되지 않도록 유의해야한다.)
+		// 4. 다시 DB에 반영~
+		// 5. update_playlist
+
+		try
+		{
+			var video_list = await db_select('VideoList', 'Playlists', format('Id = {0}', data.playlist_id)).then(ret => ret[0].VideoList).then(JSON.parse)
+			if(video_list.length <= 1)
+				return
+
+			var match_count = video_list.map(x => x == data.video_id).length
+			if(match_count == 0)
+				throw {message: '대상 비디오가 없다.'}
+
+			if(video_list[data.video_index] != data.video_id)
+				throw {message: '검증 실패. data:' + JSON.stringify(data) + ' videoList:' + JSON.stringify(video_list)}
+	
+			// if(!data.isDown && data.video_index == 0 || data.isDown && data.video_index == video_list.length - 1) // 범위를 넘어가는 정렬
+			// 	return
+
+			var dest_index = data.isDown ? data.video_index + 1 : data.video_index - 1
+			if(dest_index == -1)
+				dest_index = video_list.length - 1
+			if(dest_index == video_list.length)
+				dest_index = 0
+
+			var poped_video_id = video_list.splice(data.video_index, 1)[0]
+			video_list.splice(dest_index, 0, poped_video_id)
+
+			await db_update('Playlists', format('VideoList = "{0}"', JSON.stringify(video_list)), format('Id = {0}', data.playlist_id))
+
+			update_playlist(socket)
+		}
+		catch (exception)
+		{
+			log_exception('change_video_order', exception)
+			update_playlist(socket)
+		}
+
+	})
+
 	/*  특정 재생목록에 video 추가  */
 	// 유효한 영상이어야한다. (삭제된 영상이 아니어야한다. Embedding 비허용 영상은 상관 없음.) 
 	socket.on('push_video', async function(data) {
@@ -706,6 +814,9 @@ io.sockets.on('connection', function(socket)
 
 	/* DJ 시작 요청 */
 	socket.on('dj_enter', function() {
+		if(!socket.name)
+			return
+
 		if(g_djs.indexOf(socket.name) == -1)
 			g_djs.splice(-1, 0, socket.name)
 
@@ -718,6 +829,9 @@ io.sockets.on('connection', function(socket)
 
 	/* DJ 나가기 요청 */
 	socket.on('dj_quit', function() {
+		if(!socket.name)
+			return
+
 		if(g_djs.indexOf(socket.name) != -1)
 			g_djs.splice(g_djs.indexOf(socket.name), 1)
 
@@ -835,7 +949,7 @@ function log(type, function_name, message, isChat = false)
 	if(isChat)
 		return console.log(format('\x1b[47m\x1b[30m({0})\x1b[0m\x1b[40m {1} :', GetTime(), function_name), message, '\x1b[0m')
 
-	var color = 'x1b[37m'
+	var color = '\x1b[37m'
 	if(type == 'INFO')
 		color = '\x1b[32m'
 	else if(type == 'ERROR' || type == 'ERROR_CATCH')
@@ -848,7 +962,7 @@ function log_exception(function_name, exception, message = null)
 {
 	if(typeof(message) == 'object')
 		message = JSON.stringify(message)
-	log('ERROR_CATCH', function_name, format('\nName : {0}\nERROR : {1}\nMessage : {2}\nStack : {3}\nComment : {4}', exception.name, exception.err, exception.message, exception.stack, message))
+	log('ERROR_CATCH', function_name, format('\nName : {0}\nERROR : {1}\nMessage : {2}\nStack : {3}\nComment : {4}\nLast Query : {5}', exception.name, exception.err, exception.message, exception.stack, message, g_last_query))
 	io.sockets.emit('throw_data', exception)
 }
 
@@ -953,6 +1067,7 @@ async function end_of_video() {
 			update_current_queue(io.sockets)
 
 			// 이번 DJ에게 재생목록 데이터 변경을 알림
+			log('INFO', 'end_of_video - g_sockets', g_sockets.map(x => x.name))
 			update_playlist(g_sockets.filter(x => x.name == this_dj)[0])
 		}
 		catch (exception)
@@ -990,11 +1105,12 @@ function update_current_video(dest_socket)
 }
 
 /* 플레이 대기열 알림 발사 */
-function update_current_queue(dest_socket)
+function update_current_queue(dest_socket, is_on_demand = false)
 {
 	if(g_queue.length == 0)
 	{
-		dest_socket.emit('chat_update', {type: 'system_message', time: GetTime(), message: '플레이 대기열 없음.' })
+		if(is_on_demand)
+			dest_socket.emit('chat_update', {type: 'system_message', time: GetTime(), message: '플레이 대기열 없음' })
 		return
 	}
 
@@ -1083,6 +1199,13 @@ function second_to_string(sec)
 	return m + ':' + s
 }
 
+function shuffle(array) {
+	for (let i = array.length - 1; i > 0; i--) {
+	  let j = Math.floor(Math.random() * (i + 1));
+	  [array[i], array[j]] = [array[j], array[i]];
+	}
+  }
+
 /* ================================== QUERY =========================================*/
 
 /* 유튜브 영상 정보 조회 쿼리(Promise) */
@@ -1094,6 +1217,7 @@ function request_youtube_data(video_id)
 		var part = 'id,snippet,contentDetails,status'
 		var regionCode = 'KR'
 		var requestUrl = format('{0}?key={1}&part={2}&regionCode={3}&id={4}', url, key, part, regionCode, video_id)
+		g_last_query = requestUrl
 		request(requestUrl, function(err, response, body) {
 			if(err)
 				reject({message: 'request_youtube_data(' + video_id + ')', err: err})
@@ -1111,12 +1235,15 @@ function parse_youtube_response_data(query_result)
 		duration : parse_duration_to_second(item.contentDetails.duration),
 		embeddable : item.status.embeddable,
 	}
+	video_data.title = video_data.title.replace(/\"/g, '＂')
+
 	return video_data
 }
 
 function db_select(columns, from, where, options = '')
 {
 	var query = format('SELECT {0} FROM {1} WHERE {2} {3}', columns, from, where, options)
+	g_last_query = query
 	return new Promise(function(resolve, reject) {
 		db.query(query, function(err, result) {
 			err ? reject({message: query, err: err}) : resolve(result)
@@ -1135,6 +1262,7 @@ function db_insert(into, columns, values)
 	values = "'" + values + "'"
 
 	var query = format('INSERT INTO {0} ({1}) VALUES ({2})', into, columns, values)
+	g_last_query = query
 	return new Promise( function(resolve, reject) {
 		db.query(query, function(err, result) {
 			err ? reject({message: query, err: err}) : resolve(result)
@@ -1145,8 +1273,9 @@ function db_insert(into, columns, values)
 function db_update(table, sets, where)
 {
 	if(typeof(sets) == 'object')
-		sets = sets.join(', ')
+	sets = sets.join(', ')
 	var query = format('UPDATE {0} SET {1} WHERE {2}', table, sets, where)
+	g_last_query = query
 	return new Promise( function(resolve, reject) {
 		db.query(query, function(err, result) {
 			err ? reject({message: query, err: err}) : resolve(result)
@@ -1156,6 +1285,7 @@ function db_update(table, sets, where)
 
 function db_query(query)
 {
+	g_last_query = query
 	return new Promise( function(resolve, reject) {
 		db.query(query, function(err, result) {
 			err ? reject({message: query, err: err}) : resolve(result)

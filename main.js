@@ -94,12 +94,14 @@ app.get('/', async function(request, response, next) {
 		var text = data.toString()
 					.replace(/\$_localhost/g, 'http://' + request.headers.host.substr(0, request.headers.host.length-5))
 
-		for(var e of text.match(/\$_version\[.*?\]/g))
+		for(var e of text.match(/\/[^\/]*?\$_version/g))
 		{
-			var file_name = e.match(/\[(.*?)\]/)[1]
+			var matchs = e.match(/\/(.*?)(\?.*)\$_version/)
+			var file_name = matchs[1]
+			var other_str = matchs[2]
 			var stat = await stat_file_async(format('./static/{0}', file_name))
 			stat = stat.toJSON().replace(/\D/g, '')
-			text = text.replace(e, stat)
+			text = text.replace(e, format('/{0}{1}{2}', file_name, other_str, stat))
 		}
 
 		response.writeHead(200, {'Content-Type':'text/html'})
@@ -1233,6 +1235,8 @@ function parse_youtube_response_data(query_result)
 		duration : parse_duration_to_second(item.contentDetails.duration),
 		embeddable : item.status.embeddable,
 	}
+	video_data.title = video_data.title.replace(/\"/g, '＂')
+
 	return video_data
 }
 

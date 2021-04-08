@@ -372,6 +372,13 @@ body {
   width: 100%;
 }
 
+.chat_profile {
+  height: 18px;
+  margin-right: 3px;
+  padding-top: 0px;
+  float: left;
+}
+
 /* =================== 플레이리스트 컨트롤 패널 ========================= */
 
 /* 플레이리스트 컨트롤 패널 */
