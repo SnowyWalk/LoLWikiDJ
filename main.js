@@ -22,6 +22,8 @@ const os = require('os')
 const request = require('request-promise-native')
 /* 날짜시간 유틸 */
 require('date-utils')
+/* 아이콘 만들기 유틸*/
+const identicon = require('identicon') 
 /* mysql 서버 */
 const mysql = require('mysql')
 var db_config = JSON.parse(fs.readFileSync('db_config.txt', 'utf-8'))
@@ -46,6 +48,7 @@ handleDisconnect();
 
 app.use('/fonts', express.static('./static/fonts'))
 app.use('/static', express.static('./static'))
+app.use('/icon', express.static('./static/icon'))
 // app.use('/js', express.static('./static/js'))
 // app.use('/fonts', express.static('./static/fonts'))
 
@@ -147,7 +150,7 @@ io.sockets.on('connection', function(socket)
 		{
 			log('THROW', 'login', '빈 닉네임 : ' + nick)
 			socket.name = ''
-			socket.emit('login', false)
+			socket.emit('login', {isSuccess: false, icon_id: 0})
 			return
 		}
 
@@ -156,7 +159,7 @@ io.sockets.on('connection', function(socket)
 		{
 			log('THROW', '중복 로그인 검사', socket.name + ' 중복 로그인 실패.')
 			socket.name = ''
-			socket.emit('login', false)
+			socket.emit('login', {isSuccess: false, icon_id: 0})
 			return
 		}
 
@@ -219,6 +222,18 @@ io.sockets.on('connection', function(socket)
 				await db_update('Secures', format("ConnectData = '{0}'", JSON.stringify(secureData)), format('IP = "{0}"', socket_ip))
 			}
 
+			// 아이콘 ID 가져오기
+			var icon_id = 0
+			var select_icon = await db_select('Id', 'Icons', format('Name = "{0}"', socket.name), 'LIMIT 1')
+			if(select_icon.length == 0) // 아이콘 없으면 새로 만들기
+			{
+				icon_id = await db_insert('Icons', ['Name'], [socket.name]).then(ret => ret.insertId)
+				console.log(format('{0}의 아이콘 아이디는 {1}', socket.name, icon_id))
+				await make_identicon_async(socket.name, icon_id)
+			}
+			else
+				icon_id = parseInt(select_icon[0].Id)
+
 			// 로그인 성공
 			await db_commit()
 
@@ -227,7 +242,7 @@ io.sockets.on('connection', function(socket)
 			log('INFO', 'login', format('{0} {1}유저 {2}번째 로그인 : ({3}) {4}', socket.name, text1, connectCount, socket_ip, text4))
 
 			g_sockets.push(socket)
-			socket.emit('login', true)
+			socket.emit('login', {isSuccess: true, icon_id: icon_id})
 			update_current_video(socket) // 플레이 영상 데이터 보내기
 			update_current_queue(socket) // 플레이 대기열 알림
 			update_current_rating(socket) // 좋/싫 알림
@@ -241,9 +256,24 @@ io.sockets.on('connection', function(socket)
 			await db_rollback()
 			log_exception('login', exception, socket.name + ' 로그인 실패. 에러 : ' + JSON.stringify(exception))
 			socket.name = ''
-			socket.emit('login', false)
+			socket.emit('login', {isSuccess: false, icon_id: 0})
 		}
 	})
+
+	function make_identicon_async(nick, icon_id)
+	{
+		return new Promise( function(resolve, reject) {
+			identicon.generate({ id: nick + '7', size: 18 }, (err, buffer) => {
+				if (err) 
+					reject(err)
+			
+				// buffer is identicon in PNG format.
+				fs.writeFileSync(format('static/icon/{0}.png', icon_id), buffer)
+				resolve()
+			});
+		})
+	}
+	
 
 	/* 새로운 유저가 접속했을 경우 다른 소켓에게도 알려줌 */
 	socket.on('chat_newUser', function() 

@@ -5,12 +5,7 @@ var imgReg = /\/img (\S+)/i
 function add_message(data) 
 {
 	var message = document.createElement('div')
-	var small = document.createElement('small')
-	var b = document.createElement('b')
-	var font = document.createElement('font')
-
-	small.appendChild(b)
-	b.appendChild(font)
+	
 
 	var text = ''
 	var nick = ''
@@ -21,6 +16,24 @@ function add_message(data)
 	{
 		case 'message':
 			message.classList.add('chat_balloon')
+			
+			// 시간 넣기
+			var timeSmall = document.createElement('small')
+			var timeFont = document.createElement('font')
+			timeFont.classList.add('chat_time')
+			timeFont.color = 'gray'
+			timeFont.appendChild(document.createTextNode('  ' + data.time))
+			timeSmall.appendChild(timeFont)
+
+			nick = data.name + '  '
+			text = '\n' + data.message
+
+			var small = document.createElement('small')
+			var b = document.createElement('b')
+			var nick_img = document.createElement('img')
+			nick_img.classList.add('chat_profile')
+			nick_img.src = format('icon/{0}.png', data.icon_id)
+			var font = document.createElement('font')
 			if(data.name == g_nick)
 			{
 				className = 'me'
@@ -31,17 +44,15 @@ function add_message(data)
 				className = 'other'
 				font.color = 'mediumslateblue'
 			}
-			// 시간 넣기
-			var timeSmall = document.createElement('small')
-			var timeFont = document.createElement('font')
-			timeFont.classList.add('chat_time')
-			timeFont.color = 'gray'
-			timeFont.appendChild(document.createTextNode('  ' + data.time))
-			timeSmall.appendChild(timeFont)
+
+			small.appendChild(b)
+			b.appendChild(nick_img)
+			b.appendChild(font)
 			small.appendChild(timeSmall)
 
-			nick = data.name + '  '
-			text = '\n' + data.message
+			font.appendChild(document.createTextNode(nick))
+
+			message.appendChild(small)
 		break
 
 		case 'connect':
@@ -68,8 +79,6 @@ function add_message(data)
 
 	message.classList.add(className)
 	message.classList.add('chat')
-	font.appendChild(document.createTextNode(nick))
-	message.appendChild(small)
 	message.appendChild(document.createTextNode(text))
 	if(img != null)
 		message.appendChild(img)

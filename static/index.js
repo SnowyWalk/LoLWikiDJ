@@ -3,6 +3,7 @@ var socket = io()
 /* 채팅/인증용 데이터 */
 var g_nick = ''
 var g_isLogin = false
+var g_icon_id = 0
 
 /* 플레이어 관련 데이터 */
 var g_cued_time_ms = 0
@@ -35,8 +36,6 @@ var g_current_playlist_id = 0
 
 /* DEBUG: 랜덤 닉네임 모드 */
 var g_setting_auto_login = false
-
-
 
 window.onload = function() {
 	g_isWindowLoaded = true
