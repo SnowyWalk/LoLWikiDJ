@@ -263,7 +263,7 @@ io.sockets.on('connection', function(socket)
 	function make_identicon_async(nick, icon_id)
 	{
 		return new Promise( function(resolve, reject) {
-			identicon.generate({ id: nick + '7', size: 18 }, (err, buffer) => {
+			identicon.generate({ id: nick + '7', size: 39 }, (err, buffer) => {
 				if (err) 
 					reject(err)
 			

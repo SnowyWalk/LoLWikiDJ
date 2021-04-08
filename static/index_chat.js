@@ -2,6 +2,7 @@ var g_last_chat = ''
 
 /* 채팅창에 메시지 추가 함수 */
 var imgReg = /\/img (\S+)/i
+var byteReg = /[\da-zA-Z-_=\|\/\*-\+\.`~'\/,\!@#\$%\^\&\(\)\[\] "]/i
 function add_message(data) 
 {
 	var message = document.createElement('div')
@@ -44,6 +45,11 @@ function add_message(data)
 				className = 'other'
 				font.color = 'mediumslateblue'
 			}
+			font.classList.add('nick')
+			if(byteReg.test(data.name[0]))
+				font.style.paddingLeft = '2px'
+			if(data.message.length == 0 || byteReg.test(data.message[0]))
+				message.style.paddingLeft = '2px'
 
 			small.appendChild(b)
 			b.appendChild(nick_img)
@@ -275,7 +281,7 @@ function chat_onpaste() {
 	var reader = new FileReader()
 	reader.onload = function(ev) { 
 		var ret = ev.target.result
-		socket.emit('chat_message', { type: 'message', message: format('/img {0}', ret) })
+		socket.emit('chat_message', { type: 'message', message: format('/img {0}', ret), icon_id: g_icon_id })
 		scrollDown(true)
 	}
 	reader.readAsDataURL(blob)
