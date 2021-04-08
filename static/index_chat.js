@@ -48,8 +48,8 @@ function add_message(data)
 			font.classList.add('nick')
 			if(byteReg.test(data.name[0]))
 				font.style.paddingLeft = '2px'
-			if(data.message.length == 0 || byteReg.test(data.message[0]))
-				message.style.paddingLeft = '2px'
+			// if(data.message.length == 0 || byteReg.test(data.message[0]))
+			// 	message.style.paddingLeft = '2px'
 
 			small.appendChild(b)
 			b.appendChild(nick_img)

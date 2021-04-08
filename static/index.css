@@ -377,6 +377,7 @@ body {
   margin-right: 5px;
   padding-top: 0px;
   float: left;
+  border-radius: 100%;
 }
 
 /* =================== 플레이리스트 컨트롤 패널 ========================= */
