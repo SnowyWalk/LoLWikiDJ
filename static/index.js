@@ -128,7 +128,7 @@ socket.on('login', function(isSuccess) {
 						+ '★ 0. Lily(샤르프로젝트) 님 ★\n' 
 						+ '1. 랠래 님\n'
 						+ '2. 노통 님\n'
-						+ '3. 고냥이지 님')
+						+ '3. 고냥이지 님', 'yellow')
 	add_system_message('명령어 목록은 /? 을 입력해 볼 수 있습니다.')
 
 	socket.emit('chat_newUser')
@@ -170,9 +170,12 @@ socket.on('djs', function(data) {
 /* 서버로부터 영상 데이터를 받은 경우 */
 socket.on('update_current_video', function(data) {
 	if(data)
-		add_system_message('DJ : ' + data.dj + '\nVideo Id : ' + data.video_id + '\n타이틀 : ' +  data.title + '\n영상 길이 : ' + data.duration + '초' + '\n진행시간 : ' + data.seek_s + '초')
+	{
+		if(data.video_id)
+			add_system_message(format('DJ : {0} \nVideo Id : {1} \n제목 : {2} ({3})', data.dj, data.video_id, data.title, second_to_string(data.duration)))
+	}
 	else
-		add_system_message('영상 끝.')
+		add_system_message('영상 끝')
 
 	if(!data || !data.video_id)
 	{
@@ -320,13 +323,15 @@ function add_message(data)
 	if(img != null)
 		message.appendChild(img)
 	chat.appendChild(message)
+	if(data.bg)
+		message.style.backgroundColor = data.bg
 
 	scrollDown()
 }
 /* 채팅창에 시스템 메시지 추가 함수 */
-function add_system_message(message)
+function add_system_message(message, bg = '')
 {
-	add_message({type: 'system_message', message: message})
+	add_message({type: 'system_message', message: message, bg: bg})
 }
 
 

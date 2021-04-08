@@ -52,7 +52,7 @@ app.use('/static', express.static('./static'))
 
 /* 공지말 */
 g_port = 8080
-g_notice = '재생목록 셔플 기능 추가됨'
+g_notice = ''
 
 /* 유저 목록 */
 g_users = []
@@ -84,22 +84,52 @@ g_last_query = ''
 // })
 
 /* Get 방식으로 / 경로에 접속하면 실행 됨 */
-app.get('/', function(request, response, next) {
-	fs.readFile('./dj.html', function(err, data) {
-		if(err) {
-			response.send('서버가 고장남!!! Kakao ID: AnsanSuperstar 로 문의하세요')
-		} else {
-			if(!request.headers.host)
-				return
-			response.writeHead(200, {'Content-Type':'text/html'})
-			var text = data.toString()
-						.replace(/\$_localhost/g, 'http://' + request.headers.host.substr(0, request.headers.host.length-5))
-						.replace(/\$_version/g, new Date().getTime())
-			response.write(text)
-			response.end()
+app.get('/', async function(request, response, next) {
+	if(!request.headers.host) // 봇 쳐내
+		return
+
+	try
+	{
+		var data = await read_file_async('dj.html')
+		var text = data.toString()
+					.replace(/\$_localhost/g, 'http://' + request.headers.host.substr(0, request.headers.host.length-5))
+
+		for(var e of text.match(/\$_version\[.*?\]/g))
+		{
+			var file_name = e.match(/\[(.*?)\]/)[1]
+			var stat = await stat_file_async(format('./static/{0}', file_name))
+			stat = stat.toJSON().replace(/\D/g, '')
+			text = text.replace(e, stat)
 		}
-	})
+
+		response.writeHead(200, {'Content-Type':'text/html'})
+		response.write(text)
+		response.end()
+	}
+	catch (exception)
+	{
+		log_exception('app.get', exception)
+		response.send('서버가 고장남!!! Kakao ID: AnsanSuperstar 로 문의하세요' + '<p><p>에러 내용 : <p>' + format('<p>Name : {0}<p>ERROR : {1}<p>Message : {2}<p>Stack : {3}', exception.name, exception.err, exception.message, exception.stack))
+	}
 })
+
+function stat_file_async(file_name)
+{
+	return new Promise(function (resolve, reject) {
+		fs.stat(file_name, function(err, data) {
+			err ? reject(err) : resolve(data.mtime)
+		})
+	})
+}
+
+function read_file_async(file_name)
+{
+	return new Promise(function (resolve, reject) {
+		fs.readFile(file_name, function(err, data) {
+			err ? reject(err) : resolve(data)
+		})
+	})
+}
 
 io.sockets.on('connection', function(socket) 
 {
@@ -316,7 +346,7 @@ io.sockets.on('connection', function(socket)
 
 	/* 현재 플레이 대기열 목록 알려주기 */
 	socket.on('queue_list', function() {
-		update_current_queue(socket)
+		update_current_queue(socket, true)
 	})
 
 	/* TEST: 특정 비디오 재생 명령 */
@@ -1073,11 +1103,12 @@ function update_current_video(dest_socket)
 }
 
 /* 플레이 대기열 알림 발사 */
-function update_current_queue(dest_socket)
+function update_current_queue(dest_socket, is_on_demand = false)
 {
 	if(g_queue.length == 0)
 	{
-		dest_socket.emit('chat_update', {type: 'system_message', time: GetTime(), message: '플레이 대기열 없음.' })
+		if(is_on_demand)
+			dest_socket.emit('chat_update', {type: 'system_message', time: GetTime(), message: '플레이 대기열 없음' })
 		return
 	}
 
