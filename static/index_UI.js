@@ -520,30 +520,77 @@ function hide_video_link()
 }
 
 /* 영상 플레이 타임 갱신 */
+var cached_my_progress_bar_after_innerText = null
+var cached_my_progress_bar_after_style_width = null
+var cached_video_info_time_innerText = null
 function update_video_time() 
 {
 	var isVideoPlaying = g_current_video_id
 	if(!isVideoPlaying)
 	{
-		my_progress_bar_after.innerText = ''
-		my_progress_bar_after.style.width = 0
-		video_info_time.innerText = '--:-- / --:--'
+		if(isDirty(cached_my_progress_bar_after_innerText, ''))
+		{
+			my_progress_bar_after.innerText = ''
+			cached_my_progress_bar_after_innerText = ''
+		}
+
+		if(isDirty(cached_my_progress_bar_after_style_width, 0))
+		{
+			my_progress_bar_after.style.width = 0
+			cached_my_progress_bar_after_style_width = 0
+		}
+
+		if(isDirty(cached_video_info_time_innerText, '--:-- / --:--'))
+		{
+			video_info_time.innerText = '--:-- / --:--'
+			cached_video_info_time_innerText = '--:-- / --:--'
+		}
 		return
 	}
 
 	var duration = g_current_duration
 	if(duration == 0)
 	{
-		my_progress_bar_after.style.width = g_progress_bar_width
-		video_info_time.innerText = '실시간'
+		if(isDirty(cached_my_progress_bar_after_style_width, g_progress_bar_width))
+		{
+			my_progress_bar_after.style.width = g_progress_bar_width
+			cached_my_progress_bar_after_style_width = g_progress_bar_width
+		}
+
+		if(isDirty(cached_video_info_time_innerText, '실시간'))
+		{
+			video_info_time.innerText = '실시간'
+			cached_video_info_time_innerText = '실시간'
+		}
 		return
-}
+	}
+
 	var currentTime = (Date.now() - g_cued_time_ms) / 1000
 	if(duration < currentTime)
 		currentTime = duration
-	my_progress_bar_after.style.width = g_progress_bar_width * (currentTime / duration)
-	video_info_time.innerText = second_to_string(currentTime) + " / " + second_to_string(duration)
+
+	var bar_width = g_progress_bar_width * (currentTime / duration)
+	if(isDirty(cached_my_progress_bar_after_style_width, bar_width))
+	{
+		my_progress_bar_after.style.width = bar_width
+		cached_my_progress_bar_after_style_width = bar_width
+	}
+
+	var video_info_time_text = second_to_string(currentTime) + " / " + second_to_string(duration)
+	if(isDirty(cached_video_info_time_innerText, video_info_time_text))
+	{
+		video_info_time.innerText = video_info_time_text
+		cached_video_info_time_innerText = video_info_time_text
+	}
+	return
+
+	function isDirty(val1, val2)
+	{
+		return val1 != val2
+	}
 }
+
+
 
 /* DJ 업뎃 */
 function update_current_dj()
