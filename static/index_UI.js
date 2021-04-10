@@ -248,6 +248,13 @@ function select_playlist_button(playlist_id)
 		}
 	}
 
+	if(!thisPlaylist) // 버그 예외처리
+	{
+		thisPlaylist = g_playlist_info_list[0]
+		playlist_id = thisPlaylist.Id
+		g_playlist_control_panel_current_playlist_id = thisPlaylist.Id
+	}
+
 	// 해당 엘리먼트 찾기
 	var thisElement = playlist_control_panel_playlist_header.querySelector(format('[playlist_id="{0}"]', playlist_id))
 
@@ -644,6 +651,9 @@ function update_current_playlist()
 			break
 		}
 	}
+
+	if(!current_data)
+		return
 
 	current_playlist_name.innerText = format('{0} ({1})', current_data.Name, current_data.VideoList.length)
 	if(current_data.VideoList.length == 0)
