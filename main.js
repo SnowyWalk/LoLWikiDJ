@@ -15,7 +15,7 @@ app.use(cors())
 /* express http 서버 생성 */
 const server = http.createServer(app)
 /* 생성된 서버를 socket.io에 바인딩 */
-const io = socket(server, {maxHttpBufferSize: 1e8})
+const io = socket(server, {maxHttpBufferSize: 1e8, pingTimeout: 120 * 1000})
 /* os */
 const os = require('os')
 /* API 요청 모듈 불러오기 */
@@ -1134,8 +1134,12 @@ async function end_of_video() {
 	}
 
 	// 모든 소켓들에게 dj 상태 갱신
-	for(var e of g_users_dic)
-		e.socket.emit('dj_state', e.socket.name in g_djs)
+	console.log(format('users : [{0}]', Object.keys(g_users_dic).join(', ')))
+	for(var e in g_users_dic)
+	{
+		console.log(format('{0} in [{1}] : {2}', e, g_djs.join(', '), g_djs.includes(e)))
+		g_users_dic[e].socket.emit('dj_state', g_djs.includes(e))
+	}
 
 	// 모두에게 좋/싫 알림
 	update_current_rating(io.sockets)
