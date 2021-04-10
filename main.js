@@ -54,33 +54,32 @@ app.use('/icon', express.static('./static/icon'))
 
 
 /* 공지말 */
-g_port = 8080
-g_notice = ''
+var g_port = 8080
+var g_notice = ''
 
 /* 유저 목록 */
-g_users = []
-g_sockets = []
+var g_users_dic = [] // dic['닉네임'] = { socket: 소켓, icon_id: 아이콘 아이디, icon_ver: 아이콘 버전  }
 
 /* 현재 재생중인 비디오 정보 */
-g_current_dj = ''
-g_video_id = ''
-g_video_title = ''
-g_video_duration = 0
-g_played_time_ms = 0 // ms
-g_end_timer = null
+var g_current_dj = ''
+var g_video_id = ''
+var g_video_title = ''
+var g_video_duration = 0
+var g_played_time_ms = 0 // ms
+var g_end_timer = null
 
 /* DJ 순서 목록 */
-g_djs = []
+var g_djs = []
 
 /* 임시: QUEUE */
-g_queue = []
+var g_queue = []
 
 /* 좋아요/싫어요 데이터 */
-g_good_list = []
-g_bad_list = []
+var g_good_list = []
+var g_bad_list = []
 
 /* DEBUG 용 */
-g_last_query = ''
+var g_last_query = ''
 
 // app.get('/static/fonts/*', function(request, response, next) {
 // 	response.header( "Access-Control-Allow-Origin", "*")
@@ -150,16 +149,16 @@ io.sockets.on('connection', function(socket)
 		{
 			log('THROW', 'login', '빈 닉네임 : ' + nick)
 			socket.name = ''
-			socket.emit('login', {isSuccess: false, icon_id: 0})
+			socket.emit('login', false)
 			return
 		}
 
 		// 중복 로그인 검사 
-		if(g_users.indexOf(socket.name) != -1)
+		if(socket.name in g_users_dic)
 		{
 			log('THROW', '중복 로그인 검사', socket.name + ' 중복 로그인 실패.')
 			socket.name = ''
-			socket.emit('login', {isSuccess: false, icon_id: 0})
+			socket.emit('login', false)
 			return
 		}
 
@@ -224,15 +223,20 @@ io.sockets.on('connection', function(socket)
 
 			// 아이콘 ID 가져오기
 			var icon_id = 0
-			var select_icon = await db_select('Id', 'Icons', format('Name = "{0}"', socket.name), 'LIMIT 1')
+			var icon_ver = 0
+			var select_icon = await db_select('Id, Ver', 'Icons', format('Name = "{0}"', socket.name), 'LIMIT 1')
 			if(select_icon.length == 0) // 아이콘 없으면 새로 만들기
 			{
-				icon_id = await db_insert('Icons', ['Name'], [socket.name]).then(ret => ret.insertId)
+				icon_id = await db_insert('Icons', ['Name', 'Ver'], [socket.name, 1]).then(ret => ret.insertId)
+				icon_ver = 1
 				console.log(format('{0}의 아이콘 아이디는 {1}', socket.name, icon_id))
 				await make_identicon_async(socket.name, icon_id)
 			}
 			else
+			{
 				icon_id = parseInt(select_icon[0].Id)
+				icon_ver = parseInt(select_icon[0].Ver)
+			}
 
 			// 로그인 성공
 			await db_commit()
@@ -241,8 +245,8 @@ io.sockets.on('connection', function(socket)
 			var text4 = (is_exist_user && !is_exist_secure_data ? '아이디 도용 가능성 감지' : '')
 			log('INFO', 'login', format('{0} {1}유저 {2}번째 로그인 : ({3}) {4}', socket.name, text1, connectCount, socket_ip, text4))
 
-			g_sockets.push(socket)
-			socket.emit('login', {isSuccess: true, icon_id: icon_id})
+			g_users_dic[socket.name] = {socket: socket, icon_id: icon_id, icon_ver, icon_ver}
+			socket.emit('login', true)
 			update_current_video(socket) // 플레이 영상 데이터 보내기
 			update_current_queue(socket) // 플레이 대기열 알림
 			update_current_rating(socket) // 좋/싫 알림
@@ -256,8 +260,10 @@ io.sockets.on('connection', function(socket)
 			await db_rollback()
 			log_exception('login', exception, socket.name + ' 로그인 실패. 에러 : ' + JSON.stringify(exception))
 			socket.name = ''
-			socket.emit('login', {isSuccess: false, icon_id: 0})
+			socket.emit('login', false)
 		}
+
+		log('INFO', '현 접속자', Object.keys(g_users_dic).join(', '))
 	})
 
 	function make_identicon_async(nick, icon_id)
@@ -278,15 +284,11 @@ io.sockets.on('connection', function(socket)
 	/* 새로운 유저가 접속했을 경우 다른 소켓에게도 알려줌 */
 	socket.on('chat_newUser', function() 
 	{
-		log('INFO', 'chat_newUser', socket.name + ' 님이 접속하였습니다.')
-		
-		// 접속자 목록 업뎃
-		g_users.push(socket.name)
-		log('INFO', '현 접속자', g_users)
+		log('INFO', 'chat_newUser', format('{0} 님이 접속하였습니다.', socket.name))		
 
 		// 모든 소켓에게 전송 
-		io.sockets.emit('chat_update', {type: 'connect', name: 'SERVER', message: socket.name + '님이 접속하였습니다.'})
-		socket.emit('users', {data: '참가자 목록 (' + g_users.length + ')' + '\n' + g_users.join(', ')})
+		io.sockets.emit('chat_update', {type: 'connect', name: 'SERVER', message: format('{0} 님이 접속하였습니다.', socket.name) })
+		socket.emit('users', { data: format('참가자 목록 ({0})\n{1}', Object.keys(g_users_dic).length, Object.keys(g_users_dic).join(', ')) })
 	})
 
 	/* 전송한 메시지 받기 */
@@ -298,6 +300,8 @@ io.sockets.on('connection', function(socket)
 		/* 받은 데이터에 누가 보냈는지 이름을 추가 */
 		data.name = socket.name
 		data.time = GetTime()
+		data.icon_id = g_users_dic[socket.name].icon_id
+		data.icon_ver = g_users_dic[socket.name].icon_ver
 
 		log_message = data.message
 		if(log_message.length > 100)
@@ -314,14 +318,13 @@ io.sockets.on('connection', function(socket)
 			return
 
 		log('INFO', 'disconnect', socket.name + '님이 나가셨습니다.')
-		if(g_users.indexOf(socket.name) != -1)
-			g_users.splice(g_users.indexOf(socket.name), 1)
-		if(g_sockets.indexOf(g_sockets.filter(x => x.name == socket.name)[0]) != -1)
-			g_sockets.splice(g_sockets.indexOf(g_sockets.filter(x => x.name == socket.name)[0]), 1)
+
+		if(socket.name in g_users_dic)
+			delete g_users_dic[socket.name]
 		if(g_djs.indexOf(socket.name) != -1)
 			g_djs.splice(g_djs.indexOf(socket.name), 1)
 
-		log('INFO', '현 접속자', g_users)
+		log('INFO', '현 접속자', Object.keys(g_users_dic).join(', '))
 
 		// 현재 재생중인 dj라면 재생 종료
 		if(g_current_dj == socket.name)
@@ -446,7 +449,7 @@ io.sockets.on('connection', function(socket)
 			g_played_time_ms = Date.now()
 
 		// 챗 알림
-		// io.sockets.emit('chat_update', { type: 'message', message: data.message, name: socket.name, time: GetTime()});
+		io.sockets.emit('chat_update', { type: 'message', message: data.message, name: socket.name, time: GetTime(), icon_id: g_users_dic[socket.name].icon_id, icon_ver: g_users_dic[socket.name].icon_ver});
 		io.sockets.emit('chat_update', { type: 'system_message', message: '영상을 ' + data.sec + '초 되감았습니다.', name: socket.name, time: GetTime()});
 
 		// 영상 종료 타이머 설정
@@ -465,7 +468,7 @@ io.sockets.on('connection', function(socket)
 			g_played_time_ms = Date.now()
 
 		// 챗 알림
-		// io.sockets.emit('chat_update', { type: 'message', message: data.message, name: socket.name, time: GetTime()});
+		io.sockets.emit('chat_update', { type: 'message', message: data.message, name: socket.name, time: GetTime(), icon_id: g_users_dic[socket.name].icon_id, icon_ver: g_users_dic[socket.name].icon_ver});
 		io.sockets.emit('chat_update', { type: 'system_message', message: '영상을 ' + data.sec + '초 넘겼습니다.', name: socket.name, time: GetTime()});
 
 		// 영상 종료 타이머 설정
@@ -486,12 +489,12 @@ io.sockets.on('connection', function(socket)
 
 	/* 참가자 목록 요청 */
 	socket.on('users', function() {
-		socket.emit('users', {data: '참가자 목록 (' + g_users.length + ')' + '\n' + g_users.join(', ')})  
+		socket.emit('users', {data: format('참가자 목록 ({0})\n{1}', Object.keys(g_users_dic).length, Object.keys(g_users_dic).join(', ')) })  
 	})
 
 	/* DJ 목록 요청 */
 	socket.on('djs', function() {
-		socket.emit('djs', {data: '디제잉 목록 (' + g_djs.length + ')' + '\n' + g_djs.join('\n')})  
+		socket.emit('djs', {data: format('디제잉 목록 ({0})\n{1}', g_djs.length, g_djs.map((x, i) => format('{0}. {1}', i+1, x)).join('\n'))})  
 	})
 
 	/* 플레이리스트 요청 */
@@ -1032,7 +1035,7 @@ async function end_of_video() {
 
 		g_current_dj = next_queue_data.dj
 
-		if(g_users.indexOf(g_current_dj) == -1) // 없는 유저라면
+		if(g_current_dj in g_users_dic == false)
 		{
 			g_current_dj = ''
 			return end_of_video()
@@ -1089,8 +1092,8 @@ async function end_of_video() {
 			update_current_queue(io.sockets)
 
 			// 이번 DJ에게 재생목록 데이터 변경을 알림
-			log('INFO', 'end_of_video - g_sockets', g_sockets.map(x => x.name))
-			update_playlist(g_sockets.filter(x => x.name == this_dj)[0])
+			log('INFO', 'end_of_video - DJ', format('{0} [{1}]', this_dj, Object.keys(g_users_dic).join(', ')))
+			update_playlist( g_users_dic[this_dj].socket )
 		}
 		catch (exception)
 		{
@@ -1107,8 +1110,8 @@ async function end_of_video() {
 	}
 
 	// 모든 소켓들에게 dj 상태 갱신
-	for(var e of g_sockets)
-		e.emit('dj_state', g_djs.indexOf(e.name) != -1)
+	for(var e of g_users_dic)
+		e.socket.emit('dj_state', e.socket.name in g_djs)
 
 	// 모두에게 좋/싫 알림
 	update_current_rating(io.sockets)

@@ -40,12 +40,12 @@ socket.on('connect', function () {
 })
 
 /* 서버로부터 로그인 인증을 받은 경우 */
-socket.on('login', function(data) {
-	console.log('login 리시브', g_isLogin, '->', data)
+socket.on('login', function(isSuccess) {
+	console.log('login 리시브', g_isLogin, '->', isSuccess)
 	if(g_isLogin)
 		return
-	g_isLogin = data.isSuccess
-	if(!data.isSuccess)
+	g_isLogin = isSuccess
+	if(!isSuccess)
 	{
 		alert('인증 실패! 이미 로그인 되어있습니다.\n다시 시도하거나 새로고침(Ctrl+F5) 해주세요.')
 		login_button.style.display = 'block'
@@ -53,7 +53,6 @@ socket.on('login', function(data) {
 	}
 
 	g_isLogin = true
-	g_icon_id = data.icon_id
 
 	// 로그인 창 숨기기
 	init_block.style.opacity = 1

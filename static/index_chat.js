@@ -33,7 +33,7 @@ function add_message(data)
 			var b = document.createElement('b')
 			var nick_img = document.createElement('img')
 			nick_img.classList.add('chat_profile')
-			nick_img.src = format('icon/{0}.png', data.icon_id)
+			nick_img.src = format('icon/{0}.png?ver={1}', data.icon_id, data.icon_ver)
 			var font = document.createElement('font')
 			if(data.name == g_nick)
 			{
@@ -139,7 +139,8 @@ function send() {
 							+ '/(r)ewind 10 : 10초 되감기 (/되감기 10 도 가능)\n'
 							+ '/(f)wd 10 : 10초 빨리감기 (/빨리감기 10 도 가능)\n'
 							+ '/짤 {검색어} : 랜덤 이미지 (단부루)\n'
-							+ '/img  {이미지주소} : 이미지 채팅'
+							+ '/img  {이미지주소} : 이미지 채팅\n'
+							+ '{채팅창에 이미지 붙여넣기(Ctrl+v)} : 이미지 채팅'
 							)
 		return
 	}
@@ -179,12 +180,14 @@ function send() {
 	{
 		var sec = rewindReg.exec(message)[2]
 		socket.emit('rewind', {nick: g_nick, sec: sec, message: message})
+		return
 	}
 
 	if(forwardReg.test(message))
 	{
 		var sec = forwardReg.exec(message)[2]
 		socket.emit('forward', {nick: g_nick, sec: sec, message: message})
+		return
 	}
 
 	if(message.toLowerCase() == '/playing' || message == '/ㅔㅣ묘ㅑㅜㅎ')
@@ -258,7 +261,7 @@ function send() {
 	}
 
 	// 서버로 message 이벤트 전달 + 데이터와 함께
-	socket.emit('chat_message', { type: 'message', message: message, icon_id: g_icon_id })
+	socket.emit('chat_message', { type: 'message', message: message })
 	scrollDown(true)
 }
 
@@ -281,7 +284,7 @@ function chat_onpaste() {
 	var reader = new FileReader()
 	reader.onload = function(ev) { 
 		var ret = ev.target.result
-		socket.emit('chat_message', { type: 'message', message: format('/img {0}', ret), icon_id: g_icon_id })
+		socket.emit('chat_message', { type: 'message', message: format('/img {0}', ret) })
 		scrollDown(true)
 	}
 	reader.readAsDataURL(blob)
