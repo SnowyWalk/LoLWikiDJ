@@ -111,6 +111,7 @@ var selectPlaylistReg = /^\/select_playlist (\d+)/i
 var pushReg = /^\/push (\S+) (\d+)/i
 var queryReg = /^\/query (.+)/i
 var zzalReg = /^\/짤 (.+)/i
+var iconReg = /\/icon (.+)/i
 function send() {
 	if(!g_isLogin)
 		return
@@ -140,7 +141,8 @@ function send() {
 							+ '/(f)wd 10 : 10초 빨리감기 (/빨리감기 10 도 가능)\n'
 							+ '/짤 {검색어} : 랜덤 이미지 (단부루)\n'
 							+ '/img  {이미지주소} : 이미지 채팅\n'
-							+ '{채팅창에 이미지 붙여넣기(Ctrl+v)} : 이미지 채팅'
+							+ '{채팅창에 이미지 붙여넣기(Ctrl+v)} : 이미지 채팅\n'
+							+ '/아이콘변경 : 아이콘 변경 안내'
 							)
 		return
 	}
@@ -255,6 +257,18 @@ function send() {
 		socket.emit('test_commit')
 	}
 
+	if(message == '/아이콘변경')
+	{
+		add_system_message('==아이콘 변경법==\n채팅창에 /icon 이라고 적고 \n아이콘으로 하길 원하는 이미지를 복사해서 \n채팅창에 붙여넣기 하면 아이콘이 등록됩니다.\n\n또는 /icon {이미지주소} 를 입력하세요.')
+		return
+	}
+
+	if(iconReg.test(message))
+	{
+		socket.emit('icon_register', iconReg.exec(message)[1])
+		return
+	}
+
 	if(queryReg.test(message))
 	{
 		socket.emit('query', queryReg.exec(message)[1])
@@ -277,6 +291,10 @@ function chat_keydown() {
 
 /* 채팅창 이미지 붙여넣기 이벤트 */
 function chat_onpaste() {
+	var message = chat_input.value
+	var __is_icon = message.startsWith('/icon')
+	if(__is_icon)
+		chat_input.value = ''
 	pasteObj = (event.clipboardData || window.clipboardData); 
 	var blob = pasteObj.files[0]
 	if(!blob)
@@ -284,7 +302,10 @@ function chat_onpaste() {
 	var reader = new FileReader()
 	reader.onload = function(ev) { 
 		var ret = ev.target.result
-		socket.emit('chat_message', { type: 'message', message: format('/img {0}', ret) })
+		if(__is_icon)
+			socket.emit('icon_register', ret)
+		else
+			socket.emit('chat_message', { type: 'message', message: format('/img {0}', ret) })
 		scrollDown(true)
 	}
 	reader.readAsDataURL(blob)

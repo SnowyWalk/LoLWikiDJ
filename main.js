@@ -922,6 +922,30 @@ io.sockets.on('connection', function(socket)
 		}
 	})
 
+	socket.on('icon_register', async function(image_data) {
+		try
+		{
+			if(image_data.startsWith('data:image/'))
+			{
+				image_data = image_data.replace(/^data:image\/png;base64,/, "")
+				fs.writeFileSync(format('static/icon/{0}.png', g_users_dic[socket.name].icon_id), image_data, 'base64')
+			}
+			else
+			{
+				image_data = await request({ url: image_data, encoding: null })
+				fs.writeFileSync(format('static/icon/{0}.png', g_users_dic[socket.name].icon_id), image_data)
+			}
+			
+			await db_update('Icons', 'Ver = Ver + 1', format('Name = "{0}"', socket.name))
+			g_users_dic[socket.name].icon_ver += 1
+			socket.emit('chat_update', {type: 'system_message', message: '아이콘이 변경되었습니다.'})
+		}
+		catch (exception)
+		{
+			log_exception('icon_register', exception)
+		}
+	})
+
 	socket.on('test_begin', async function() {
 		io.sockets.emit('chat_update', {type: 'system_message', message: 'begin 진입한다'})
 		var ret = await db_query('BEGIN')
@@ -1260,7 +1284,7 @@ function parse_youtube_response_data(query_result)
 		duration : parse_duration_to_second(item.contentDetails.duration),
 		embeddable : item.status.embeddable,
 	}
-	video_data.title = video_data.title.replace(/\"/g, '＂')
+	video_data.title = video_data.title.replace(/(\"|\')/g, '＂')
 
 	return video_data
 }
