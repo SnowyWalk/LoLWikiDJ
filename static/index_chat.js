@@ -292,12 +292,12 @@ function chat_keydown() {
 function chat_onpaste() {
 	var message = chat_input.value
 	var __is_icon = message.startsWith('/icon')
-	if(__is_icon)
-		chat_input.value = ''
 	pasteObj = (event.clipboardData || window.clipboardData); 
 	var blob = pasteObj.files[0]
 	if(!blob)
 		return
+	if(__is_icon)
+			chat_input.value = ''
 	var reader = new FileReader()
 	reader.onload = function(ev) { 
 		var ret = ev.target.result
