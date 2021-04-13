@@ -420,7 +420,7 @@ function onclick_playlist_delete_button()
 	if(!yes)
 		return
 
-	var delete_playlist_id = g_playlist_control_panel_current_playlist_id
+	var delete_playlist_id = thisPlaylist.Id
 	select_playlist_button(g_current_playlist_id)
 	socket.emit('delete_playlist', delete_playlist_id)
 }
