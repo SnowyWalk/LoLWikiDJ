@@ -168,5 +168,5 @@ socket.on('throw_data', function(exception) {
 
 /* push_video의 결과 신호를 받았을 때 */
 socket.on('push_video_result', function(data) {
-	alert((data.isSuccess ? '성공!' : '실패..') + '\n' + data.message)
+	alert(data.message)
 })

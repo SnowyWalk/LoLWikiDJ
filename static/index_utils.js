@@ -13,6 +13,16 @@ function youtube_url_parse(url_or_id)
 	return url_or_id
 }
 
+/* 유튜브 재생목록 주소 파싱 */
+var youtubePlaylistReg = /list=([^&]+)/
+function youtube_playlist_url_parse(url_or_id)
+{
+	if(youtubePlaylistReg.test(url_or_id))
+		return youtubePlaylistReg.exec(url_or_id)[1]
+	
+	return url_or_id
+}
+
 /* 90 -> "01:30" */
 function second_to_string(sec) 
 {

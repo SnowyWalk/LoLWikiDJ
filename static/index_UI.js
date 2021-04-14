@@ -368,6 +368,19 @@ function onclick_new_video_button()
 	socket.emit('push_video', {video_id: video_id, playlist_id: g_playlist_control_panel_current_playlist_id})
 }
 
+/* 컨트롤패널 - 재생목록 정보 - 새 영상 추가 버튼 onrclick */
+function onrclick_playlist_control_panel_playlist_info_new_video_button()
+{
+	event.preventDefault()
+
+	var url = prompt('추가할 재생목록의 주소나 ID를 넣어주세요.\nex)\nhttps://www.youtube.com/playlist?list=PL7axKIpVlfRsyg_XqG0QPBIyppz60P40l\n또는 PL7axKIpVlfRsyg_XqG0QPBIyppz60P40l')
+	var youtube_playlist_id = youtube_playlist_url_parse(url)
+	if(!url || !youtube_playlist_id)
+		return
+
+	socket.emit('push_playlist', {youtube_playlist_id: youtube_playlist_id, playlist_id: g_playlist_control_panel_current_playlist_id})
+}
+
 /* 컨트롤패널 - 재생목록 정보 - 셔플 버튼 onclick */
 function onclick_playlist_shuffle_button()
 {

@@ -62,4 +62,5 @@ window.onload = function() {
 		if (window.event.keyCode == 13)
 			chat_input.focus()
 	}
+	playlist_control_panel_playlist_info_new_video_button.addEventListener('contextmenu', onrclick_playlist_control_panel_playlist_info_new_video_button, false);
 }

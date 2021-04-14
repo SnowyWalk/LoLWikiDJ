@@ -1,19 +1,19 @@
 /* 설치한 express 모듈 불러오기 */
 const express = require('express')
-
+/* 설치한 socket.io 모듈 불러오기 */
+const socket = require('socket.io')
 /* Node.js 기본 내장 모듈 불러오기 */
 const http = require('http')
 /* Node.js 기본 내장 모듈 불러오기 */
 const fs = require('fs')
 /* express 객체 생성 */
 const app = express()
+app.set('maxHttpBufferSize', 1e8)
 /* CORS 설정 */
 var cors = require('cors')
 app.use(cors())
 /* express http 서버 생성 */
 const server = http.createServer(app)
-/* 설치한 socket.io 모듈 불러오기 */
-const socket = require('socket.io')
 /* 생성된 서버를 socket.io에 바인딩 */
 const io = socket(server, {maxHttpBufferSize: 1e8, pingTimeout: 120 * 1000})
 /* os */
@@ -182,10 +182,11 @@ io.sockets.on('connection', function(socket)
 
 			// Secure 데이터 등록
 			var socket_ip = socket.handshake.address.match(ipReg)[1]
-			var secureData = await db_select('ConnectData', 'Secures', format('IP = "{0}"', socket_ip), 'LIMIT 1') // secure data 가져오기
+			var secureData = await db_select('ConnectData, Comment', 'Secures', format('IP = "{0}"', socket_ip), 'LIMIT 1') // secure data 가져오기
 			var is_exist_secure = (secureData.length > 0)
 			var connectCount = 0
 			var is_exist_secure_data = false
+			var comment = ''
 			if(!is_exist_secure) // 새로 등록
 			{
 				await db_insert('Secures', ['IP', 'ConnectData'], [socket_ip, JSON.stringify([{Name: socket.name, ConnectCount: 1, CreationDate: current_date, LastLoginDate: current_date}])])
@@ -193,6 +194,7 @@ io.sockets.on('connection', function(socket)
 			}
 			else // 기존꺼에 추가
 			{
+				comment = secureData[0].Comment
 				// 해당 Name이 존재하는지 체크
 				secureData = JSON.parse(secureData[0].ConnectData)
 
@@ -229,7 +231,6 @@ io.sockets.on('connection', function(socket)
 			{
 				icon_id = await db_insert('Icons', ['Name', 'Ver'], [socket.name, 1]).then(ret => ret.insertId)
 				icon_ver = 1
-				console.log(format('{0}의 아이콘 아이디는 {1}', socket.name, icon_id))
 				await make_identicon_async(socket.name, icon_id)
 			}
 			else
@@ -243,9 +244,9 @@ io.sockets.on('connection', function(socket)
 
 			var text1 = (is_exist_user ? '기존' : '신규')
 			var text4 = (is_exist_user && !is_exist_secure_data ? '아이디 도용 가능성 감지' : '')
-			log('INFO', 'login', format('{0} {1}유저 {2}번째 로그인 : ({3}) {4}', socket.name, text1, connectCount, socket_ip, text4))
+			log('INFO', 'login', format('{0} {1}유저 {2}번째 로그인 : ({3}) {4} {5}', socket.name, text1, connectCount, socket_ip, text4, comment))
 
-			g_users_dic[socket.name] = {socket: socket, icon_id: icon_id, icon_ver, icon_ver}
+			g_users_dic[socket.name] = {socket: socket, icon_id: icon_id, icon_ver: icon_ver, ip: socket_ip}
 			socket.emit('login', true)
 			update_current_video(socket) // 플레이 영상 데이터 보내기
 			update_current_queue(socket) // 플레이 대기열 알림
@@ -302,11 +303,12 @@ io.sockets.on('connection', function(socket)
 		data.time = GetTime()
 		data.icon_id = g_users_dic[socket.name].icon_id
 		data.icon_ver = g_users_dic[socket.name].icon_ver
+		var ip = g_users_dic[socket.name].ip
 
 		log_message = data.message
 		if(log_message.length > 100)
 			log_message = format('{0} ... ({1} bytes)', log_message.substr(0, 100), log_message.length)
-		log('CHAT', data.name, log_message, true)
+		log('CHAT', format('{0} ({1})', data.name, ip), log_message, true)
 
 		/* 보낸 사람을 제외한 나머지 유저에게 메시지 전송 */
 		io.sockets.emit('chat_update', data);
@@ -345,7 +347,7 @@ io.sockets.on('connection', function(socket)
 
 		try
 		{
-			var youtube_data = await request_youtube_data(data.video_id).then(parse_youtube_response_data)
+			var youtube_data = await request_youtube_video(data.video_id).then(parse_youtube_video_data)
 			
 			if(!g_video_id)
 			{
@@ -404,11 +406,11 @@ io.sockets.on('connection', function(socket)
 		var body = ''
 		try
 		{
-			body = await request_youtube_data(data.video_id)
+			body = await request_youtube_video(data.video_id)
 			var item = body.items[0]
 			if(item == null)
 				throw Error()
-			var response_data = parse_youtube_response_data(body)
+			var response_data = parse_youtube_video_data(body)
 			
 			log('INFO', 'play', response_data.title)
 			g_current_dj = data.dj
@@ -574,7 +576,6 @@ io.sockets.on('connection', function(socket)
 	socket.on('delete_playlist', async function(playlist_id) {
 		if(!socket.name)
 			return
-
 		try
 		{
 			await db_beginTransaction()
@@ -734,69 +735,133 @@ io.sockets.on('connection', function(socket)
 
 	/*  특정 재생목록에 video 추가  */
 	// 유효한 영상이어야한다. (삭제된 영상이 아니어야한다. Embedding 비허용 영상은 상관 없음.) 
-	socket.on('push_video', async function(data) {
+	socket.on('push_video', function(data) {
+		// data : {video_id: 추가할 비디오 아이디, playlist_id: 추가할 플레이리스트 아이디}
+
 		if(!socket.name)
 			return
 
-		// 1. Videos DB에 이미 있는 곡인지 확인
-		//  있다면 -> Id 가져오기
-		//  없다면 -> 
-		//    1-1. youtube data request
-		//    1-2. Videos DB에 등록
-		//    1-3. insertId 가져오기
-		// 2. Playlists DB에서 Id = data.playlist_id인 레코드의 list에 (1번의 Id)를 JSON_ARRAY_APPEND
-		// 3. socket.emit('push_video_result', {isSuccess: true}) 실행
+		push_videos(data.video_id, data.playlist_id)
+	})
 
-		// Catch. socket.emit('push_video_result', {isSuccess: false, message: 에러_메시지}) 실행
+	/* 특정 재생목록에 재생목록 단위로 video 추가 */
+	socket.on('push_playlist', async function(data) {
+		// data : {youtube_playlist_id: 추가할 재생목록 아이디, playlist_id: 추가할 DB플레이리스트 아이디}
 
+		if(!socket.name)
+			return
+		var video_list = []
+		var nextPageToken = ''
+		while(true)
+		{
+			var request_ret = await request_youtube_playlist(data.youtube_playlist_id, nextPageToken).then(parse_youtube_playlist_data)
+			video_list.push(...request_ret.list)
+			
+			nextPageToken = request_ret.nextPageToken
+			if(!request_ret.nextPageToken)
+				break
+		}
+		push_videos(video_list, data.playlist_id)
+	})
+
+	async function push_videos(videoId_list, playlist_id)
+	{
 		try
 		{
-			var video_id = data.video_id
-			var playlist_id = data.playlist_id
+			var result = await get_video_index(videoId_list)
+			var successed = result.filter(x => x.Id)
+			var blocked = result.filter(x => !x.Id && x.Name)
+			var failed = result.filter(x => !x.Id && !x.Name)
 
-			// 1. Videos DB에 이미 있는 곡인지 확인
-			var db_video_id = 0
-			var video_title = ''
-			var db_select_ret1 = await db_select('Id, Name', 'Videos', format('VideoId = "{0}"', video_id), 'LIMIT 1')
-			if(db_select_ret1.length > 0)
-			{
-				db_video_id = db_select_ret1[0].Id
-				video_title = db_select_ret1[0].Name
-			}
-			else
-			{
-				// 1-1. youtube data request
-				var video_data = await request_youtube_data(video_id)
-									.then(parse_youtube_response_data)
+			// 재생목록에 추가
+			if(successed.length > 0)
+				await db_update('Playlists', format('VideoList = JSON_MERGE_PRESERVE(VideoList, JSON_ARRAY({0}))', successed.map(x => x.Id).join(', ')), format('Id = {0}', playlist_id))
 
-				log('INFO', 'push_video - yt data', video_data)
+			// 출력 문자열 구성
+			var ret_str = ''
+			if(successed.length > 0)
+				ret_str += successed.map(x => format('[등록 성공] {0} ({1})', x.Name, parse_second_to_string(x.Length))).join('\n')
 
-				// 외부 재생 제한 영상의 경우
-				if(!video_data.embeddable)
-					throw {message: '외부 재생 제한 영상', err: '외부 재생이 제한된 영상입니다.'}
+			if(blocked.length > 0)
+				ret_str += blocked.map(x => format('[외부 재생 제한] {0} ({1})', x.Name, parse_second_to_string(x.Length))).join('\n')
 
-				// 1-2. Videos DB에 등록
-				// 1-3. insertId 가져오기
-				db_video_id = await db_insert('Videos', ['Name', 'VideoId', 'Length', 'Thumbnail'], [video_data.title, video_id, video_data.duration, video_data.thumbnail_url])
-								.then((ret) => ret.insertId)
-				video_title = video_data.title
-			}
+			if(failed.length > 0)
+				ret_str += failed.map(x => format('[조회 실패] {0}', x.VideoId)).join('\n')
 
-			// 2. Playlists DB에서 Id = data.playlist_id인 레코드의 list에 (1번의 Id)를 JSON_ARRAY_APPEND
-			await db_update('Playlists', format('VideoList = JSON_ARRAY_APPEND(VideoList, "$", {0})', db_video_id), format('Id = {0}', playlist_id))
-			// await db_query('UPDATE Playlists SET VideoList = JSON_ARRAY_APPEND(VideoList, "$", ' + db_video_id + ') WHERE Id = ' + playlist_id)
 
-			// 3. socket.emit('push_video_result', {isSuccess: true}) 실행
-			log('INFO', 'push_video_result', format('SUCCESS! VideoID. {0} -> Playlist. {1} ({2})', db_video_id, playlist_id, video_title) )
-			socket.emit('push_video_result', {isSuccess: true, message: video_title})
+			log('INFO', 'push_videos', format('SUCCESS! VideoID. [{0}] ({2}개) -> Playlist. {1}', successed.map(x => x.Id).join(', '), playlist_id, successed.length) )
+			socket.emit('push_video_result', {isSuccess: true, message: ret_str})
 			update_playlist(socket)
 		}
 		catch (exception)
 		{
-			log_exception('push_video', exception)
+			log_exception('push_videos', exception)
 			socket.emit('push_video_result', {isSuccess: false, message: '영상을 추가하는 중에 오류가 발생했습니다.\n' + exception.err})
 		}
-	})
+	}
+
+	/* VideoId의 DB Id를 반환 (없으면 추가) / return : {successed, failed (VideoId만 있음), blocked (Id만 없음)} */
+	async function get_video_index(video_id_list)
+	{
+		try
+		{
+			if(typeof(video_id_list) != 'object')
+			video_id_list = [video_id_list]
+
+			// [{VideoId: 'vQHVGXdcqEQ', Id: 0, Name: '', Length: 0}, { ... }, ...] 으로 변환
+			var ret_list = video_id_list.map( x => Object({VideoId: x, Id: 0, Name: '', Length: 0}) )
+
+			// 기존 DB에 등록된 애들은 Id 가져와서 적용
+			var select_ret = await db_select('Id, VideoId, Name, Length', 'Videos', format('VideoId In ({0})', video_id_list.map(x => format('\'{0}\'', x)).join(', ')))
+			Array.from(select_ret).forEach(x => {
+				var data = ret_list.find(f => f.VideoId == x.VideoId)
+				data.Id = x.Id
+				data.Name = x.Name
+				data.Length = x.Length
+			})
+
+			// DB에 없던 놈들은 모아서 DB에 등록 (병렬 Promise 사용)
+			async function put_video_to_db(video_id) {
+				// 1-1. youtube data request
+				var video_data = await request_youtube_video(video_id).then(parse_youtube_video_data).catch(() => false)
+				// var { tags, ...other_data } = video_data
+				
+				if(!video_data)
+					return
+
+				log('INFO', 'put_video_to_db - yt data', video_data.title)
+
+				var data = ret_list.find(f => f.VideoId == video_id)
+				data.Name = video_data.title
+				data.Length = video_data.duration
+
+				// 외부 재생 제한 영상의 경우
+				if(!video_data.embeddable)
+					return
+
+				// 1-2. Videos DB에 등록
+				// 1-3. insertId 가져오기
+				var inserted_id = await db_insert('Videos', ['Name', 'VideoId', 'Length', 'Thumbnail'], [video_data.title, video_id, video_data.duration, video_data.thumbnail_url])
+								.then((ret) => ret.insertId)
+				
+				data.Id = inserted_id
+			}
+			var to_register_videoId_list = ret_list.filter(e => !e.Id).map(e => e.VideoId) // ['vQHVGXdcqEQ', ...]
+			if(to_register_videoId_list.length > 0)
+			{
+				var promises = to_register_videoId_list.map( x => put_video_to_db(x) )
+				await Promise.all(promises)
+			}
+
+			return ret_list
+		}
+		catch (exception)
+		{
+			log_exception('get_video_index', exception)
+		}
+
+	}
+
 
 	/* 좋아요/싫어요 투표 신호 */
 	socket.on('rating', function(isGood) {
@@ -872,26 +937,14 @@ io.sockets.on('connection', function(socket)
 
 		socket.emit('dj_state', false)
 
-		if(g_current_dj == socket.name)
-			end_of_video()
+		// if(g_current_dj == socket.name)
+		// 	end_of_video()
 	})
 
 	/* 맥심 */
 	var imgReg = /window\.open\('\.(\/file\/\S+?)\'/
 	socket.on('maxim', function(no) {
 		io.sockets.emit('chat_update', { type: 'system_message', message: '맥심 막힘. ㅠㅠ' })
-		// if(!no)
-		// 	no = Math.floor(Math.random() * 236) + 1
-		// request(format('https://www.maximkorea.net/magdb/magdb_view.php?lib=M&number={0}', no))
-		// 	.then( ret => {
-		// 		ret = 'https://www.maximkorea.net/magdb' + imgReg.exec(ret)[1]
-		// 		io.sockets.emit('chat_update', { type: 'system_message', message: format('/img {0} 맥심 {1}호', ret, no) })
-		// 	})
-		// 	.catch( err => {
-		// 		console.log(err.stack)
-		// 		log('EXCEPTION', 'maxim', format('https://www.maximkorea.net/magdb/magdb_view.php?lib=M&number={0}', no))
-		// 		io.sockets.emit('chat_update', { type: 'system_message', message: format('맥심 {0}호 불러오기 실패', no) })
-		// 	})
 	})
 
 	var zzalReg = /<picture>.*?srcset="(https?\:\/\/(?:cdn|danbooru)\.donmai\.us\/(?:data\/)?(?:sample|original).*?)"/i
@@ -968,7 +1021,7 @@ io.sockets.on('connection', function(socket)
 	/* TEST: 영상 정보 요청 */
 	socket.on('request_video_info', async function(video_id) {
 		try {
-			var response_data = await request_youtube_data(video_id).then(parse_youtube_response_data)
+			var response_data = await request_youtube_video(video_id).then(parse_youtube_video_data)
 			log('INFO', 'request_video_info', response_data)
 		}
 		catch (exception)
@@ -1134,12 +1187,8 @@ async function end_of_video() {
 	}
 
 	// 모든 소켓들에게 dj 상태 갱신
-	console.log(format('users : [{0}]', Object.keys(g_users_dic).join(', ')))
 	for(var e in g_users_dic)
-	{
-		console.log(format('{0} in [{1}] : {2}', e, g_djs.join(', '), g_djs.includes(e)))
 		g_users_dic[e].socket.emit('dj_state', g_djs.includes(e))
-	}
 
 	// 모두에게 좋/싫 알림
 	update_current_rating(io.sockets)
@@ -1170,7 +1219,7 @@ function update_current_queue(dest_socket, is_on_demand = false)
 	var str = '플레이 대기열\n'
 	for(var e of g_queue)
 	{
-		str += format('{0}. {1} - {2} ({3})\n', g_queue.indexOf(e) + 1, e.dj, e.data.title, second_to_string(e.data.duration))
+		str += format('{0}. {1} - {2} ({3})\n', g_queue.indexOf(e) + 1, e.dj, e.data.title, parse_second_to_string(e.data.duration))
 	}
 
 	dest_socket.emit('chat_update', {type: 'system_message', time: GetTime(), message: str })
@@ -1234,7 +1283,7 @@ function set_timeout_end_of_video()
 	g_end_timer = setTimeout(end_of_video, (g_video_duration + 2) * 1000 - seek_time)
 }
 
-function second_to_string(sec) 
+function parse_second_to_string(sec) 
 {
 	sec = Math.round(sec)
 	var h = Math.floor(sec / 3600)
@@ -1262,7 +1311,7 @@ function shuffle(array) {
 /* ================================== QUERY =========================================*/
 
 /* 유튜브 영상 정보 조회 쿼리(Promise) */
-function request_youtube_data(video_id)
+function request_youtube_video(video_id)
 {
 	return new Promise(function(resolve, reject) {
 		var url = 'https://www.googleapis.com/youtube/v3/videos'
@@ -1273,13 +1322,13 @@ function request_youtube_data(video_id)
 		g_last_query = requestUrl
 		request(requestUrl, function(err, response, body) {
 			if(err)
-				reject({message: 'request_youtube_data(' + video_id + ')', err: err})
+				reject({message: 'request_youtube_video(' + video_id + ')', err: err, youtube_query_error: true})
 			else
 				resolve(JSON.parse(body))
 		})
 	})
 }
-function parse_youtube_response_data(query_result)
+function parse_youtube_video_data(query_result)
 {
 	var item = query_result.items[0]
 	var video_data = {
@@ -1287,10 +1336,32 @@ function parse_youtube_response_data(query_result)
 		thumbnail_url : item.snippet.thumbnails.medium.url,
 		duration : parse_duration_to_second(item.contentDetails.duration),
 		embeddable : item.status.embeddable,
+		tags : item.snippet.tags,
 	}
 	video_data.title = video_data.title.replace(/(\"|\')/g, '＂')
 
 	return video_data
+}
+function request_youtube_playlist(playlist_id, pageToken = '')
+{
+	return new Promise(function(resolve, reject) {
+		var url = 'https://www.googleapis.com/youtube/v3/playlistItems'
+		var key = 'AIzaSyARG5pgayIj8ghL0hwzrNL_3pl-QeRQYMc'
+		var part = 'contentDetails'
+		var maxResults = 50
+		var requestUrl = format('{0}?key={1}&part={2}&maxResults={3}&playlistId={4}&pageToken={5}', url, key, part, maxResults, playlist_id, pageToken)
+		g_last_query = requestUrl
+		request(requestUrl, function(err, response, body) {
+			err ? reject({message: 'request_youtube_playlist(' + playlist_id + ')', err: err}) : resolve(JSON.parse(body))
+		})
+	})
+}
+function parse_youtube_playlist_data(query_result)
+{
+	var ret_video_id_list = []
+	for(var item of query_result.items)
+		ret_video_id_list.push(item.contentDetails.videoId)
+	return {list: ret_video_id_list, nextPageToken: query_result.nextPageToken}
 }
 
 function db_select(columns, from, where, options = '')
