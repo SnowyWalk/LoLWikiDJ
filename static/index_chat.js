@@ -130,6 +130,7 @@ function send() {
 	if(message == '/?' || message == '/help')
 	{
 		add_system_message('명령어 목록 (대소문자 구분 X)\n' 
+							+ '/(p)lay {유튜브주소} : 해당 영상 대기열에 추가\n'
 							+ '/(q)ueue {유튜브주소} : 해당 영상 대기열에 추가\n'
 							+ '/q : 현재 영상 대기열 확인\n'
 							+ '/(l)ist : 참가자 목록 보기\n'
@@ -153,14 +154,14 @@ function send() {
 	}
 
 	// play url 테스트
-	// if(playReg.test(message))
-	// {
-	// 	var url = playReg.exec(message)[2]
-	// 	var video_id = youtube_url_parse(url)
+	if(playReg.test(message))
+	{
+		var url = playReg.exec(message)[2]
+		var video_id = youtube_url_parse(url)
 
-	// 	socket.emit('play', {dj: g_nick, video_id: video_id})
-	// 	return
-	// }
+		socket.emit('queue', {dj: g_nick, video_id: video_id})
+		return
+	}
 
 	if(queueReg.test(message))
 	{
