@@ -15,7 +15,7 @@ app.use(cors())
 /* express http 서버 생성 */
 const server = http.createServer(app)
 /* 생성된 서버를 socket.io에 바인딩 */
-const io = socket(server, {maxHttpBufferSize: 1e8, pingTimeout: 120 * 1000})
+const io = socket(server, {maxHttpBufferSize: 2e7, pingTimeout: 120 * 1000})
 /* os */
 const os = require('os')
 /* API 요청 모듈 불러오기 */
@@ -169,7 +169,7 @@ io.sockets.on('connection', function(socket)
 			var current_date = GetDate()
 
 			 // 기존 유저가 아니라면 등록
-			var is_exist_user = await db_select('COUNT(*) as cnt', 'Accounts', format('Name = "{0}"', socket.name), 'LIMIT 1')
+			var is_exist_user = await db_select('COUNT(*) as cnt', 'Accounts', format('Name LIKE "{0}"', socket.name), 'LIMIT 1')
 									.then(ret => ret[0].cnt > 0)
 			if(!is_exist_user)
 			{
@@ -226,7 +226,7 @@ io.sockets.on('connection', function(socket)
 			// 아이콘 ID 가져오기
 			var icon_id = 0
 			var icon_ver = 0
-			var select_icon = await db_select('Id, Ver', 'Icons', format('Name = "{0}"', socket.name), 'LIMIT 1')
+			var select_icon = await db_select('Id, Ver', 'Icons', format('Name LIKE "{0}"', socket.name), 'LIMIT 1')
 			if(select_icon.length == 0) // 아이콘 없으면 새로 만들기
 			{
 				icon_id = await db_insert('Icons', ['Name', 'Ver'], [socket.name, 1]).then(ret => ret.insertId)
@@ -520,7 +520,7 @@ io.sockets.on('connection', function(socket)
 			var new_playlist_id = await db_insert('Playlists', ['Name', 'VideoList'], ['새 재생목록', '[]']).then(ret => ret.insertId)
 			
 			// 유저의 현재 재생목록에 추가
-			await db_update('Accounts', format('Playlists = JSON_ARRAY_APPEND(Playlists, "$", {0})', new_playlist_id), format('Name = "{0}"', socket.name))
+			await db_update('Accounts', format('Playlists = JSON_ARRAY_APPEND(Playlists, "$", {0})', new_playlist_id), format('Name LIKE "{0}"', socket.name))
 
 			await db_commit()
 
@@ -544,7 +544,7 @@ io.sockets.on('connection', function(socket)
 
 		try
 		{
-			await db_update('Accounts', format('CurrentPlaylist = {0}', playlist_id), format('Name = "{0}"', socket.name))
+			await db_update('Accounts', format('CurrentPlaylist = {0}', playlist_id), format('Name LIKE "{0}"', socket.name))
 
 			update_playlist(socket)
 		}
@@ -562,7 +562,7 @@ io.sockets.on('connection', function(socket)
 		/* data : { name: 새이름, playlist_id: 변경할 재생목록 id } */
 		try
 		{
-			await db_update('Playlists', format('Name = "{0}"', data.name), format('Id = {0}', data.playlist_id))
+			await db_update('Playlists', format('Name LIKE "{0}"', data.name), format('Id = {0}', data.playlist_id))
 
 			update_playlist(socket)
 			log('INFO', 'rename_playlist', format('{0} 이(가) 재생목록명을 변경 -> {1}', socket.name, data.name))
@@ -580,10 +580,10 @@ io.sockets.on('connection', function(socket)
 		{
 			await db_beginTransaction()
 
-			var my_playlists = await db_select('Playlists', 'Accounts', format('Name="{0}"', socket.name), 'LIMIT 1').then(ret => ret[0].Playlists).then(JSON.parse)
+			var my_playlists = await db_select('Playlists', 'Accounts', format('Name LIKE "{0}"', socket.name), 'LIMIT 1').then(ret => ret[0].Playlists).then(JSON.parse)
 			my_playlists.splice(my_playlists.indexOf(playlist_id), 1)
 
-			await db_update('Accounts', format('Playlists = "{0}"', JSON.stringify(my_playlists)), format('Name = "{0}"', socket.name))
+			await db_update('Accounts', format('Playlists = "{0}"', JSON.stringify(my_playlists)), format('Name LIKE "{0}"', socket.name))
 			await db_update('Playlists', format('Deleted = "1"'), format('Id = "{0}"', playlist_id))
 
 			await db_commit()
@@ -989,7 +989,7 @@ io.sockets.on('connection', function(socket)
 				fs.writeFileSync(format('static/icon/{0}.png', g_users_dic[socket.name].icon_id), image_data)
 			}
 			
-			await db_update('Icons', 'Ver = Ver + 1', format('Name = "{0}"', socket.name))
+			await db_update('Icons', 'Ver = Ver + 1', format('Name LIKE "{0}"', socket.name))
 			g_users_dic[socket.name].icon_ver += 1
 			socket.emit('chat_update', {type: 'system_message', message: '아이콘이 변경되었습니다.'})
 		}
@@ -1141,7 +1141,7 @@ async function end_of_video() {
 			var this_dj = g_djs.splice(0, 1)[0] // 맨 앞 디제이 뽑음
 			g_djs.push(this_dj) // 맨 뒤에 다시 추가
 
-			var playlist_id = await db_select('CurrentPlaylist', 'Accounts', format('Name = "{0}"', this_dj), 'LIMIT 1').then(ret => ret[0].CurrentPlaylist)
+			var playlist_id = await db_select('CurrentPlaylist', 'Accounts', format('Name LIKE "{0}"', this_dj), 'LIMIT 1').then(ret => ret[0].CurrentPlaylist)
 			var video_list = await db_select('VideoList', 'Playlists', format('Id = {0}', playlist_id), 'LIMIT 1').then(ret => ret[0].VideoList).then(JSON.parse)
 			var first_video_id = video_list.splice(0, 1)[0]
 			video_list.push(first_video_id)
@@ -1238,7 +1238,7 @@ async function update_playlist(socket)
 	try
 	{
 		// 해당 계정의 재생목록ID 전체를 가져옴
-		var acccount_data = await db_select('Playlists, CurrentPlaylist', 'Accounts', format('Name = "{0}"', socket.name), 'LIMIT 1').then( (ret) => ret[0] )
+		var acccount_data = await db_select('Playlists, CurrentPlaylist', 'Accounts', format('Name LIKE "{0}"', socket.name), 'LIMIT 1').then( (ret) => ret[0] )
 		var current_playlist = JSON.parse(acccount_data.CurrentPlaylist)
 		var playlist_id_list = JSON.parse(acccount_data.Playlists)
 
