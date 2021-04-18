@@ -285,10 +285,10 @@ io.sockets.on('connection', function(socket)
 	/* 새로운 유저가 접속했을 경우 다른 소켓에게도 알려줌 */
 	socket.on('chat_newUser', function() 
 	{
-		log('INFO', 'chat_newUser', format('{0} 님이 접속하였습니다.', socket.name))		
+		log('INFO', 'chat_newUser', format('\'{0}\' 님이 접속하였습니다.', socket.name))		
 
 		// 모든 소켓에게 전송 
-		io.sockets.emit('chat_update', {type: 'connect', name: 'SERVER', message: format('{0} 님이 접속하였습니다.', socket.name) })
+		io.sockets.emit('chat_update', {type: 'connect', name: 'SERVER', message: format('\'{0}\' 님이 접속하였습니다.', socket.name) })
 		socket.emit('users', { data: format('참가자 목록 ({0})\n{1}', Object.keys(g_users_dic).length, Object.keys(g_users_dic).join(', ')) })
 	})
 
@@ -319,7 +319,7 @@ io.sockets.on('connection', function(socket)
 		if(!socket.name)
 			return
 
-		log('INFO', 'disconnect', socket.name + '님이 나가셨습니다.')
+		log('INFO', 'disconnect', format('\'{0}\' 님이 나가셨습니다.', socket.name))
 
 		if(socket.name in g_users_dic)
 			delete g_users_dic[socket.name]
@@ -333,7 +333,7 @@ io.sockets.on('connection', function(socket)
 			end_of_video()
 
 		// 나가는 사람을 제외한 나머지 유저에게 메시지 전송
-		socket.broadcast.emit('chat_update', {type: 'disconnect', message: socket.name + '님이 나가셨습니다.'});
+		socket.broadcast.emit('chat_update', {type: 'disconnect', message: format('\'{0}\' 님이 나가셨습니다.', socket.name)});
 	})
 
 	/* TEST: QUEUE에 비디오 추가 */
@@ -562,7 +562,7 @@ io.sockets.on('connection', function(socket)
 		/* data : { name: 새이름, playlist_id: 변경할 재생목록 id } */
 		try
 		{
-			await db_update('Playlists', format('Name LIKE "{0}"', data.name), format('Id = {0}', data.playlist_id))
+			await db_update('Playlists', format('Name = "{0}"', data.name), format('Id = {0}', data.playlist_id))
 
 			update_playlist(socket)
 			log('INFO', 'rename_playlist', format('{0} 이(가) 재생목록명을 변경 -> {1}', socket.name, data.name))
