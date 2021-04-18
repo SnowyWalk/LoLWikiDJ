@@ -10,6 +10,7 @@ function login()
 		login_button.style.display = 'block'
 		return
 	}
+	g_nick = g_nick.substr(0, 32)
 
 	console.log('window에서 login')
 	socket.emit('login', g_nick)
