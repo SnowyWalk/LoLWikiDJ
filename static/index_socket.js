@@ -66,7 +66,9 @@ socket.on('login', function(isSuccess) {
 						+ '★ 0. Lily(샤르프로젝트) 님 ★\n' 
 						+ '1. 랠래 님\n'
 						+ '2. 노통 님\n'
-						+ '3. 고냥이지 님', 'yellow')
+						+ '3. 고냥이지 님\n'
+						+ '4. 디아 님\n'
+						+ '후원 계좌 : 기업 539-028793-01-012 박*준', 'yellow')
 	add_system_message('명령어 목록은 /? 을 입력해 볼 수 있습니다.')
 
 	socket.emit('chat_newUser')
