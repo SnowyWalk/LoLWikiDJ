@@ -64,6 +64,7 @@ var g_users_dic = [] // dic['닉네임'] = { socket: 소켓, icon_id: 아이콘 
 var g_current_dj = ''
 var g_video_id = ''
 var g_video_title = ''
+var g_video_thumbnail = ''
 var g_video_duration = 0
 var g_played_time_ms = 0 // ms
 var g_end_timer = null
@@ -348,6 +349,8 @@ io.sockets.on('connection', function(socket)
 		try
 		{
 			var youtube_data = await request_youtube_video(data.video_id).then(parse_youtube_video_data)
+
+			log('INFO', 'queue', format('{0} 이(가) {1} ({2}) 예약 {3}', socket.name, youtube_data.title, parse_duration_to_second(youtube_data.duration), data.video_id))
 			
 			if(!g_video_id)
 			{
@@ -355,6 +358,7 @@ io.sockets.on('connection', function(socket)
 				g_current_dj = data.dj
 				g_video_id = data.video_id
 				g_video_title = youtube_data.title
+				g_video_thumbnail = youtube_data.thumbnail_url
 				g_video_duration = youtube_data.duration
 				g_played_time_ms = Date.now()
 	
@@ -416,6 +420,7 @@ io.sockets.on('connection', function(socket)
 			g_current_dj = data.dj
 			g_video_id = data.video_id
 			g_video_title = response_data.title
+			g_video_thumbnail = response_data.thumbnail_url
 			g_video_duration = response_data.duration
 			g_played_time_ms = Date.now()
 
@@ -485,12 +490,14 @@ io.sockets.on('connection', function(socket)
 		if(!socket.name)
 			return
 
+		io.sockets.emit('chat_update', { type: 'system_message', message: '영상이 스킵 되었습니다.', time: GetTime()});
 		log('INFO', 'socket.skip', 'skipped on demand.')
 		end_of_video()
 	})
 
 	/* 참가자 목록 요청 */
 	socket.on('users', function() {
+		log('INFO', 'users', format('참가자 목록 ({0})\n{1}', Object.keys(g_users_dic).length, Object.keys(g_users_dic).map( x => format('{0} ({1})', x, g_users_dic[x].ip)).join(', ')))
 		socket.emit('users', {data: format('참가자 목록 ({0})\n{1}', Object.keys(g_users_dic).length, Object.keys(g_users_dic).join(', ')) })  
 	})
 
@@ -1118,6 +1125,7 @@ async function end_of_video() {
 			return end_of_video()
 		}
 		g_video_id = next_queue_data.video_id
+		g_video_thumbnail = next_queue_data.data.thumbnail_url
 		g_video_duration = next_queue_data.data.duration
 		g_video_title = next_queue_data.data.title
 		g_played_time_ms = Date.now()
@@ -1145,13 +1153,14 @@ async function end_of_video() {
 			var video_list = await db_select('VideoList', 'Playlists', format('Id = {0}', playlist_id), 'LIMIT 1').then(ret => ret[0].VideoList).then(JSON.parse)
 			var first_video_id = video_list.splice(0, 1)[0]
 			video_list.push(first_video_id)
-			var video_info = await db_select('Id, Name, VideoId, Length', 'Videos', format('Id = {0}', first_video_id), 'LIMIT 1').then(ret => ret[0])
+			var video_info = await db_select('Id, Name, VideoId, Length, Thumbnail', 'Videos', format('Id = {0}', first_video_id), 'LIMIT 1').then(ret => ret[0])
 			
 			// 재생목록의 영상 순서 순환
 			await db_update('Playlists', format('VideoList = "{0}"', JSON.stringify(video_list)), format('Id = {0}', playlist_id))
 
 			g_current_dj = this_dj
 			g_video_id = video_info.VideoId
+			g_video_thumbnail = video_info.Thumbnail
 			g_video_duration = video_info.Length
 			g_video_title = video_info.Name
 			g_played_time_ms = Date.now()
@@ -1181,6 +1190,7 @@ async function end_of_video() {
 	{
 		g_current_dj = ''
 		g_video_id = ''
+		g_video_thumbnail = ''
 		g_video_duration = 0
 		g_video_title = ''
 		io.sockets.emit('update_current_video', null)
@@ -1202,6 +1212,7 @@ function update_current_video(dest_socket)
 		video_id: g_video_id,
 		title: g_video_title,
 		duration: g_video_duration,
+		thumbnail: g_video_thumbnail,
 		seek_s: g_video_duration > 0 ? ((Date.now() - g_played_time_ms - 1000) / 1000) : 999999999
 	})
 }
@@ -1212,17 +1223,14 @@ function update_current_queue(dest_socket, is_on_demand = false)
 	if(g_queue.length == 0)
 	{
 		if(is_on_demand)
-			dest_socket.emit('chat_update', {type: 'system_message', time: GetTime(), message: '플레이 대기열 없음' })
+			dest_socket.emit('chat_update', {type: 'system_message', time: GetTime(), message: '플레이 대기열 없음', bg: '#39e065' })
 		return
 	}
 
-	var str = '플레이 대기열\n'
-	for(var e of g_queue)
-	{
-		str += format('{0}. {1} - {2} ({3})\n', g_queue.indexOf(e) + 1, e.dj, e.data.title, parse_second_to_string(e.data.duration))
-	}
+	var str = '플레이 대기열\n\n'
+	str += g_queue.map( (x, i) => format('{0}. {1} - {2} ({3})', i+1, x.dj, x.data.title, parse_second_to_string(x.data.duration))).join('\n\n')
 
-	dest_socket.emit('chat_update', {type: 'system_message', time: GetTime(), message: str })
+	dest_socket.emit('chat_update', {type: 'system_message', time: GetTime(), message: str, bg: '#39e065'})
 }
 
 /* 좋아요/싫어요 알림 */

@@ -7,7 +7,6 @@ function add_message(data)
 {
 	var message = document.createElement('div')
 	
-
 	var text = ''
 	var nick = ''
 	var className = ''
@@ -94,10 +93,47 @@ function add_message(data)
 
 	scrollDown()
 }
+
 /* 채팅창에 시스템 메시지 추가 함수 */
 function add_system_message(message, bg = '')
 {
 	add_message({type: 'system_message', message: message, bg: bg})
+}
+
+/* 현재 플레이영상 전용 메시지 추가 함수 */
+function add_play_message(data)
+{
+	var base = document.createElement('div')
+	base.classList.add('system_message')
+	base.classList.add('chat')
+	base.classList.add('play_info')
+
+	var img = document.createElement('img')
+	img.onload = scrollDown
+	img.src = data.thumbnail
+	img.setAttribute('video_id', data.video_id)
+	img.onclick = onclick_play_data
+	base.appendChild(img)
+
+	var dj = document.createElement('div')
+	dj.classList.add('play_info_dj')
+	dj.appendChild(document.createTextNode(format('DJ : {0}', data.dj)))
+	base.appendChild(dj)
+
+	var title = document.createElement('div')
+	title.classList.add('play_info_title')
+	title.appendChild(document.createTextNode(format('제목 : {0} ({1})', data.title, second_to_string(data.duration))))
+	base.appendChild(title)
+
+	chat.appendChild(base)
+
+	scrollDown()
+}
+
+function onclick_play_data()
+{
+	var thisElement = event.target
+	copyToClipboard('https://www.youtube.com/watch?v=' + thisElement.getAttribute('video_id'))
 }
 
 

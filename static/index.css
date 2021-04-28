@@ -316,6 +316,7 @@ body {
   background-color: aquamarine;
   text-align: center;
   margin-top: 10px;
+  font-family: 'Dovemayo';
 }
 
 /* 접속 종료 알림 */
@@ -325,6 +326,7 @@ body {
   background-color: indianred;
   text-align: center;
   margin-top: 10px;
+  font-family: 'Dovemayo';
 }
 
 /* 내가 보낸 메시지 */
@@ -349,11 +351,14 @@ body {
 
 /* 시스템 메시지 */
 .system_message {
-  width: 100%;
+  width: 90%;
+  padding-left: 2.5%;
+  padding-right: 2.5%;
   margin: auto;
   background-color: rgb(160, 224, 57);
   text-align: center;
   margin-top: 10px;
+  font-family: 'Dovemayo';
 }
 
 .chat {
@@ -379,6 +384,27 @@ body {
   padding-top: 0px;
   float: left;
   border-radius: 30%;
+}
+
+.system_message.play_info {
+  padding-top: 7px;
+  text-align: center;
+  overflow-y: auto;
+  border-radius: 3%;
+}
+
+.play_info > img {
+  width: 100%;
+  margin-bottom: 5px;
+  cursor: pointer;
+}
+
+.play_info > .play_info_dj {
+  padding-top: 2px;
+}
+
+.play_info > .play_info_title {
+  padding-top: 2px;
 }
 
 /* =================== 플레이리스트 컨트롤 패널 ========================= */

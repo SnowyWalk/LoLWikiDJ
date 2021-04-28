@@ -66,7 +66,7 @@ function resize() {
 	block_video.style.height = (window_height - bottom_height)
 	block_video.style.lineHeight = (window_height - bottom_height) + 'px'
 	
-	if(!player || !g_current_video_id)
+	if(!g_current_video_id)
 		block_video.style.display = 'block'
 	else
 		block_video.style.display = 'none'
@@ -296,7 +296,7 @@ function select_playlist_button(playlist_id)
 		img.src = thisData.Thumbnail
 		img.innerText = format('{0} ({1})', thisData.Name, second_to_string(thisData.Length))
 		img.setAttribute('videoId', thisData.VideoId)
-		img.onclick = _ => window.open(format('https://www.youtube.com/watch?v={0}', event.target.getAttribute('videoId')))
+		img.onclick = _ => copyToClipboard(format('https://www.youtube.com/watch?v={0}', event.target.getAttribute('videoId')))
 		div.appendChild(img)
 
 		// 영상 이름 텍스트 생성 후 추가

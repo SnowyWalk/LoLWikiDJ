@@ -54,8 +54,8 @@ app.use('/icon', express.static('./static/icon'))
 
 
 /* 공지말 */
-var g_port = 8081
-var g_notice = '여기는 8081 음악 감상 채널 입니당'
+var g_port = 1557
+var g_notice = '여기는 1557 눈물 전용 채널입니당\n(슬픈 영상만 허용)'
 
 /* 유저 목록 */
 var g_users_dic = [] // dic['닉네임'] = { socket: 소켓, icon_id: 아이콘 아이디, icon_ver: 아이콘 버전  }
