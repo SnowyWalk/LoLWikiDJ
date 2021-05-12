@@ -1,6 +1,6 @@
 /* 공지말 */
-var g_port = 8081
-var g_notice = '여기는 8081 음악 감상 채널 입니당'
+var g_port = 49415
+var g_notice = '서버 개설일자: 2021-05-12\n소유자: 두림\n판매가: 500원'
 
 /* 설치한 express 모듈 불러오기 */
 const express = require('express')

@@ -73,8 +73,14 @@ function format()
 	return arguments[0].replace (/\{(\d+)\}/g, function (match, index) { return args[index]; }); 
 }
 
-function scrollDown(isForce = false)
+function scrollDown()
 {
-	if(chat.scrollHeight - (chat.scrollTop + chat.clientHeight) < chat.clientHeight || isForce)
-		chat.scrollTop = chat.scrollHeight
+	chat.scrollTop = chat.scrollHeight
+}
+
+function is_scroll_bottom(offset = 0)
+{
+	if(offset > 0)
+		console.log(offset, chat.scrollHeight-chat.scrollTop, chat.clientHeight+offset, chat.scrollHeight-chat.scrollTop <= chat.clientHeight+offset ? 'bottom' : 'scrolled')
+	return chat.scrollHeight-chat.scrollTop <= chat.clientHeight+offset+20
 }

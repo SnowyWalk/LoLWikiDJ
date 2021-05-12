@@ -1,10 +1,20 @@
 var g_last_chat = ''
+var mute_list = []
+var ping_time = 0
 
 /* 채팅창에 메시지 추가 함수 */
 var imgReg = /\/img (\S+)/i
 var byteReg = /[\da-zA-Z-_=\|\/\*-\+\.`~'\/,\!@#\$%\^\&\(\)\[\] "]/i
 function add_message(data) 
 {
+	if(data.name && mute_list.indexOf(data.name) >= 0)
+	{
+		console.log(format('[{0}] {1} : {2}', data.time, data.name, data.message))
+		return
+	}
+
+	var need_scroll = is_scroll_bottom()
+
 	var message = document.createElement('div')
 	
 	var text = ''
@@ -33,6 +43,9 @@ function add_message(data)
 			var nick_img = document.createElement('img')
 			nick_img.classList.add('chat_profile')
 			nick_img.src = format('icon/{0}.png?ver={1}', data.icon_id, data.icon_ver)
+			nick_img.onmouseenter = image_onmouseenter
+			nick_img.onmouseout = image_onmouseout
+			nick_img.onmousemove = image_onmousemove
 			var font = document.createElement('font')
 			if(data.name == g_nick)
 			{
@@ -77,8 +90,12 @@ function add_message(data)
 		var img = document.createElement('img')
 		img.classList.add('chat_img')
 		img.src = img_url
+		img.onmouseenter = image_onmouseenter
+		img.onmouseout = image_onmouseout
+		img.onmousemove = image_onmousemove
 		img.onerror = function() { img.style.height = '0px'; }
-		img.onload = scrollDown
+		if(need_scroll)
+			img.onload = scrollDown
 		text = text.replace(imgReg, '')
 	}
 
@@ -91,28 +108,37 @@ function add_message(data)
 	if(data.bg)
 		message.style.backgroundColor = data.bg
 
-	scrollDown()
+	if(need_scroll)
+		scrollDown()
+
+	return message
 }
 
 /* 채팅창에 시스템 메시지 추가 함수 */
 function add_system_message(message, bg = '')
 {
-	add_message({type: 'system_message', message: message, bg: bg})
+	return add_message({type: 'system_message', message: message, bg: bg})
 }
 
 /* 현재 플레이영상 전용 메시지 추가 함수 */
 function add_play_message(data)
 {
+	var need_scroll = is_scroll_bottom()
+
 	var base = document.createElement('div')
 	base.classList.add('system_message')
 	base.classList.add('chat')
 	base.classList.add('play_info')
 
 	var img = document.createElement('img')
-	img.onload = scrollDown
+	if(need_scroll)
+		img.onload = scrollDown
 	img.src = data.thumbnail
 	img.setAttribute('video_id', data.video_id)
 	img.onclick = onclick_play_data
+	img.onmouseenter = image_onmouseenter
+	img.onmouseout = image_onmouseout
+	img.onmousemove = image_onmousemove
 	base.appendChild(img)
 
 	var dj = document.createElement('div')
@@ -127,7 +153,10 @@ function add_play_message(data)
 
 	chat.appendChild(base)
 
-	scrollDown()
+	if(need_scroll)
+		scrollDown()
+
+	return base
 }
 
 function onclick_play_data()
@@ -148,6 +177,7 @@ var pushReg = /^\/push (\S+) (\d+)/i
 var queryReg = /^\/query (.+)/i
 var zzalReg = /^\/짤 (.+)/i
 var iconReg = /^\/icon (.+)/i
+var muteReg = /^\/mute (.+)/i
 function send() {
 	if(!g_isLogin)
 		return
@@ -178,7 +208,9 @@ function send() {
 							+ '/짤 {검색어} : 랜덤 이미지 (단부루)\n'
 							+ '/img  {이미지주소} : 이미지 채팅\n'
 							+ '{채팅창에 이미지 붙여넣기(Ctrl+v)} : 이미지 채팅\n'
-							+ '/아이콘변경법 : 아이콘 변경 안내'
+							+ '/아이콘변경법 : 아이콘 변경 안내\n'
+							+ '/ping : 서버 핑 확인\n'
+							+ '/clear : 채팅창 정리'
 							)
 		return
 	}
@@ -278,6 +310,33 @@ function send() {
 		socket.emit('request_video_info', video_id)
 	}
 
+	if(muteReg.test(message))
+	{
+		var nick = muteReg.exec(message)[1]
+		if(nick == '설보')
+		{
+			add_system_message('어허~\n그러면 안댕~\n설보를 뮤트하면 죽여버릴지도 모르샤~ /img static/good.png')
+			return
+		}
+		mute_list.push(nick)
+		add_system_message(format('\'{0}\' 님을 차단했습니다.\n\n-차단 목록-\n{1}', nick, mute_list.join('\n')))
+		return
+	}
+
+	if(message == '/ping' || message == '/PING')
+	{
+		ping_time = Date.now()
+		socket.emit('ping')
+		return
+	}
+
+	if(message == '/clear' || message == '/CLEAR')
+	{
+		while(chat.hasChildNodes())
+			chat.removeChild(chat.lastChild)
+		return
+	}
+
 	if(message == '/맥심')
 	{
 		socket.emit('maxim')
@@ -312,7 +371,7 @@ function send() {
 
 	// 서버로 message 이벤트 전달 + 데이터와 함께
 	socket.emit('chat_message', { type: 'message', message: message })
-	scrollDown(true)
+	scrollDown()
 }
 
 
@@ -322,7 +381,6 @@ function chat_keydown() {
 		send()
 	else if(window.event.keyCode == 38 && g_last_chat)
 		chat_input.value = g_last_chat
-
 }
 
 /* 채팅창 이미지 붙여넣기 이벤트 */
@@ -342,7 +400,45 @@ function chat_onpaste() {
 			socket.emit('icon_register', ret)
 		else
 			socket.emit('chat_message', { type: 'message', message: format('/img {0}', ret) })
-		scrollDown(true)
+		scrollDown()
 	}
 	reader.readAsDataURL(blob)
+}
+
+function chat_scroll() {
+	var to = is_scroll_bottom() ? 'none' : 'inline'
+	if(chat_scroller.style.display != to)
+		chat_scroller.style.display = to
+}
+
+
+function image_onmouseenter()
+{
+	image_expander.style.display = 'block'
+	image_expander_src.src = event.target.src
+	image_expander_set_pos(event.clientX, event.clientY)
+}
+
+function image_onmouseout()
+{
+	image_expander.style.display = 'none'
+	image_expander_src.src = ''
+}
+
+function image_onmousemove()
+{
+	image_expander_set_pos(event.clientX, event.clientY)
+}
+
+function image_expander_set_pos(x, y)
+{
+	x -= image_expander.clientWidth + 25 // border 1px라서 최소 3
+	y -= image_expander.clientHeight + 25 // border 1px라서 최소 3
+	if(x < 0)
+		x = 0
+	if(y < 0)
+		y = 0
+
+	image_expander.style.left = x
+	image_expander.style.top = y
 }

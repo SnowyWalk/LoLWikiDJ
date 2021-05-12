@@ -45,6 +45,7 @@ window.onload = function() {
 	if(g_isConnected && !g_isLogin)
 	{
 		login_bg.style.display = 'block'
+		login_port.style.display = 'block'
 		login_id.style.display = 'block'
 		login_pw.style.display = 'block'
 		login_button.style.display = 'block'

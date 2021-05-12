@@ -41,7 +41,10 @@ function resize() {
 
 	/* 로그인 창 */
 	login_bg.style.left = (window_width - login_bg.clientWidth) / 2
-	login_bg.style.top = (window_height - login_bg.clientHeight) / 2
+	login_bg.style.top = (window_height - login_bg.clientHeight) / 2 - 30
+
+	login_port.style.left = (window_width - login_bg.clientWidth) / 2 + 4
+	login_port.style.top = (window_height - login_bg.clientHeight) / 2 - 30 + 4
 
 	login_id.style.left = (window_width - login_bg.clientWidth) / 2 + 13
 	login_id.style.top = window_height / 2 - login_id.clientHeight - 7.5
@@ -106,6 +109,10 @@ function resize() {
 	/* 플레이리스트 패널 */
 	if(g_show_playlist_control_panel)
 		control_panel_resize()
+
+	/* 이미지 돋보기 */
+	image_expander_src.style.maxWidth = window_width - mainchat.clientWidth
+	image_expander_src.style.maxHeight = window_height
 }
 
 /* UI 리사이즈 - 컨트롤 패널만 */

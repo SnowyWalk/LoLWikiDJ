@@ -4,6 +4,8 @@
 <head>
   <meta charset="UTF-8">
 
+  <script data-ad-client="ca-pub-7542030194414681" async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+
   <link rel="preload" href="$_localhost/static/bg.jpg" as="image">
   <link rel="shortcut icon" href="$_localhost/static/favicon.ico" type="image/x-icon">
   <link rel="stylesheet" href="$_localhost/static/index.css?ver=$_version">
@@ -23,6 +25,30 @@
           url('/fonts/nanum-gothic-v17-latin_korean-regular.ttf') format('truetype'), /* Safari, Android, iOS */
           url('/fonts/nanum-gothic-v17-latin_korean-regular.svg#NanumGothic') format('svg'); /* Legacy iOS */
     }
+
+    @font-face {
+      font-family: 'Dovemayo';
+      src: url('/fonts/Dovemayo-Medium.eot');
+      src: url('/fonts/Dovemayo-Medium.eot?#iefix') format('embedded-opentype'),
+          url('/fonts/Dovemayo-Medium.svg#Dovemayo-Medium') format('svg'),
+          url('/fonts/Dovemayo-Medium.ttf') format('truetype'),
+          url('/fonts/Dovemayo-Medium.woff') format('woff'),
+          url('/fonts/Dovemayo-Medium.woff2') format('woff2');
+      font-weight: normal;
+      font-style: normal;
+    }
+
+    @font-face {
+      font-family: 'Dovemayo';
+      src: url('/fonts/Dovemayo-Bold.eot');
+      src: url('/fonts/Dovemayo-Bold.eot?#iefix') format('embedded-opentype'),
+          url('/fonts/Dovemayo-Bold.svg#Dovemayo-Bold') format('svg'),
+          url('/fonts/Dovemayo-Bold.ttf') format('truetype'),
+          url('/fonts/Dovemayo-Bold.woff') format('woff'),
+          url('/fonts/Dovemayo-Bold.woff2') format('woff2');
+      font-weight: bold;
+      font-style: normal;
+    }
   </style>
 
 </head>
@@ -32,6 +58,7 @@
  <!-- 초기화 전 전체블록 -->
   <div id="init_block" style="background-image: url('$_localhost/static/bg.jpg')">
     <div id="login_bg"></div>
+    <div id="login_port">$_port</div>
     <input type="text" id="login_id" placeholder="닉네임" onkeydown="login_keydown()">
     <input type="text" id="login_pw" placeholder="PW (미구현)" onkeydown="login_keydown()" disabled>
     <div id="login_button" class="nanum bold" onclick="login()">Login</div>
@@ -39,12 +66,14 @@
 
   <!-- 채팅 메시지 영역 -->
   <div id="mainchat">
-    <div id="chat">
+    <div id="chat" onscroll="chat_scroll()">
     </div>
     <div>
       <input type="text" id="chat_input" onpaste="chat_onpaste()" onkeydown="chat_keydown()" placeholder="메시지를 입력해주세요..">
       <button id="chat_send" onclick="send()">전송</button>
     </div>
+    <div id="chat_scroller" onclick="scrollDown()">스크롤해서 채팅이 멈췄습니다.</div> 
+    <div id="image_expander"><img id="image_expander_src"></div>
   </div>
 
   <!-- 좌하단 재생목록 정보 -->
@@ -66,6 +95,19 @@
   <!-- 영상 플레이어 -->
   <div id="block_video">재생 중인 영상이 없습니다.</div>
   <div id="video_player"></div>
+
+  <!-- 영상 위 광고 -->
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+  <!-- square_Ad -->
+  <ins class="adsbygoogle"
+      style="display:block"
+      data-ad-client="ca-pub-7542030194414681"
+      data-ad-slot="1386231453"
+      data-ad-format="auto"
+      data-full-width-responsive="true"></ins>
+  <script>
+      (adsbygoogle = window.adsbygoogle || []).push({});
+  </script>
 
   <!-- 우하단 기타  -->
   <div id="etc_box">

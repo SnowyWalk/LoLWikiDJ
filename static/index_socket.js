@@ -13,6 +13,7 @@ socket.on('connect', function () {
 	if(g_isWindowLoaded)
 	{
 		login_bg.style.display = 'block'
+		login_port.style.display = 'block'
 		login_id.style.display = 'block'
 		login_pw.style.display = 'block'
 		login_button.style.display = 'block'
@@ -54,6 +55,7 @@ socket.on('login', function(isSuccess) {
 	init_block.style.opacity = 1
 	disappear_login_scene()
 	login_bg.style.display = 'none'
+	login_port.style.display = 'none'
 	login_id.style.display = 'none'
 	login_pw.style.display = 'none'
 	login_button.style.display = 'none'
@@ -66,6 +68,7 @@ socket.on('login', function(isSuccess) {
 						+ '4. 디아 님\n'
 						+ '후원 계좌 : 기업 539-028793-01-012 박*준', 'yellow')
 	add_system_message('명령어 목록은 /? 을 입력해 볼 수 있습니다.')
+	add_system_message('패치 노트 보기 (클릭)', 'chartreuse').onclick = _ => window.open('/patch_note', '패치 노트')
 
 	socket.emit('chat_newUser')
 
@@ -148,6 +151,12 @@ socket.on('dj_state', function(isDJing) {
 	g_is_djing = isDJing
 
 	update_dj_state()
+})
+
+socket.on('ping', function () {
+	var elapsed_time =  Date.now() - ping_time
+	// add_system_message(format('Ping : {0}ms', elapsed_time))
+	socket.emit('chat_message', { type: 'message', message: format('# Ping Test : {0}ms', elapsed_time) })
 })
 
 socket.on('data', function(data) {

@@ -1,6 +1,6 @@
 /* 공지말 */
-var g_port = 8081
-var g_notice = '여기는 8081 음악 감상 채널 입니당'
+var g_port = 1224
+var g_notice = '/img static/1.png'
 
 /* 설치한 express 모듈 불러오기 */
 const express = require('express')

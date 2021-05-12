@@ -1,3 +1,7 @@
+/* 공지말 */
+var g_port = 8080
+var g_notice = '2021-05-10\n- 패치노트 적용\n- 유튜브 썸네일 고화질로 변경\n- 로그인 화면에 현재 서버(포트번호) 표시'
+
 /* 설치한 express 모듈 불러오기 */
 const express = require('express')
 /* 설치한 socket.io 모듈 불러오기 */
@@ -24,6 +28,9 @@ const request = require('request-promise-native')
 require('date-utils')
 /* 아이콘 만들기 유틸*/
 const identicon = require('identicon') 
+/* MD 뷰어 */
+var showdown  = require('showdown')
+var converter = new showdown.Converter()
 /* mysql 서버 */
 const mysql = require('mysql')
 var db_config = JSON.parse(fs.readFileSync('db_config.txt', 'utf-8'))
@@ -49,13 +56,6 @@ handleDisconnect();
 app.use('/fonts', express.static('./static/fonts'))
 app.use('/static', express.static('./static'))
 app.use('/icon', express.static('./static/icon'))
-// app.use('/js', express.static('./static/js'))
-// app.use('/fonts', express.static('./static/fonts'))
-
-
-/* 공지말 */
-var g_port = 8080
-var g_notice = '-04.14 신기능-\n영상 추가버튼(+)을 우클릭하면 재생목록째로 추가 가능'
 
 /* 유저 목록 */
 var g_users_dic = [] // dic['닉네임'] = { socket: 소켓, icon_id: 아이콘 아이디, icon_ver: 아이콘 버전  }
@@ -96,6 +96,7 @@ app.get('/', async function(request, response, next) {
 		var data = await read_file_async('dj.html')
 		var text = data.toString()
 					.replace(/\$_localhost/g, 'http://' + request.headers.host.substr(0, request.headers.host.length-5))
+					.replace(/\$_port/g, g_port)
 
 		for(var e of text.match(/\/[^\/]*?\$_version/g))
 		{
@@ -118,6 +119,28 @@ app.get('/', async function(request, response, next) {
 	}
 })
 
+app.get('/patch_note', async function(request, response, next) {
+	if(!request.headers.host) // 봇 쳐내
+		return
+
+	try
+	{
+		var data = await read_file_async('readme.md')
+		var text = data.toString()
+		var html = converter.makeHtml(text)
+		html = '<meta charset="UTF-8"><style> * { font-weight: normal; margin-block: 0.3em; }</style>' + html
+
+		response.writeHead(200, {'Content-Type':'text/html'})
+		response.write(html)
+		response.end()
+	}
+	catch (exception)
+	{
+		log_exception('app.get patch_note', exception)
+		response.send('서버가 고장남!!! Kakao ID: AnsanSuperstar 로 문의하세요' + '<p><p>에러 내용 : <p>' + format('<p>Name : {0}<p>ERROR : {1}<p>Message : {2}<p>Stack : {3}', exception.name, exception.err, exception.message, exception.stack))
+	}
+})
+
 function stat_file_async(file_name)
 {
 	return new Promise(function (resolve, reject) {
@@ -130,7 +153,7 @@ function stat_file_async(file_name)
 function read_file_async(file_name)
 {
 	return new Promise(function (resolve, reject) {
-		fs.readFile(file_name, function(err, data) {
+		fs.readFile(file_name, 'utf8', function(err, data) {
 			err ? reject(err) : resolve(data)
 		})
 	})
@@ -298,6 +321,12 @@ io.sockets.on('connection', function(socket)
 	{
 		if(!socket.name)
 			return
+
+		if(!g_users_dic[socket.name])
+		{
+			log_exception('chat_message', null, g_users_dic[socket.name])
+			return
+		}
 			
 		/* 받은 데이터에 누가 보냈는지 이름을 추가 */
 		data.name = socket.name
@@ -350,7 +379,7 @@ io.sockets.on('connection', function(socket)
 		{
 			var youtube_data = await request_youtube_video(data.video_id).then(parse_youtube_video_data)
 
-			log('INFO', 'queue', format('{0} 이(가) {1} ({2}) 예약 {3}', socket.name, youtube_data.title, parse_duration_to_second(youtube_data.duration), data.video_id))
+			log('INFO', 'queue', format('{0} 이(가) {1} ({2}) 예약 {3}', socket.name, youtube_data.title, parse_second_to_string(youtube_data.duration), data.video_id))
 			
 			if(!g_video_id)
 			{
@@ -757,18 +786,26 @@ io.sockets.on('connection', function(socket)
 
 		if(!socket.name)
 			return
-		var video_list = []
-		var nextPageToken = ''
-		while(true)
+		try
 		{
-			var request_ret = await request_youtube_playlist(data.youtube_playlist_id, nextPageToken).then(parse_youtube_playlist_data)
-			video_list.push(...request_ret.list)
-			
-			nextPageToken = request_ret.nextPageToken
-			if(!request_ret.nextPageToken)
-				break
+			var video_list = []
+			var nextPageToken = ''
+			for(var i = 0; i < 10; ++i) // 최대 500개 까지만 ..
+			{
+				var request_ret = await request_youtube_playlist(data.youtube_playlist_id, nextPageToken).then(parse_youtube_playlist_data)
+				video_list.push(...request_ret.list)
+				
+				nextPageToken = request_ret.nextPageToken
+				if(!request_ret.nextPageToken)
+					break
+			}
+			push_videos(video_list, data.playlist_id)
 		}
-		push_videos(video_list, data.playlist_id)
+		catch (exception)
+		{
+			log_exception('push_playlist', exception)
+			socket.emit('push_video_result', {isSuccess: false, message: '영상을 추가하는 중에 오류가 발생했습니다.\n' + exception.err})
+		}
 	})
 
 	async function push_videos(videoId_list, playlist_id)
@@ -780,20 +817,30 @@ io.sockets.on('connection', function(socket)
 			var blocked = result.filter(x => !x.Id && x.Name)
 			var failed = result.filter(x => !x.Id && !x.Name)
 
+			// 재생목록에 이미 있는 영상인지 중복체크
+			var cur_videos = await db_select('VideoList', 'Playlists', format('Id = {0}', playlist_id), 'LIMIT 1').then(e => e[0].VideoList).then(JSON.parse)
+			var duplicated = successed.filter(x => cur_videos.indexOf(x.Id) != -1)
+			if(duplicated.length > 0)
+				successed = successed.filter(x => !duplicated.find(y => y.Id == x.Id))
+
 			// 재생목록에 추가
 			if(successed.length > 0)
 				await db_update('Playlists', format('VideoList = JSON_MERGE_PRESERVE(VideoList, JSON_ARRAY({0}))', successed.map(x => x.Id).join(', ')), format('Id = {0}', playlist_id))
 
 			// 출력 문자열 구성
 			var ret_str = ''
+
+			if(duplicated.length > 0)
+				ret_str += duplicated.map(x => format('[중복됨] {0} ({1})', x.Name, parse_second_to_string(x.Length))).join('\n') + '\n'
+			
+			if(blocked.length > 0)
+				ret_str += blocked.map(x => format('[외부 재생 제한] {0} ({1})', x.Name, parse_second_to_string(x.Length))).join('\n') + '\n'
+			
+			if(failed.length > 0)
+				ret_str += failed.map(x => format('[조회 실패] {0}', x.VideoId)).join('\n') + '\n'
+
 			if(successed.length > 0)
 				ret_str += successed.map(x => format('[등록 성공] {0} ({1})', x.Name, parse_second_to_string(x.Length))).join('\n')
-
-			if(blocked.length > 0)
-				ret_str += blocked.map(x => format('[외부 재생 제한] {0} ({1})', x.Name, parse_second_to_string(x.Length))).join('\n')
-
-			if(failed.length > 0)
-				ret_str += failed.map(x => format('[조회 실패] {0}', x.VideoId)).join('\n')
 
 
 			log('INFO', 'push_videos', format('SUCCESS! VideoID. [{0}] ({2}개) -> Playlist. {1}', successed.map(x => x.Id).join(', '), playlist_id, successed.length) )
@@ -946,6 +993,10 @@ io.sockets.on('connection', function(socket)
 
 		// if(g_current_dj == socket.name)
 		// 	end_of_video()
+	})
+
+	socket.on('ping', function() {
+		socket.emit('ping')
 	})
 
 	/* 맥심 */
@@ -1341,7 +1392,7 @@ function parse_youtube_video_data(query_result)
 	var item = query_result.items[0]
 	var video_data = {
 		title : item.snippet.title,
-		thumbnail_url : item.snippet.thumbnails.medium.url,
+		thumbnail_url : item.snippet.thumbnails.high.url,
 		duration : parse_duration_to_second(item.contentDetails.duration),
 		embeddable : item.status.embeddable,
 		tags : item.snippet.tags,
