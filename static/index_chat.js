@@ -7,13 +7,16 @@ var imgReg = /\/img (\S+)/i
 var byteReg = /[\da-zA-Z-_=\|\/\*-\+\.`~'\/,\!@#\$%\^\&\(\)\[\] "]/i
 function add_message(data) 
 {
+	if(g_nick == 'OBS' && data.type != 'message')
+		return
+
 	if(data.name && mute_list.indexOf(data.name) >= 0)
 	{
 		console.log(format('[{0}] {1} : {2}', data.time, data.name, data.message))
 		return
 	}
 
-	var need_scroll = is_scroll_bottom()
+	var need_scroll = is_scroll_bottom() || g_nick == 'OBS'
 
 	var message = document.createElement('div')
 	
@@ -47,6 +50,11 @@ function add_message(data)
 			nick_img.onmouseout = image_onmouseout
 			nick_img.onmousemove = image_onmousemove
 			var font = document.createElement('font')
+			if(g_nick == 'OBS')
+			{
+				font.style.fontSize = '18px'
+				message.style.fontSize = '18px'
+			}
 			if(data.name == g_nick)
 			{
 				className = 'me'
@@ -117,12 +125,18 @@ function add_message(data)
 /* 채팅창에 시스템 메시지 추가 함수 */
 function add_system_message(message, bg = '')
 {
+	if(g_nick == 'OBS')
+		return
+
 	return add_message({type: 'system_message', message: message, bg: bg})
 }
 
 /* 현재 플레이영상 전용 메시지 추가 함수 */
 function add_play_message(data)
 {
+	if(g_nick == 'OBS')
+		return
+
 	var need_scroll = is_scroll_bottom()
 
 	var base = document.createElement('div')
@@ -407,6 +421,10 @@ function chat_onpaste() {
 
 function chat_scroll() {
 	var to = is_scroll_bottom() ? 'none' : 'inline'
+
+	if(g_nick == 'OBS')
+		to = 'none'
+
 	if(chat_scroller.style.display != to)
 		chat_scroller.style.display = to
 }
