@@ -192,6 +192,7 @@ var queryReg = /^\/query (.+)/i
 var zzalReg = /^\/짤 (.+)/i
 var iconReg = /^\/icon (.+)/i
 var muteReg = /^\/mute (.+)/i
+var refreshReg = /^\/refresh (.+)/i
 function send() {
 	if(!g_isLogin)
 		return
@@ -334,6 +335,13 @@ function send() {
 		}
 		mute_list.push(nick)
 		add_system_message(format('\'{0}\' 님을 차단했습니다.\n\n-차단 목록-\n{1}', nick, mute_list.join('\n')))
+		return
+	}
+
+	if(refreshReg.test(message))
+	{
+		var nick = refreshReg.exec(message)[1]
+		socket.emit('refresh', nick)
 		return
 	}
 

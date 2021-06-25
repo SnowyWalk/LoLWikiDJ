@@ -318,6 +318,7 @@ body {
   height: 26px;
   margin-top: 11px;
   position: relative;
+  z-index: 1;
 }
 
 #chat_send {

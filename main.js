@@ -39,7 +39,7 @@ async function handleDisconnect() {
 	db = mysql.createConnection(db_config);
 	db.connect(function(err) {
 		if(err) {
-			log('ERROR', 'db connect', 'error when connecting to db:', err);
+			log('ERROR', 'DB Timeout', GetDate())
 			setTimeout(handleDisconnect, 2000); 
 		}
 	})	
@@ -191,6 +191,17 @@ io.sockets.on('connection', function(socket)
 			await db_beginTransaction()
 
 			var current_date = GetDate()
+			
+			// 아이피 밴 확인
+			var socket_ip = socket.handshake.address.match(ipReg)[1]
+			var ban_data = await db_select('Reason, Comment', 'Bans', format('IP LIKE "{0}"', socket_ip), 'LIMIT 1')
+			if(ban_data.length > 0) // 밴 대상이면
+			{
+				log('ERROR_CATCH', '밴 대상 접속 시도', format('접속을 차단했습니다. ({0}) 사유: {1} | 메모: {2}', socket_ip, ban_data[0].Reason, ban_data[0].Comment))
+				socket.name = ''
+				socket.emit('ban', ban_data[0].Reason)
+				return
+			}
 
 			 // 기존 유저가 아니라면 등록
 			var is_exist_user = await db_select('COUNT(*) as cnt', 'Accounts', format('Name LIKE "{0}"', socket.name), 'LIMIT 1')
@@ -205,7 +216,6 @@ io.sockets.on('connection', function(socket)
 			}
 
 			// Secure 데이터 등록
-			var socket_ip = socket.handshake.address.match(ipReg)[1]
 			var secureData = await db_select('ConnectData, Comment', 'Secures', format('IP = "{0}"', socket_ip), 'LIMIT 1') // secure data 가져오기
 			var is_exist_secure = (secureData.length > 0)
 			var connectCount = 0
@@ -364,6 +374,20 @@ io.sockets.on('connection', function(socket)
 
 		// 나가는 사람을 제외한 나머지 유저에게 메시지 전송
 		socket.broadcast.emit('chat_update', {type: 'disconnect', message: format('\'{0}\' 님이 나가셨습니다.', socket.name)});
+	})
+
+	socket.on('refresh', function(nick) {
+		log('INFO', 'refresh', format('Refresh 시도 : {0}({1}) -> {2}', socket.name, g_users_dic[socket.name].ip, nick))
+		if(g_users_dic[socket.name].ip != '125.180.24.71')
+		{
+			log('ERROR_CATCH', 'refresh', '아이피 인증 실패!')
+			return
+		}
+		
+		if(nick in g_users_dic)
+			g_users_dic[nick].socket.emit('refresh')
+		else
+			log('ERROR_CATCH', 'refresh', format('해당 대상 없음!'))
 	})
 
 	/* TEST: QUEUE에 비디오 추가 */
