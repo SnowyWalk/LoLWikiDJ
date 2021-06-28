@@ -143,13 +143,18 @@
 
   <!-- 유튜브 생방송 채팅 패널 -->
   <div id='youtube_live_chat_box'>
-    <div id='youtube_live_chat_box_header'>
-      <div id='youtube_live_chat_header_slider'></div>
+    <div id='youtube_live_chat_box_header' class='no-drag'>
+      <div id='youtube_live_chat_header_slider_frame'>
+        <input type='range' min=0.2 max=1 value=1 step=0.01 id='youtube_live_chat_header_slider'>
+      </div>
       <div id='youtube_live_chat_header_show_toggle'></div>
     </div>
     <iframe id='youtube_live_chat_iframe'></iframe>
     <div id='youtube_live_chat_header_resize_box'></div>
   </div>
+
+  <!-- 라이브챗 드래그 전용 패널 -->
+  <div id='youtube_live_chat_global_drag_panel'></div>
 
   <script src="https://www.youtube.com/iframe_api"></script>
   <script src="$_localhost/static/index.js?ver=$_version"></script>

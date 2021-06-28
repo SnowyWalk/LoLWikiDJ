@@ -11,6 +11,13 @@ body {
 .hover:hover {
   background-color: rgba(0, 0, 0, 0.118) !important;
 }
+.no-drag {
+  -ms-user-select: none; 
+  -moz-user-select: -moz-none; 
+  -webkit-user-select: none; 
+  -khtml-user-select: none; 
+  user-select: none;
+}
 
 /* * { font-family: "Nanum Gothic" !important; } */
 
@@ -702,12 +709,24 @@ body {
 
 /* 헤더 */
 #youtube_live_chat_box_header {
+  background-color: gray;
+  width: 100%;
+}
 
+/* 슬라이더 커버 (드래그 무브 방지) */
+#youtube_live_chat_header_slider_frame {
+  position: relative;
+  width: 100px;
+  height: 20px;
+  top: 3px;
+  right: 50px;
+  float: right;
 }
 
 /* 투명도 슬라이더 */
 #youtube_live_chat_header_slider {
-
+  width: 100%;
+  height: 100%;
 }
 
 /* 보이기/숨기기 토글 */
@@ -719,11 +738,22 @@ body {
 #youtube_live_chat_iframe {
   border: 0px;
   width: 100%;
-  height: 100%;
+  position: absolute;
 }
 
 /* 리사이즈 박스 */
 #youtube_live_chat_header_resize_box {
   z-index: 3;
+}
+
+#youtube_live_chat_global_drag_panel {
+  position: fixed;
+  top: 0px;
+  left: 0px;
+  width: 100%;
+  height: 100%;
+  display: none;
+  cursor: move;
+  z-index: 100;
 }
   

@@ -30,6 +30,8 @@ function initial_resize()
 	playlist_control_panel_playlist_info.style.height = 100
 
 	resize()
+
+	livechat_initial_resize() // 라이브챗 이니셜 리사이즈
 }
 
 /* UI 리사이즈 */
