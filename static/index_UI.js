@@ -115,6 +115,9 @@ function resize() {
 	/* 이미지 돋보기 */
 	image_expander_src.style.maxWidth = window_width - mainchat.clientWidth
 	image_expander_src.style.maxHeight = window_height
+
+	/* 라이브챗 */
+	livechat_window_clamp()
 }
 
 /* UI 리사이즈 - 컨트롤 패널만 */

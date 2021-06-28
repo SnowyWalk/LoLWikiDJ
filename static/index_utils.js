@@ -84,3 +84,12 @@ function is_scroll_bottom(offset = 0)
 		console.log(offset, chat.scrollHeight-chat.scrollTop, chat.clientHeight+offset, chat.scrollHeight-chat.scrollTop <= chat.clientHeight+offset ? 'bottom' : 'scrolled')
 	return chat.scrollHeight-chat.scrollTop <= chat.clientHeight+offset+20
 }
+
+function clamp(val, min, max)
+{
+	if(val < min)
+		val = min
+	else if(val > max)
+		val = max
+	return val
+}
