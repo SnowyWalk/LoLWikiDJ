@@ -687,3 +687,43 @@ body {
 .odd > .delete_button:hover {
   background-color: rgb(66, 167, 200);
 } */
+
+/* =================== 유튜브 생방송 채팅 패널 ========================= */
+
+/* 라이브채팅 메인 패널 */
+#youtube_live_chat_box {
+  position: fixed;
+  width: 0px;
+  height: 0px;
+  top: 0px;
+  left: 0px;
+  z-index: 2;
+}
+
+/* 헤더 */
+#youtube_live_chat_box_header {
+
+}
+
+/* 투명도 슬라이더 */
+#youtube_live_chat_header_slider {
+
+}
+
+/* 보이기/숨기기 토글 */
+#youtube_live_chat_header_show_toggle {
+
+}
+
+/* 채팅 메인 프레임 */
+#youtube_live_chat_iframe {
+  border: 0px;
+  width: 100%;
+  height: 100%;
+}
+
+/* 리사이즈 박스 */
+#youtube_live_chat_header_resize_box {
+  z-index: 3;
+}
+  

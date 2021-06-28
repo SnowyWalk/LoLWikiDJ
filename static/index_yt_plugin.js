@@ -55,7 +55,12 @@ function onPlayerStateChange(event)
 
 			if(diff >= 0.5)
 				player.seekTo((Date.now() - g_cued_time_ms) / 1000, true)
+
+			livechat_hide()
 		}
+		else
+			livechat_set_video_id(g_current_video_id) // 생방이면 라이브챗 켜기
+
 		SetVideoBlock(!g_current_video_id)
 	 }
 
