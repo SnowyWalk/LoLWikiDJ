@@ -716,10 +716,10 @@ body {
 /* 슬라이더 커버 (드래그 무브 방지) */
 #youtube_live_chat_header_slider_frame {
   position: relative;
-  width: 100px;
+  width: 150px;
   height: 20px;
   top: 3px;
-  right: 50px;
+  right: 35px;
   float: right;
 }
 
@@ -731,8 +731,28 @@ body {
 
 /* 보이기/숨기기 토글 */
 #youtube_live_chat_header_show_toggle {
-
+  position: relative;
+  background-image: url('circle.png');
+  width: 20px;
+  height: 20px;
+  right: 15px;
+  top: 5px;
+  float: right;
 }
+
+#youtube_live_chat_header_show_toggle[toggled] {
+  background-image: url('circle2.png');
+}
+
+#youtube_live_chat_header_show_toggle[toggled]:hover {
+  cursor: pointer;
+  background-image: url('circle3.png');
+}
+#youtube_live_chat_header_show_toggle:hover {
+  cursor: pointer;
+  background-image: url('circle3.png');
+}
+
 
 /* 채팅 메인 프레임 */
 #youtube_live_chat_iframe {
