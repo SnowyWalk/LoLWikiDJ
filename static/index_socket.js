@@ -73,12 +73,13 @@ socket.on('login', function(isSuccess) {
 
 	add_system_message('후원 랭킹\n'
 						+ '★ 0. Lily(샤르프로젝트) 님 ★\n' 
-						+ '1. 랠래 님\n'
-						+ '2. 노통 님\n'
-						+ '3. 고냥이지 님\n'
-						+ '4. 인공사 님\n'
-						+ '5. 디아 님\n'
-						+ '6. 강령군주 님\n'
+						+ '1. 우뭇가사리 님\n' 
+						+ '2. 랠래 님\n'
+						+ '3. 노통 님\n'
+						+ '4. 고냥이지 님\n'
+						+ '5. 인공사 님\n'
+						+ '6. 디아 님\n'
+						+ '7. 강령군주 님\n'
 						+ '후원 계좌 : 기업 539-028793-01-012 박*준', 'yellow')
 	add_system_message('명령어 목록은 /? 을 입력해 볼 수 있습니다.')
 	add_system_message('패치 노트 보기 (클릭)', 'chartreuse').onclick = _ => window.open('/patch_note', '패치 노트')
