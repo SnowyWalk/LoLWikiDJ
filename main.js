@@ -1,6 +1,6 @@
 /* 공지말 */
 var g_port = 8080
-var g_notice = '2021-05-10\n- 패치노트 적용\n- 유튜브 썸네일 고화질로 변경\n- 로그인 화면에 현재 서버(포트번호) 표시'
+var g_notice = '2021-06-28\n- 실시간방송 라이브챗 윈도우 추가'
 
 /* 설치한 express 모듈 불러오기 */
 const express = require('express')
