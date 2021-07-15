@@ -572,6 +572,9 @@ body {
 
 #playlist_control_panel_playlist_info_name {
   float: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 #playlist_control_panel_playlist_info_select {
@@ -699,6 +702,7 @@ body {
 
 /* 라이브채팅 메인 패널 */
 #youtube_live_chat_box {
+  display: none;
   position: fixed;
   width: 0px;
   height: 0px;
