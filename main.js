@@ -1032,6 +1032,10 @@ io.sockets.on('connection', function(socket)
 	var zzalReg = /<picture>.*?srcset="(https?\:\/\/(?:cdn|danbooru)\.donmai\.us\/(?:data\/)?(?:sample|original).*?)"/i
 	var zzalUrlReg = /<link rel="canonical" href="(.*?)">/
 	socket.on('zzal', async function(tag) {
+		load_danbooru_zzal(tag)
+	})
+
+	async function load_danbooru_zzal(tag, retry_count = 0) {
 		try
 		{
 			tag = tag.replace(/ /g, '_')
@@ -1051,11 +1055,18 @@ io.sockets.on('connection', function(socket)
 				io.sockets.emit('chat_update', { type: 'system_message', message: format('{0} 짤 검색결과 없음!', tag) })
 				return
 			}
-
 			log_exception('zzal', exception, format('https://danbooru.donmai.us/posts/random?tags={0}', tag))
-			io.sockets.emit('chat_update', { type: 'system_message', message: format('{0} 짤 불러오기 실패', tag) })
+			
+			if(count < 5)
+			{
+				load_danbooru_zzal(tag, retry_count + 1)
+			}
+			else
+			{
+				io.sockets.emit('chat_update', { type: 'system_message', message: format('{0} 짤 불러오기 실패', tag) })
+			}
 		}
-	})
+	}
 
 	socket.on('icon_register', async function(image_data) {
 		try
