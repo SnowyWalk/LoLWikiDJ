@@ -1240,6 +1240,21 @@ async function end_of_video() {
 
 			var playlist_id = await db_select('CurrentPlaylist', 'Accounts', format('Name LIKE "{0}"', this_dj), 'LIMIT 1').then(ret => ret[0].CurrentPlaylist)
 			var video_list = await db_select('VideoList', 'Playlists', format('Id = {0}', playlist_id), 'LIMIT 1').then(ret => ret[0].VideoList).then(JSON.parse)
+
+			// 만약 재생목록이 비어있다면 -> 자동으로 대기열에서 퇴출
+			if(video_list.length == 0)
+			{
+				if(g_djs.indexOf(this_dj) != -1)
+					g_djs.splice(g_djs.indexOf(this_dj), 1)
+
+				log('INFO', 'end_of_video - auto dj_quit', this_dj)
+
+				if(this_dj in g_users_dic)
+					g_users_dic[this_dj].socket.emit('dj_state', false)
+				
+				return end_of_video()
+			}
+			
 			var first_video_id = video_list.splice(0, 1)[0]
 			video_list.push(first_video_id)
 			var video_info = await db_select('Id, Name, VideoId, Length, Thumbnail', 'Videos', format('Id = {0}', first_video_id), 'LIMIT 1').then(ret => ret[0])
