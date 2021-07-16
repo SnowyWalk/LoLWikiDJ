@@ -1,4 +1,4 @@
-var livechat_const_window_width = 400
+var livechat_const_window_width = 350
 var livechat_const_window_height = 500
 var livechat_const_window_top = 160
 var livechat_const_window_left = 1080
@@ -278,10 +278,10 @@ function livechat_set_video_id(video_id)
 	youtube_live_chat_global_resize_panel.style.display = 'none'
 	livechat_onclick_show_toggle_set(true)
 
-	livechat_window_width = 400
-	livechat_window_height = 500
-	livechat_window_top = 160
-	livechat_window_left = 1080
+	livechat_window_width = livechat_const_window_width
+	livechat_window_height = livechat_const_window_height
+	livechat_window_top = livechat_const_window_top
+	livechat_window_left = livechat_const_window_left
 	livechat_opacity = 1.0
 
 	youtube_live_chat_box.style.top = livechat_window_top
