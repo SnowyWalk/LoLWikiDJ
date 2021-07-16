@@ -3,7 +3,7 @@ function login()
 	login_button.style.display = 'none'
 
 	g_nick = login_id.value.trim()
-	g_nick = g_nick.replace(/(\'|\")/g, '')
+	g_nick = g_nick.replace(/(\'|\"|\?| )/g, '')
 	if(!g_nick)
 	{
 		login_id.value = ''

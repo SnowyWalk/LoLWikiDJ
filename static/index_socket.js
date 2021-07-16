@@ -24,7 +24,7 @@ socket.on('connect', function () {
 	if(!g_setting_auto_login)
 		return
 
-	g_nick = g_nick.replace(/(\'|\"|\?)/g, '')
+	g_nick = g_nick.replace(/(\'|\"|\?| )/g, '')
 
 	// 이름이 빈칸인 경우
 	if (!g_nick) {
