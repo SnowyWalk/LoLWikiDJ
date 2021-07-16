@@ -2,9 +2,13 @@ var g_last_chat = ''
 var mute_list = []
 var ping_time = 0
 
+var cached_chat_call_audio = null
+
 /* 채팅창에 메시지 추가 함수 */
 var imgReg = /\/img (\S+)/i
 var byteReg = /[\da-zA-Z-_=\|\/\*-\+\.`~'\/,\!@#\$%\^\&\(\)\[\] "]/i
+var callReg = /@(\S+)/g
+var callRegPre = /@(\S+)/
 function add_message(data) 
 {
 	if(g_nick == 'OBS' && data.type != 'message')
@@ -118,6 +122,21 @@ function add_message(data)
 
 	if(need_scroll)
 		scrollDown()
+
+	// 호출 사운드
+	if(callRegPre.test(text)) // @가 있는지부터 체크
+	{
+		callReg.test('') // 초기화
+		var t_callRegResult = callReg.exec(text)
+		while(t_callRegResult)
+		{
+			console.log('@' + t_callRegResult[1])
+			if(t_callRegResult[1] == g_nick)
+				play_call_audio()
+
+			t_callRegResult = callReg.exec(text)
+		}
+	}
 
 	return message
 }
@@ -467,4 +486,17 @@ function image_expander_set_pos(x, y)
 
 	image_expander.style.left = x
 	image_expander.style.top = y
+}
+
+function play_call_audio(start_time = 0.14)
+{
+	if(!cached_chat_call_audio)
+	{
+		cached_chat_call_audio = audio_chat_call
+		cached_chat_call_audio.volume = 0.5
+	}
+
+	cached_chat_call_audio.pause()
+	cached_chat_call_audio.currentTime = start_time
+	cached_chat_call_audio.play()
 }
