@@ -1060,7 +1060,7 @@ io.sockets.on('connection', function(socket)
 			}
 			log_exception('zzal', exception, format('https://danbooru.donmai.us/posts/random?tags={0}', tag))
 			
-			if(count < 5)
+			if(retry_count < 5)
 			{
 				load_danbooru_zzal(tag, retry_count + 1)
 			}
