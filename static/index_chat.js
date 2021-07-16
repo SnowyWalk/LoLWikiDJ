@@ -130,7 +130,6 @@ function add_message(data)
 		var t_callRegResult = callReg.exec(text)
 		while(t_callRegResult)
 		{
-			console.log('@' + t_callRegResult[1])
 			if(t_callRegResult[1] == g_nick)
 				play_call_audio()
 
