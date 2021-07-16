@@ -1142,7 +1142,7 @@ function GetDate()
 function log(type, function_name, message, isChat = false)
 {
 	if(isChat)
-		return console.log(format('\x1b[47m\x1b[30m({0})\x1b[0m\x1b[40m {1} :', GetTime(), function_name), message, '\x1b[0m')
+		return console.log(format('\x1b[47m\x1b[30m({0})\x1b[0m\x1b[40m {1} :', GetDate(), function_name), message, '\x1b[0m')
 
 	var color = '\x1b[37m'
 	if(type == 'INFO')
@@ -1150,7 +1150,7 @@ function log(type, function_name, message, isChat = false)
 	else if(type == 'ERROR' || type == 'ERROR_CATCH')
 		color = '\x1b[31m'
 
-	return console.log(format('\x1b[47m\x1b[30m({0})\x1b[0m\x1b[40m [{2}]{1}', GetTime(), color, function_name), message, '\x1b[0m')
+	return console.log(format('\x1b[47m\x1b[30m({0})\x1b[0m\x1b[40m [{2}]{1}', GetDate(), color, function_name), message, '\x1b[0m')
 }
 
 function log_exception(function_name, exception, message = null)
