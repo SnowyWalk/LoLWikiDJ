@@ -162,7 +162,11 @@ socket.on('update_playlist', function(data) {
 
 	update_current_playlist()
 	if(g_show_playlist_control_panel)
+	{
 		update_playlist(true) 
+		if(data.length >= 3 && data[3] != 0)
+			select_playlist_button(data[3])
+	}
 })
 
 socket.on('dj_state', function(isDJing) {

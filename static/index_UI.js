@@ -149,7 +149,7 @@ function control_panel_resize()
 	var w3 = playlist_control_panel_playlist_info_rename_button.clientWidth
 	var w4 = playlist_control_panel_playlist_info_shuffle.clientWidth
 	var w5 = playlist_control_panel_playlist_info_select.clientWidth
-	playlist_control_panel_playlist_info_name.style.width = (window_width - t_playlist_control_panel_playlist_header_width - mainchat.clientWidth - 1) - w1 - w2 - w3 - w4 - w5 - 1 - 30
+	playlist_control_panel_playlist_info_name.style.width = (window_width - t_playlist_control_panel_playlist_header_width - mainchat.clientWidth - 1) - w1 - w2 - w3 - w4 - w5 - 2 - 30
 
 	// 영상 목록의 텍스트 길이 조절
 	for(var e of document.getElementsByClassName('videolist_button'))

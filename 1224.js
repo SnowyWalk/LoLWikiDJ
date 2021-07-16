@@ -585,7 +585,7 @@ io.sockets.on('connection', function(socket)
 			await db_commit()
 
 			// 업데이트
-			update_playlist(socket)
+			update_playlist(socket, new_playlist_id)
 
 			log('INFO', 'new_playlist', format('{0} 이(가) 새 재생목록을 생성', socket.name))
 		}
@@ -1032,6 +1032,10 @@ io.sockets.on('connection', function(socket)
 	var zzalReg = /<picture>.*?srcset="(https?\:\/\/(?:cdn|danbooru)\.donmai\.us\/(?:data\/)?(?:sample|original).*?)"/i
 	var zzalUrlReg = /<link rel="canonical" href="(.*?)">/
 	socket.on('zzal', async function(tag) {
+		load_danbooru_zzal(tag)
+	})
+
+	async function load_danbooru_zzal(tag, retry_count = 0) {
 		try
 		{
 			tag = tag.replace(/ /g, '_')
@@ -1051,11 +1055,18 @@ io.sockets.on('connection', function(socket)
 				io.sockets.emit('chat_update', { type: 'system_message', message: format('{0} 짤 검색결과 없음!', tag) })
 				return
 			}
-
 			log_exception('zzal', exception, format('https://danbooru.donmai.us/posts/random?tags={0}', tag))
-			io.sockets.emit('chat_update', { type: 'system_message', message: format('{0} 짤 불러오기 실패', tag) })
+			
+			if(count < 5)
+			{
+				load_danbooru_zzal(tag, retry_count + 1)
+			}
+			else
+			{
+				io.sockets.emit('chat_update', { type: 'system_message', message: format('{0} 짤 불러오기 실패', tag) })
+			}
 		}
-	})
+	}
 
 	socket.on('icon_register', async function(image_data) {
 		try
@@ -1315,7 +1326,7 @@ function update_current_rating(dest_socket)
 }
 
 /* 해당 유저에게 플레이리스트 갱신 */
-async function update_playlist(socket)
+async function update_playlist(socket, show_playlist_id = 0) // show_playlist_id : 새 재생목록 만들었을 때 해당 재생목록이 선택될 수 있도록 아이디 알려줌
 {
 	// 플레이리스트들의 제목과 곡정보들 리스트 보내주면 될 듯 [playlist_id1: {name:"내 재생목록", list:[{title:"언더테일 브금", duration:90}, {title:"천아연유튜브소개영상", duration:10}]}]
 	try
@@ -1348,7 +1359,7 @@ async function update_playlist(socket)
 				video_info_dic[e.Id] = { Name: e.Name, VideoId: e.VideoId, Length: e.Length, Thumbnail: e.Thumbnail }
 		}
 
-		socket.emit('update_playlist', [video_info_dic, playlist_info_list, current_playlist])
+		socket.emit('update_playlist', [video_info_dic, playlist_info_list, current_playlist, show_playlist_id])
 	}
 	catch (exception)
 	{
