@@ -45,8 +45,11 @@ async function handleDisconnect() {
 	})	
 	db.on('error', function(err) {
 		log('ERROR','db on error', err);
-		if(err.code === 'PROTOCOL_CONNECTION_LOST')
+		if(err.code === 'PROTOCOL_CONNECTION_LOST' || err.code === 'PROTOCOL_PACKETS_OUT_OF_ORDER')
+		{
+			log_exception('ERROR', 'DB TimeOut', GetDate() + 'DB tried to reconnect.')
 			return handleDisconnect()
+		}
 		else
 			throw err;
 	})
