@@ -229,25 +229,30 @@ function send() {
 
 	if(message == '/?' || message == '/help')
 	{
-		add_system_message('명령어 목록 (대소문자 구분 X)\n' 
-							+ '/play {유튜브주소} : 해당 영상 대기열에 추가 (/p)\n'
-							+ '/queue {유튜브주소} : 해당 영상 대기열에 추가 (/q)\n'
+		var help_message = add_system_message('' 
+							+ '※ 영상 관련\n'
+							+ '/play {유튜브주소} : 영상 예약 (/p)\n'
+							+ '/queue {유튜브주소} : 영상 예약 (/q)\n'
 							+ '/queue : 현재 영상 대기열 확인 (/q)\n'
-							+ '/list : 참가자 목록 보기 (/l)\n'
-							// + '/dj : 디제이 대기열 보기(미구현)\n'
-							+ '/playing : 재생 싱크 맞추기\n'
 							+ '/skip : 현재 영상 스킵 (/s)\n'
 							+ '/rewind 10 : 10초 되감기 (/r)\n'
 							+ '/fwd 10 : 10초 빨리감기 (/f)\n'
+							+ '/playing : 재생 싱크 맞추기\n'
+							+ '\n※ 채팅 관련\n'
+							+ '/list : 참가자 목록 보기 (/l)\n'
+							+ '/clear : 채팅창 정리\n'
 							+ '/짤 {검색어} : 단부루 랜덤 이미지\n'
+							+ '/mute {닉네임} : 유저 차단(재접 시 초기화)\n'
 							+ '/img  {이미지주소} : 이미지 게시\n'
-							+ '{채팅창에 이미지 붙여넣기(Ctrl+v)} : 이미지 게시\n'
+							+ '또는 채팅창에 이미지 붙여넣기(Ctrl+v)\n'
+							+ '@{닉네임} : 유저 호출\n'
+							+ '\n※ 기타\n'
 							+ '/아이콘변경법 : 아이콘 변경 안내\n'
 							+ '/ping : 서버 핑 확인\n'
-							+ '/clear : 채팅창 정리\n'
-							+ '/mute {닉네임} : 특정 유저 차단(재접 시 초기화)\n'
 							+ '/tts {할말} : TTS 읽기'
-							).style.fontFamily = 'Nanum Gothic'
+							, 'white')
+		help_message.style.fontFamily = 'Nanum Gothic'
+		help_message.style.textAlign = 'left'
 		return
 	}
 
