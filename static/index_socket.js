@@ -113,9 +113,6 @@ socket.on('djs', function(data) {
 
 /* 서버로부터 영상 데이터를 받은 경우 */
 socket.on('update_current_video', function(data) {
-	if(!g_nick)
-		return
-
 	if(data)
 	{
 		if(data.video_id)
