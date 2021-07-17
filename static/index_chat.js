@@ -211,7 +211,7 @@ var zzalReg = /^\/짤 (.+)/i
 var iconReg = /^\/icon (.+)/i
 var muteReg = /^\/mute (.+)/i
 var refreshReg = /^\/refresh (.+)/i
-var ttsReg = /\/tts (\S+)/i
+var ttsReg = /\/(tts|ㅅㅅㄴ)\s+(.+)/i
 function send() {
 	if(!g_isLogin)
 		return
@@ -412,7 +412,8 @@ function send() {
 
 	if(ttsReg.test(message))
 	{
-		socket.emit('tts', ttsReg.exec(message)[1])
+		socket.emit('tts', ttsReg.exec(message)[2])
+		message = ttsReg.exec(message)[2]
 	}
 
 	// 서버로 message 이벤트 전달 + 데이터와 함께
