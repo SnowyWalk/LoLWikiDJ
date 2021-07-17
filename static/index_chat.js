@@ -247,7 +247,7 @@ function send() {
 							+ '/clear : 채팅창 정리\n'
 							+ '/mute {닉네임} : 특정 유저 차단(재접 시 초기화)\n'
 							+ '/tts {할말} : TTS 읽기'
-							)
+							).style.fontFamily = 'Nanum Gothic'
 		return
 	}
 
