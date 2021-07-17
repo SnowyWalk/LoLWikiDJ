@@ -193,3 +193,14 @@ socket.on('throw_data', function(exception) {
 socket.on('push_video_result', function(data) {
 	alert(data.message)
 })
+
+socket.on('tts', function(file_name) {
+	var new_tts = new Audio(file_name)
+	new_tts.onended = destroy_self
+	new_tts.play()
+})
+
+function destroy_self() 
+{
+	delete this
+}

@@ -31,6 +31,10 @@ const identicon = require('identicon')
 /* MD 뷰어 */
 var showdown  = require('showdown')
 var converter = new showdown.Converter()
+/* TTS 유틸 */
+const textToSpeech = require('@google-cloud/text-to-speech');
+const util = require('util');
+const tts_client = new textToSpeech.TextToSpeechClient();
 /* mysql 서버 */
 const mysql = require('mysql')
 var db_config = JSON.parse(fs.readFileSync('db_config.txt', 'utf-8'))
@@ -44,14 +48,16 @@ async function handleDisconnect() {
 		}
 	})	
 	db.on('error', function(err) {
-		log('ERROR','db on error', err);
 		if(err.code === 'PROTOCOL_CONNECTION_LOST' || err.code === 'PROTOCOL_PACKETS_OUT_OF_ORDER')
 		{
-			log_exception('ERROR', 'DB TimeOut', GetDate() + 'DB tried to reconnect.')
+			log_exception('ERROR', 'DB TimeOut', format('DB tried to reconnect. [{0}]', GetDate()))
 			return handleDisconnect()
 		}
 		else
+		{
+			log('ERROR','db on error', err)
 			throw err;
+		}
 	})
 }
 handleDisconnect();
@@ -59,6 +65,7 @@ handleDisconnect();
 app.use('/fonts', express.static('./static/fonts'))
 app.use('/static', express.static('./static'))
 app.use('/icon', express.static('./static/icon'))
+app.use('/tts', express.static('./tts'))
 
 /* 유저 목록 */
 var g_users_dic = [] // dic['닉네임'] = { socket: 소켓, icon_id: 아이콘 아이디, icon_ver: 아이콘 버전  }
@@ -1125,6 +1132,11 @@ io.sockets.on('connection', function(socket)
 			log_exception('request_video_info', exception)
 		}
 	})
+
+	socket.on('tts', async function(text) {
+		log('INFO', 'TTS', socket.name + ' make tts : ' + text)
+		make_tts(text)
+	})
 }) 
 
 /* 서버를 8080 포트로 listen */
@@ -1554,4 +1566,20 @@ function db_rollback()
 			err ? reject(err) : resolve()
 		})
 	})
+}
+
+async function make_tts(text) 
+{
+	const request = {
+	  input: {text: text},
+	  voice: {languageCode: 'ko-KR', ssmlGender: 'FEMALE'},
+	  audioConfig: {audioEncoding: 'MP3'},
+	}
+	const [response] = await tts_client.synthesizeSpeech(request)
+	const writeFile = util.promisify(fs.writeFile)
+	const file_name = './tts/' + (new Date().addHours(9).toFormat('YYYYMMDD HH24MISS')) + ' ' + Math.random().toString(36).substr(2,11) + Math.random().toString(36).substr(2,11)
+	await writeFile(file_name, response.audioContent, 'binary')
+
+	for(var e in g_users_dic)
+		g_users_dic[e].socket.emit('tts', file_name)
 }
