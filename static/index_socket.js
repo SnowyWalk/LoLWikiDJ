@@ -3,7 +3,7 @@ socket.on('connect', function () {
 	g_isConnected = true
 	if(g_isLogin)
 	{
-		add_message({type: 'system_message', message: '연결 끊김. 새로고침하고 다시 로그인 해주세요.'})
+		add_message({type: 'system_message', message: '로그인 세션 만료.\n새로고침하고 다시 로그인 해주세요.'})
 		return
 	}
 
@@ -35,6 +35,10 @@ socket.on('connect', function () {
 	add_system_message('인증 중 ...')
 	if(g_player_ready)
 		socket.emit('login', g_nick)
+})
+
+socket.on('disconnect', function () {
+	add_message({type: 'system_message', message: '연결 끊김', bg: 'red'})
 })
 
 /* 밴 안내 */
