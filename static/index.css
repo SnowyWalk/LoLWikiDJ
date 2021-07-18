@@ -449,6 +449,11 @@ body {
   border-radius: 30%;
 }
 
+.chat_tts_icon {
+  float: right;
+  cursor: pointer;
+}
+
 .system_message.play_info {
   padding-top: 7px;
   text-align: center;

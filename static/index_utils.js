@@ -93,3 +93,16 @@ function clamp(val, min, max)
 		val = max
 	return val
 }
+
+function random_hash()
+{
+	return Math.random().toString(36).substr(2,11) + Math.random().toString(36).substr(2,11)
+}
+
+var dateReg = /(?<year>\d*)-(?<month>\d*)-(?<day>\d*).(?<hour>\d*):(?<minute>\d*):(?<second>\d*)/
+function GetDate() // YYYYMMDD HHMMSS
+{
+	var cur_date = new Date(Date.now() + 9 * 60 * 60 * 1000).toISOString() // 2021-07-18T00:19:30.530Z
+	var reg_ret = dateReg.exec(cur_date)
+	return format('{0}{1}{2} {3}{4}{5}', reg_ret.groups['year'], reg_ret.groups['month'], reg_ret.groups['day'], reg_ret.groups['hour'], reg_ret.groups['minute'], reg_ret.groups['second'] )
+}

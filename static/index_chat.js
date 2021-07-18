@@ -75,6 +75,17 @@ function add_message(data)
 			// if(data.message.length == 0 || byteReg.test(data.message[0]))
 			// 	message.style.paddingLeft = '2px'
 
+			// TTS 아이콘
+			if(data.tts_hash)
+			{
+				var tts_icon = document.createElement('img')
+				tts_icon.src = 'static/tts.png'
+				tts_icon.classList.add('chat_tts_icon')
+				tts_icon.setAttribute('tts_hash', data.tts_hash)
+				tts_icon.onclick = play_tts_audio_this
+				small.appendChild(tts_icon)
+			}
+
 			small.appendChild(b)
 			b.appendChild(nick_img)
 			b.appendChild(font)
@@ -417,14 +428,16 @@ function send() {
 		socket.emit('query', queryReg.exec(message)[1])
 	}
 
+	var tts_hash = ''
 	if(ttsReg.test(message))
 	{
-		socket.emit('tts', ttsReg.exec(message)[2])
+		tts_hash = GetDate() + ' ' + random_hash()
 		message = ttsReg.exec(message)[2]
+		socket.emit('tts', { text: message, tts_hash: tts_hash })
 	}
 
 	// 서버로 message 이벤트 전달 + 데이터와 함께
-	socket.emit('chat_message', { type: 'message', message: message })
+	socket.emit('chat_message', { type: 'message', message: message, tts_hash: tts_hash })
 	scrollDown()
 }
 
@@ -501,15 +514,26 @@ function image_expander_set_pos(x, y)
 	image_expander.style.top = y
 }
 
-function play_call_audio(start_time = 0.14)
+function play_call_audio(start_time = 0.0)
 {
 	if(!cached_chat_call_audio)
 	{
 		cached_chat_call_audio = audio_chat_call
-		cached_chat_call_audio.volume = 0.5
+		cached_chat_call_audio.volume = 1
 	}
 
 	cached_chat_call_audio.pause()
 	cached_chat_call_audio.currentTime = start_time
 	cached_chat_call_audio.play()
+}
+
+function play_tts_audio_this()
+{
+	var tts_hash = this.getAttribute('tts_hash')
+	if(!tts_hash)
+		return
+
+	var new_tts = new Audio('./tts/' + tts_hash)
+	new_tts.onended = destroy_self
+	new_tts.play()
 }
