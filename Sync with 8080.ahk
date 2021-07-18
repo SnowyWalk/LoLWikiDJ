@@ -14,11 +14,13 @@ StringGetPos, startOffset, srcStr, `n, L%keepLines%
 StringTrimLeft, srcStr, srcStr, % startOffset
 
 for i, e in destFiles
+{
     if( e == srcFile )
         continue
     FileRead, destStr, % "*P65001 " e
+    ; msgbox,% e "`n" SubStr(destStr, -200, 200)
     StringGetPos, keepCount, destStr, `n, L%keepLines%
     destStr := SubStr(destStr, 1, keepCount) srcStr
     FileDelete, % e
     FileAppend, % destStr, % e, UTF-8-RAW
-
+}
