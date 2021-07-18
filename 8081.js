@@ -1133,9 +1133,9 @@ io.sockets.on('connection', function(socket)
 		}
 	})
 
-	socket.on('tts', async function(text) {
-		log('INFO', 'TTS', socket.name + ' make tts : ' + text)
-		make_tts(text)
+	socket.on('tts', async function(data) {
+		log('INFO', 'TTS', format('{0} make tts ({1}) : {2}', socket.name, data.tts_hash, data.text))
+		make_tts(data.text, data.tts_hash)
 	})
 }) 
 
@@ -1568,7 +1568,7 @@ function db_rollback()
 	})
 }
 
-async function make_tts(text) 
+async function make_tts(text, tts_hash)
 {
 	const request = {
 	  input: {text: text},
@@ -1577,7 +1577,7 @@ async function make_tts(text)
 	}
 	const [response] = await tts_client.synthesizeSpeech(request)
 	const writeFile = util.promisify(fs.writeFile)
-	const file_name = './tts/' + (new Date().addHours(9).toFormat('YYYYMMDD HH24MISS')) + ' ' + Math.random().toString(36).substr(2,11) + Math.random().toString(36).substr(2,11)
+	const file_name = './tts/' + tts_hash
 	await writeFile(file_name, response.audioContent, 'binary')
 
 	for(var e in g_users_dic)
