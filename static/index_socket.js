@@ -196,6 +196,9 @@ socket.on('push_video_result', function(data) {
 })
 
 socket.on('tts', function(file_name) {
+	if(!option_checkbox_tts.checked) // TTS 자동 재생 옵션 체크
+		return
+
 	var new_tts = new Audio(file_name)
 	new_tts.onended = destroy_self
 	new_tts.play()

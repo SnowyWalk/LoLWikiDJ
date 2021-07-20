@@ -313,6 +313,80 @@ body {
   overflow: hidden;
 }
 
+/* 우측 카테고리 헤더 */
+#mainchat_header {
+  height: 50px;
+  box-sizing: border-box;
+  background: lightskyblue;
+}
+
+#mainchat_header_chat {
+  background-image: url(chat_menu.png);
+}
+
+#mainchat_header_djlist {
+  background-image: url(djlist_menu2.png);
+}
+
+#mainchat_header_recent {
+  background-image: url(recent_menu.png);
+}
+
+#mainchat_header_option {
+  background-image: url(option_menu.png);
+}
+
+.mainchat_header_btn {
+  height: 100%;
+  background-repeat: no-repeat;
+  background-color: lightskyblue;
+  background-position: center;
+  float: left;
+}
+
+.mainchat_header_btn:not([selected]) {
+  cursor: pointer;
+}
+
+.mainchat_header_btn:not([selected]):hover {
+  background-color: #6192b1;
+}
+
+.mainchat_header_btn[selected] {
+  background-color: lightblue;
+}
+
+/* 참여자 카테고리 */
+#djlist {
+  height: 95%;
+  width: 100%;
+  overflow-y: auto;
+  display: none;
+}
+
+/* 최근곡 카테고리 */
+#recent {
+  height: 95%;
+  width: 100%;
+  overflow-y: auto;
+  display: none;
+}
+
+/* 옵션 카테고리 */
+#option {
+  height: 95%;
+  width: 100%;
+  text-align: left;
+  overflow-y: auto;
+  display: none;
+}
+
+.option_row {
+  position: relative;
+  margin-left: 11px;
+  margin-top: 25px;
+}
+
 /* 채팅 영역 */
 #chat {
   height: 95%;

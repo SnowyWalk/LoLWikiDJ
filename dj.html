@@ -64,17 +64,52 @@
     <div id="login_button" class="nanum bold" onclick="login()">Login</div>
   </div>
 
-  <!-- 채팅 메시지 영역 -->
+  <!-- 우측 채팅 영역 -->
   <div id="mainchat">
+    <!-- 채팅 헤더 영역 -->
+    <div id="mainchat_header">
+      <!-- 카테고리 : 챗 버튼 -->
+      <div id="mainchat_header_chat" class="mainchat_header_btn" selected></div>
+      <!-- 카테고리 : DJ 버튼 -->
+      <div id="mainchat_header_djlist" class="mainchat_header_btn"></div>
+      <!-- 카테고리 : 최근 곡 버튼 -->
+      <div id="mainchat_header_recent" class="mainchat_header_btn"></div>
+      <!-- 카테고리 : 옵션 버튼 -->
+      <div id="mainchat_header_option" class="mainchat_header_btn"></div>
+    </div>
+
+    <!-- 카테고리 : 채팅 -->
     <div id="chat" onscroll="chat_scroll()">
+
     </div>
-    <div>
-      <input type="text" id="chat_input" onpaste="chat_onpaste()" onkeydown="chat_keydown()" placeholder="메시지를 입력해주세요..">
-      <button id="chat_send" onclick="send()">전송</button>
+
+    <!-- 카테고리 : DJ/참여자 -->
+    <div id="djlist">
+      <div><label>(미구현)현재 접속자와 DJ대기열이 표시될 예정</label></div>
     </div>
-    <div id="chat_scroller" onclick="scrollDown()">스크롤해서 채팅이 멈췄습니다.</div> 
-    <div id="image_expander"><img id="image_expander_src"></div>
+
+    <!-- 카테고리 : 최근곡 -->
+    <div id="recent">
+      <div><label>(미구현)최근 재생된 영상 20개가 표시될 예정</label></div>
+    </div>
+
+    <!-- 카테고리 : 옵션 -->
+    <div id="option">
+      <div class="option_row"><input type="checkbox" id="option_checkbox_mention" name="option_checkbox_mention" checked/> <label for="option_checkbox_mention">'@닉네임' 알림 받기</label></div>
+      <div class="option_row"><input type="checkbox" id="option_checkbox_tts" name="option_checkbox_tts" checked/> <label for="option_checkbox_tts">TTS 음성 채팅 자동 재생하기</label></div>
+    </div>
+
+    <div id="chat_extra">
+      <div>
+        <input type="text" id="chat_input" onpaste="chat_onpaste()" onkeydown="chat_keydown()" placeholder="메시지를 입력해주세요..">
+        <button id="chat_send" onclick="send()">전송</button>
+      </div>
+      <div id="chat_scroller" onclick="scrollDown()">스크롤해서 채팅이 멈췄습니다.</div> 
+      <div id="image_expander"><img id="image_expander_src"></div>
+    </div>
   </div>
+
+  
 
   <!-- 좌하단 재생목록 정보 -->
   <div id="current_playlist_info_box" onclick="toggle_playlist_control_panel()">

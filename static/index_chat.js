@@ -135,16 +135,19 @@ function add_message(data)
 		scrollDown()
 
 	// 호출 사운드
-	if(callRegPre.test(text)) // @가 있는지부터 체크
+	if(option_checkbox_mention.checked) // 호출 알림 체크되어있어야 재생
 	{
-		callReg.test('') // 초기화
-		var t_callRegResult = callReg.exec(text)
-		while(t_callRegResult)
+		if(callRegPre.test(text)) // @가 있는지부터 체크
 		{
-			if(t_callRegResult[1] == g_nick)
-				play_call_audio()
+			callReg.test('') // 초기화
+			var t_callRegResult = callReg.exec(text)
+			while(t_callRegResult)
+			{
+				if(t_callRegResult[1] == g_nick)
+					play_call_audio()
 
-			t_callRegResult = callReg.exec(text)
+				t_callRegResult = callReg.exec(text)
+			}
 		}
 	}
 

@@ -1,3 +1,5 @@
+var g_current_chat_category = mainchat_header_chat // 채팅 카테고리 초기화 (기본값: 채팅) [채팅|접속자(DJ)|최근곡|옵션]
+
 /* 캐싱 */
 var g_progress_bar_width = 0
 
@@ -8,6 +10,17 @@ function initial_resize()
 
 	/* 우측 채팅 */
 	mainchat.style.width = 350
+	var category_count = mainchat_header.childElementCount
+	for(var e of mainchat_header.children)
+	{
+		e.style.width = 350 / category_count
+		e.onclick = onclick_chat_category_btn
+	}
+
+	option_checkbox_mention.onclick = onclick_chat_category_option_mention
+	option_checkbox_tts.onclick = onclick_chat_category_option_tts
+
+	
 
 	/* 좌하단 재생목록 정보 */
 	current_playlist_info_box.style.width = 232 + 100
@@ -61,7 +74,10 @@ function resize() {
 	/* 채팅 */
 	mainchat.style.marginLeft = (window_width - mainchat.clientWidth) // 350
 
-	chat.style.height = (window_height - 50)
+	chat.style.height = (window_height - 50 - 50)
+	djlist.style.height = (window_height - 50)
+	recent.style.height = (window_height - 50)
+	option.style.height = (window_height - 50)
 
 	/* 유튜브 플레이어 */
 	if(player)
@@ -527,6 +543,78 @@ function request_change_video_sort(element, isDown)
 }
 
 // ========================= 메인 화면 =========================
+
+
+// ========================= 메인 화면 - 우측 채팅 =========================
+
+function onclick_chat_category_btn()
+{
+	if(this == mainchat_header_chat ||
+		this == mainchat_header_djlist ||
+		this == mainchat_header_recent ||
+		this == mainchat_header_option)
+		{
+			set_chat_category(this)
+		}
+}
+
+function set_chat_category(category_element) // category_element : mainchat_header_(chat|djlist|recent|option)
+{
+	if(g_current_chat_category == category_element)
+		return
+
+	g_current_chat_category.toggleAttribute('selected', false)
+	var cur_panel = get_chat_category_panel(g_current_chat_category)
+	if(!cur_panel)
+		console.error('cur panel이 없다. 1 ', g_current_chat_category, ' ', category_element)
+	else
+	{
+		cur_panel.style.display = 'none'
+		if(g_current_chat_category == mainchat_header_chat)
+			chat_extra.style.display = 'none'
+	}
+
+	g_current_chat_category = category_element
+
+	g_current_chat_category.toggleAttribute('selected', true)
+	cur_panel = get_chat_category_panel(g_current_chat_category)
+	if(!cur_panel)
+		console.error('cur panel이 없다. 2 ', g_current_chat_category)
+	else
+	{
+		cur_panel.style.display = 'block'
+		if(g_current_chat_category == mainchat_header_chat)
+		{
+			chat_extra.style.display = 'block'
+			chat_scroll()
+		}
+	}
+
+}
+
+function get_chat_category_panel(category_element) // category_element : mainchat_header_(chat|djlist|recent|option)
+{
+	if(category_element == mainchat_header_chat)
+		return chat
+	if(category_element == mainchat_header_djlist)
+		return djlist
+	if(category_element == mainchat_header_recent)
+		return recent
+	if(category_element == mainchat_header_option)
+		return option
+	
+	return null
+}
+
+function onclick_chat_category_option_mention()
+{
+	// TODO: 나중에 계정에 설정 저장?
+}
+
+function onclick_chat_category_option_tts()
+{
+	// TODO: 나중에 계정에 설정 저장?
+}
 
 // ========================= 메인 화면 - 영상부 =========================
 
