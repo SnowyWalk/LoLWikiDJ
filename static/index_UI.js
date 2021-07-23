@@ -19,6 +19,8 @@ function initial_resize()
 
 	option_checkbox_mention.onclick = onclick_chat_category_option_mention
 	option_checkbox_tts.onclick = onclick_chat_category_option_tts
+	option_mention_sample.onclick = onclick_chat_category_option_mention_sample
+	option_tts_sample.onclick = onclick_chat_category_option_tts_sample
 
 	
 
@@ -614,6 +616,22 @@ function onclick_chat_category_option_mention()
 function onclick_chat_category_option_tts()
 {
 	// TODO: 나중에 계정에 설정 저장?
+}
+
+function onclick_chat_category_option_mention_sample()
+{
+	var audio = new Audio('static/call.mp3')
+	audio.volume = option_slider_mention_volume.value
+	audio.onended = destroy_self
+	audio.play()
+}
+
+function onclick_chat_category_option_tts_sample()
+{
+	var audio = new Audio('static/크크루삥뽕')
+	audio.volume = option_slider_tts_volume.value
+	audio.onended = destroy_self
+	audio.play()
 }
 
 // ========================= 메인 화면 - 영상부 =========================

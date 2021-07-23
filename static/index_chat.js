@@ -522,9 +522,9 @@ function play_call_audio(start_time = 0.0)
 	if(!cached_chat_call_audio)
 	{
 		cached_chat_call_audio = audio_chat_call
-		cached_chat_call_audio.volume = 1
 	}
-
+	
+	cached_chat_call_audio.volume = option_slider_mention_volume.value
 	cached_chat_call_audio.pause()
 	cached_chat_call_audio.currentTime = start_time
 	cached_chat_call_audio.play()
@@ -537,6 +537,7 @@ function play_tts_audio_this()
 		return
 
 	var new_tts = new Audio('./tts/' + tts_hash)
+	new_tts.volume = option_slider_tts_volume.value
 	new_tts.onended = destroy_self
 	new_tts.play()
 }

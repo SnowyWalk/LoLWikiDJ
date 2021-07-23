@@ -200,6 +200,7 @@ socket.on('tts', function(file_name) {
 		return
 
 	var new_tts = new Audio(file_name)
+	new_tts.volume = option_slider_tts_volume.value
 	new_tts.onended = destroy_self
 	new_tts.play()
 })

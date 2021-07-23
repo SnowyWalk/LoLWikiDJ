@@ -96,7 +96,14 @@
     <!-- 카테고리 : 옵션 -->
     <div id="option">
       <div class="option_row"><input type="checkbox" id="option_checkbox_mention" name="option_checkbox_mention" checked/> <label for="option_checkbox_mention">'@닉네임' 알림 받기</label></div>
+      <label style="margin-left: 38px; top: 5px; position: relative;">볼륨</label> 
+      <input type='range' min=0 max=1 value=1 step=0.01 class='no-drag' id="option_slider_mention_volume" style="top: 8px; position: relative;">
+      <img src="static/tts.png" id="option_mention_sample" style="cursor: pointer; position: relative; top: 9px; left: 3px;">
+
       <div class="option_row"><input type="checkbox" id="option_checkbox_tts" name="option_checkbox_tts" checked/> <label for="option_checkbox_tts">TTS 음성 채팅 자동 재생하기</label></div>
+      <label style="margin-left: 38px; top: 5px; position: relative;">볼륨</label> 
+      <input type='range' min=0 max=1 value=1 step=0.01 class='no-drag' id="option_slider_tts_volume" style="top: 8px; position: relative;">
+      <img src="static/tts.png" id="option_tts_sample" style="cursor: pointer; position: relative; top: 9px; left: 3px;">
     </div>
 
     <div id="chat_extra">
