@@ -50,7 +50,7 @@ async function handleDisconnect() {
 	db.on('error', function(err) {
 		if(err.code === 'PROTOCOL_CONNECTION_LOST' || err.code === 'PROTOCOL_PACKETS_OUT_OF_ORDER')
 		{
-			log_exception('ERROR', 'DB TimeOut', format('DB tried to reconnect. [{0}]', GetDate()))
+			log('ERROR', 'DB TimeOut', format('DB tried to reconnect. [{0}]', GetDate()))
 			return handleDisconnect()
 		}
 		else
@@ -383,7 +383,7 @@ io.sockets.on('connection', function(socket)
 			end_of_video()
 
 		// 나가는 사람을 제외한 나머지 유저에게 메시지 전송
-		socket.broadcast.emit('chat_update', {type: 'disconnect', message: format('\'{0}\' 님이 나가셨습니다.', socket.name)});
+		socket.broadcast.emit('chat_update', {type: 'disconnect', message: format('\'{0}\' 님이 나가셨습니다.', socket.name)})
 	})
 
 	socket.on('refresh', function(nick) {
@@ -1136,6 +1136,20 @@ io.sockets.on('connection', function(socket)
 	socket.on('tts', async function(data) {
 		log('INFO', 'TTS', format('{0} make tts ({1}) : {2}', socket.name, data.tts_hash, data.text))
 		make_tts(data.text, data.tts_hash)
+	})
+
+	socket.on('force_logout', function(nick) {
+		if(nick == socket.name)
+			return
+
+		if(nick in g_users_dic == false) // 해당 nick이 유저목록에 없으면 pass
+			return
+
+		if(g_users_dic[socket.name].ip != g_users_dic[nick].ip) // 요청자와 해당 유저가 같은 아이피가 아니면 pass // TODO:  && g_users_dic[socket.name].ip != '125.180.24.71'
+			return
+
+		log('INFO', 'force_logout', format('{0} 이 {1} 에게 강제 로그아웃 시도', socket.name, nick))
+		g_users_dic[nick].socket.disconnect(true) // 진짜 연결 해제
 	})
 }) 
 
