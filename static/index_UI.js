@@ -78,6 +78,8 @@ function resize() {
 
 	chat.style.height = (window_height - 50 - 50)
 	djlist.style.height = (window_height - 50)
+	djlist_users.style.height = (window_height - 50 - 20 - 16 - 16 - 50 - 16 - 16 - 22 - 22 - 86) / 2
+	djlist_djs.style.height = (window_height - 50 - 20 - 16 - 16 - 50 - 16 - 16 - 22 - 22 - 86) / 2
 	recent.style.height = (window_height - 50)
 	option.style.height = (window_height - 50)
 
@@ -617,10 +619,13 @@ function update_djlist_users(data_list)
 
 	djlist_users_header.firstChild.textContent = format('참여 인원 ({0})', data_list.length)
 
-	for(var e of data_list)
-	{
+	data_list.map(function (e, i) {
 		var li = document.createElement('li')
 		li.classList.add('djlist_user')
+
+		var number = document.createElement('number')
+		number.appendChild(document.createTextNode(''))
+		li.appendChild(number)
 
 		var img = document.createElement('img')
 		img.classList.add('chat_profile')
@@ -637,7 +642,41 @@ function update_djlist_users(data_list)
 		li.appendChild(label)
 
 		djlist_users.appendChild(li)
-	}
+	})
+}
+
+function update_djlist_djs(data_list)
+{
+	// 모든 자식 노드 삭제
+	while ( djlist_djs.hasChildNodes() ) 
+		djlist_djs.removeChild( djlist_djs.firstChild )
+
+	data_list.map(function(e, i) {
+		var li = document.createElement('li')
+		li.classList.add('djlist_dj')
+		if(i == 0)
+			li.classList.add('djing')
+		if(e.nick == g_nick)
+			li.style.color = 'crimson'
+
+		var number = document.createElement('number')
+		number.appendChild(document.createTextNode(i == 0 ? '▶' : format('{0}.', i)))
+		li.appendChild(number)
+
+		var img = document.createElement('img')
+		img.classList.add('chat_profile')
+		img.src = format('icon/{0}.png?ver={1}', e.icon_id, e.icon_ver)
+		img.onmouseenter = image_onmouseenter
+		img.onmouseout = image_onmouseout
+		img.onmousemove = image_onmousemove
+		li.appendChild(img)
+
+		var label = document.createElement('label')
+		label.appendChild(document.createTextNode(e.nick))
+		li.appendChild(label)
+
+		djlist_djs.appendChild(li)
+	})
 }
 
 // ========================= 메인 화면 - 우측 채팅 - 최근곡 =========================

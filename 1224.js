@@ -193,6 +193,7 @@ io.sockets.on('connection', function(socket)
 		{
 			if(g_users_dic[socket.name].ip == socket_ip) // 동일 아이피에서 로그인 했다면 그냥 기존 연결 끊고 새로 연결
 			{
+				log('INFO', '중복 로그인 교체 연결', socket.name)
 				var dest_socket = g_users_dic[socket.name].socket
 				disconnect_process(dest_socket)
 				dest_socket.disconnect(true) // 진짜 연결 해제
@@ -344,12 +345,8 @@ io.sockets.on('connection', function(socket)
 		// 모든 소켓에게 전송 
 		io.sockets.emit('chat_update', {type: 'connect', name: 'SERVER', message: format('\'{0}\' 님이 접속하였습니다.', socket.name) })
 		update_users()
+		update_djs()
 	})
-
-	function update_users()
-	{
-		io.sockets.emit('users', Object.keys(g_users_dic).map(x => Object({ nick: x, icon_id: g_users_dic[x].icon_id, icon_ver: g_users_dic[x].icon_ver })))
-	}
 
 	/* 전송한 메시지 받기 */
 	socket.on('chat_message', function(data) 
@@ -396,7 +393,11 @@ io.sockets.on('connection', function(socket)
 
 		delete g_users_dic[socket.name]
 		if(g_djs.indexOf(socket.name) != -1)
+		{
 			g_djs.splice(g_djs.indexOf(socket.name), 1)
+			update_djs()
+
+		}
 
 		log('INFO', '현 접속자', Object.keys(g_users_dic).join(', '))
 
@@ -745,6 +746,7 @@ io.sockets.on('connection', function(socket)
 			{
 				g_djs.splice(g_djs.indexOf(socket.name), 1)
 				socket.emit('dj_state', false)
+				update_djs()
 			}
 		}
 		catch (exception)
@@ -1032,6 +1034,7 @@ io.sockets.on('connection', function(socket)
 
 		log('INFO', 'dj_enter', g_djs)
 		socket.emit('dj_state', true)
+		update_djs()
 
 		if(!g_video_id)
 			end_of_video() // 루프 시작
@@ -1048,9 +1051,7 @@ io.sockets.on('connection', function(socket)
 		log('INFO', 'dj_quit', g_djs)
 
 		socket.emit('dj_state', false)
-
-		// if(g_current_dj == socket.name)
-		// 	end_of_video()
+		update_djs()
 	})
 
 	socket.on('ping', function() {
@@ -1163,6 +1164,16 @@ io.sockets.on('connection', function(socket)
 		make_tts(data.text, data.tts_hash)
 	})
 }) 
+
+function update_users()
+{
+	io.sockets.emit('users', Object.keys(g_users_dic).map(x => Object({ nick: x, icon_id: g_users_dic[x].icon_id, icon_ver: g_users_dic[x].icon_ver })))
+}
+
+function update_djs()
+{
+	io.sockets.emit('djs', g_djs.map(x => Object({ nick: x, icon_id: g_users_dic[x].icon_id, icon_ver: g_users_dic[x].icon_ver })))
+}
 
 /* 서버를 8080 포트로 listen */
 server.listen(g_port, function() {
@@ -1288,6 +1299,7 @@ async function end_of_video() {
 
 				if(this_dj in g_users_dic)
 					g_users_dic[this_dj].socket.emit('dj_state', false)
+				update_djs()
 				
 				return end_of_video()
 			}
@@ -1340,6 +1352,7 @@ async function end_of_video() {
 	// 모든 소켓들에게 dj 상태 갱신
 	for(var e in g_users_dic)
 		g_users_dic[e].socket.emit('dj_state', g_djs.includes(e))
+	update_djs()
 
 	// 모두에게 좋/싫 알림
 	update_current_rating(io.sockets)

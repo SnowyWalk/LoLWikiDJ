@@ -188,12 +188,23 @@ io.sockets.on('connection', function(socket)
 		}
 
 		// 중복 로그인 검사 
+		var socket_ip = socket.handshake.address.match(ipReg)[1]
 		if(socket.name in g_users_dic)
 		{
-			log('THROW', '중복 로그인 검사', socket.name + ' 중복 로그인 실패.')
-			socket.name = ''
-			socket.emit('login', false)
-			return
+			if(g_users_dic[socket.name].ip == socket_ip) // 동일 아이피에서 로그인 했다면 그냥 기존 연결 끊고 새로 연결
+			{
+				log('INFO', '중복 로그인 교체 연결', socket.name)
+				var dest_socket = g_users_dic[socket.name].socket
+				disconnect_process(dest_socket)
+				dest_socket.disconnect(true) // 진짜 연결 해제
+			}
+			else
+			{
+				log('THROW', '중복 로그인 검사', socket.name + ' 중복 로그인 실패.')
+				socket.name = ''
+				socket.emit('login', false)
+				return
+			}
 		}
 
 		try
@@ -203,7 +214,6 @@ io.sockets.on('connection', function(socket)
 			var current_date = GetDate()
 			
 			// 아이피 밴 확인
-			var socket_ip = socket.handshake.address.match(ipReg)[1]
 			var ban_data = await db_select('Reason, Comment', 'Bans', format('IP LIKE "{0}"', socket_ip), 'LIMIT 1')
 			if(ban_data.length > 0) // 밴 대상이면
 			{
@@ -330,10 +340,12 @@ io.sockets.on('connection', function(socket)
 	socket.on('chat_newUser', function() 
 	{
 		log('INFO', 'chat_newUser', format('\'{0}\' 님이 접속하였습니다.', socket.name))		
+		log('INFO', 'users', format('참가자 목록 ({0})\n{1}', Object.keys(g_users_dic).length, Object.keys(g_users_dic).map( x => format('{0} ({1})', x, g_users_dic[x].ip)).join(', ')))
 
 		// 모든 소켓에게 전송 
 		io.sockets.emit('chat_update', {type: 'connect', name: 'SERVER', message: format('\'{0}\' 님이 접속하였습니다.', socket.name) })
-		socket.emit('users', { data: format('참가자 목록 ({0})\n{1}', Object.keys(g_users_dic).length, Object.keys(g_users_dic).join(', ')) })
+		update_users()
+		update_djs()
 	})
 
 	/* 전송한 메시지 받기 */
@@ -369,12 +381,23 @@ io.sockets.on('connection', function(socket)
 		if(!socket.name)
 			return
 
+		disconnect_process(socket)
+	})
+
+	function disconnect_process(socket)
+	{
+		if(socket.name in g_users_dic == false)
+			return
+
 		log('INFO', 'disconnect', format('\'{0}\' 님이 나가셨습니다.', socket.name))
 
-		if(socket.name in g_users_dic)
-			delete g_users_dic[socket.name]
+		delete g_users_dic[socket.name]
 		if(g_djs.indexOf(socket.name) != -1)
+		{
 			g_djs.splice(g_djs.indexOf(socket.name), 1)
+			update_djs()
+
+		}
 
 		log('INFO', '현 접속자', Object.keys(g_users_dic).join(', '))
 
@@ -384,7 +407,9 @@ io.sockets.on('connection', function(socket)
 
 		// 나가는 사람을 제외한 나머지 유저에게 메시지 전송
 		socket.broadcast.emit('chat_update', {type: 'disconnect', message: format('\'{0}\' 님이 나가셨습니다.', socket.name)})
-	})
+		log('INFO', 'users', format('참가자 목록 ({0})\n{1}', Object.keys(g_users_dic).length, Object.keys(g_users_dic).map( x => format('{0} ({1})', x, g_users_dic[x].ip)).join(', ')))
+		update_users()
+	}
 
 	socket.on('refresh', function(nick) {
 		log('INFO', 'refresh', format('Refresh 시도 : {0}({1}) -> {2}', socket.name, g_users_dic[socket.name].ip, nick))
@@ -558,10 +583,10 @@ io.sockets.on('connection', function(socket)
 		end_of_video()
 	})
 
-	/* 참가자 목록 요청 */
+	/* deprecated: 참가자 목록 요청 */
 	socket.on('users', function() {
 		log('INFO', 'users', format('참가자 목록 ({0})\n{1}', Object.keys(g_users_dic).length, Object.keys(g_users_dic).map( x => format('{0} ({1})', x, g_users_dic[x].ip)).join(', ')))
-		socket.emit('users', {data: format('참가자 목록 ({0})\n{1}', Object.keys(g_users_dic).length, Object.keys(g_users_dic).join(', ')) })  
+		update_users()
 	})
 
 	/* DJ 목록 요청 */
@@ -721,6 +746,7 @@ io.sockets.on('connection', function(socket)
 			{
 				g_djs.splice(g_djs.indexOf(socket.name), 1)
 				socket.emit('dj_state', false)
+				update_djs()
 			}
 		}
 		catch (exception)
@@ -1008,6 +1034,7 @@ io.sockets.on('connection', function(socket)
 
 		log('INFO', 'dj_enter', g_djs)
 		socket.emit('dj_state', true)
+		update_djs()
 
 		if(!g_video_id)
 			end_of_video() // 루프 시작
@@ -1024,9 +1051,7 @@ io.sockets.on('connection', function(socket)
 		log('INFO', 'dj_quit', g_djs)
 
 		socket.emit('dj_state', false)
-
-		// if(g_current_dj == socket.name)
-		// 	end_of_video()
+		update_djs()
 	})
 
 	socket.on('ping', function() {
@@ -1095,6 +1120,7 @@ io.sockets.on('connection', function(socket)
 			await db_update('Icons', 'Ver = Ver + 1', format('Name LIKE "{0}"', socket.name))
 			g_users_dic[socket.name].icon_ver += 1
 			socket.emit('chat_update', {type: 'system_message', message: '아이콘이 변경되었습니다.'})
+			update_users()
 		}
 		catch (exception)
 		{
@@ -1137,21 +1163,17 @@ io.sockets.on('connection', function(socket)
 		log('INFO', 'TTS', format('{0} make tts ({1}) : {2}', socket.name, data.tts_hash, data.text))
 		make_tts(data.text, data.tts_hash)
 	})
-
-	socket.on('force_logout', function(nick) {
-		if(nick == socket.name)
-			return
-
-		if(nick in g_users_dic == false) // 해당 nick이 유저목록에 없으면 pass
-			return
-
-		if(g_users_dic[socket.name].ip != g_users_dic[nick].ip) // 요청자와 해당 유저가 같은 아이피가 아니면 pass // TODO:  && g_users_dic[socket.name].ip != '125.180.24.71'
-			return
-
-		log('INFO', 'force_logout', format('{0} 이 {1} 에게 강제 로그아웃 시도', socket.name, nick))
-		g_users_dic[nick].socket.disconnect(true) // 진짜 연결 해제
-	})
 }) 
+
+function update_users()
+{
+	io.sockets.emit('users', Object.keys(g_users_dic).map(x => Object({ nick: x, icon_id: g_users_dic[x].icon_id, icon_ver: g_users_dic[x].icon_ver })))
+}
+
+function update_djs()
+{
+	io.sockets.emit('djs', g_djs.map(x => Object({ nick: x, icon_id: g_users_dic[x].icon_id, icon_ver: g_users_dic[x].icon_ver })))
+}
 
 /* 서버를 8080 포트로 listen */
 server.listen(g_port, function() {
@@ -1277,6 +1299,7 @@ async function end_of_video() {
 
 				if(this_dj in g_users_dic)
 					g_users_dic[this_dj].socket.emit('dj_state', false)
+				update_djs()
 				
 				return end_of_video()
 			}
@@ -1329,6 +1352,7 @@ async function end_of_video() {
 	// 모든 소켓들에게 dj 상태 갱신
 	for(var e in g_users_dic)
 		g_users_dic[e].socket.emit('dj_state', g_djs.includes(e))
+	update_djs()
 
 	// 모두에게 좋/싫 알림
 	update_current_rating(io.sockets)

@@ -36,7 +36,7 @@ var g_current_playlist_id = 0
 
 /* 현재 유저 데이터 */
 var g_users = [] // nick: 닉네임, icon_id, icon_ver
-var g_djs = [] 
+var g_djs = [] // [닉네임1, 닉네임2, ..., 현재재생중인dj]
 
 /* DEBUG: 랜덤 닉네임 모드 */
 var g_setting_auto_login = false

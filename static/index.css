@@ -378,6 +378,35 @@ ul#djlist_users {
 .djlist_user {
   line-height: 39px;
   margin-bottom: 10px;
+  list-style-type: none;
+}
+
+.djlist_user > number {
+  float: left;
+  width: 30px;
+  text-align: left;
+}
+
+#djlist_djs_header {
+  margin-top: 50px;
+}
+
+ul#djlist_djs {
+  text-align: left;
+  margin-right: 15px;
+  overflow-y: auto;
+}
+
+.djlist_dj {
+  line-height: 39px;
+  margin-bottom: 10px;
+  list-style-type: none;
+}
+
+.djlist_dj > number {
+  float: left;
+  width: 30px;
+  text-align: left;
 }
 
 /* 최근곡 카테고리 */
