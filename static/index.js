@@ -34,6 +34,10 @@ var g_video_info_dic = null
 var g_playlist_info_list = null
 var g_current_playlist_id = 0
 
+/* 현재 유저 데이터 */
+var g_users = [] // nick: 닉네임, icon_id, icon_ver
+var g_djs = [] 
+
 /* DEBUG: 랜덤 닉네임 모드 */
 var g_setting_auto_login = false
 

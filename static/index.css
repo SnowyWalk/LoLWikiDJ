@@ -364,6 +364,22 @@ body {
   display: none;
 }
 
+#djlist_users_header {
+  margin-top: 20px;
+}
+
+ul#djlist_users {
+  text-align: left;
+  margin-left: 15px;
+  margin-right: 15px;
+  overflow-y: auto;
+}
+
+.djlist_user {
+  line-height: 39px;
+  margin-bottom: 10px;
+}
+
 /* 최근곡 카테고리 */
 #recent {
   height: 95%;

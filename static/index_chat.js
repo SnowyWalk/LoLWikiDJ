@@ -226,7 +226,6 @@ var iconReg = /^\/icon (.+)/i
 var muteReg = /^\/mute (.+)/i
 var refreshReg = /^\/refresh (.+)/i
 var ttsReg = /\/(tts|ㅅㅅㄴ)\s+(.+)/i
-var logoutReg = /\/logout (.+)/i
 function send() {
 	if(!g_isLogin)
 		return
@@ -336,6 +335,7 @@ function send() {
 	if(message.toLowerCase() == '/list' || message == '/ㅣㅑㄴㅅ' || message.toLowerCase() == '/l')
 	{
 		socket.emit('users')
+		set_chat_category(mainchat_header_djlist)
 		return
 	}
 
@@ -438,12 +438,6 @@ function send() {
 		tts_hash = GetDate() + ' ' + random_hash()
 		message = ttsReg.exec(message)[2]
 		socket.emit('tts', { text: message, tts_hash: tts_hash })
-	}
-
-	if(logoutReg.test(message))
-	{
-		var nick = logoutReg.exec(message)[1]
-		socket.emit('force_logout', nick)
 	}
 
 	// 서버로 message 이벤트 전달 + 데이터와 함께

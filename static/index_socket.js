@@ -102,8 +102,9 @@ socket.on('chat_update', function (data) {
 })
 
 /* 서버로부터 참가자 목록 요청의 답신을 받은 경우 */
-socket.on('users', function(data) {
-	add_system_message(data.data)
+socket.on('users', function(data_list) {
+	g_users = data_list
+	update_djlist_users(g_users)
 })
 
 /* 서버로부터 DJ 목록 요청의 답신을 받은 경우 */

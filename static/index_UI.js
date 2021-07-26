@@ -607,6 +607,44 @@ function get_chat_category_panel(category_element) // category_element : maincha
 	
 	return null
 }
+// ========================= 메인 화면 - 우측 채팅 - 멤버 리스트 =========================
+
+function update_djlist_users(data_list)
+{
+	// 모든 자식 노드 삭제
+	while ( djlist_users.hasChildNodes() ) 
+		djlist_users.removeChild( djlist_users.firstChild )
+
+	djlist_users_header.firstChild.textContent = format('참여 인원 ({0})', data_list.length)
+
+	for(var e of data_list)
+	{
+		var li = document.createElement('li')
+		li.classList.add('djlist_user')
+
+		var img = document.createElement('img')
+		img.classList.add('chat_profile')
+		img.src = format('icon/{0}.png?ver={1}', e.icon_id, e.icon_ver)
+		img.onmouseenter = image_onmouseenter
+		img.onmouseout = image_onmouseout
+		img.onmousemove = image_onmousemove
+		li.appendChild(img)
+
+		var label = document.createElement('label')
+		label.appendChild(document.createTextNode(e.nick))
+		if(e.nick == g_nick)
+			li.style.color = 'crimson'
+		li.appendChild(label)
+
+		djlist_users.appendChild(li)
+	}
+}
+
+// ========================= 메인 화면 - 우측 채팅 - 최근곡 =========================
+
+
+
+// ========================= 메인 화면 - 우측 채팅 - 옵션 =========================
 
 function onclick_chat_category_option_mention()
 {

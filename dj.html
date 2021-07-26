@@ -85,7 +85,9 @@
 
     <!-- 카테고리 : DJ/참여자 -->
     <div id="djlist">
-      <div><label>(미구현)현재 접속자와 DJ대기열이 표시될 예정</label></div>
+      <div id="djlist_users_header">
+        <ul id="djlist_users"></ul>
+      </div>
     </div>
 
     <!-- 카테고리 : 최근곡 -->
@@ -112,8 +114,8 @@
         <button id="chat_send" onclick="send()">전송</button>
       </div>
       <div id="chat_scroller" onclick="scrollDown()">스크롤해서 채팅이 멈췄습니다.</div> 
-      <div id="image_expander"><img id="image_expander_src"></div>
     </div>
+    <div id="image_expander"><img id="image_expander_src"></div>
   </div>
 
   
