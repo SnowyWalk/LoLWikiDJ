@@ -346,6 +346,7 @@ io.sockets.on('connection', function(socket)
 		io.sockets.emit('chat_update', {type: 'connect', name: 'SERVER', message: format('\'{0}\' 님이 접속하였습니다.', socket.name) })
 		update_users()
 		update_djs()
+		socket.emit('chat_update', { type:'system_message', time: GetTime(), message: format('참가자 목록 ({0})\n{1}', Object.keys(g_users_dic).length, Object.keys(g_users_dic).join(', ')) })
 	})
 
 	/* 전송한 메시지 받기 */
