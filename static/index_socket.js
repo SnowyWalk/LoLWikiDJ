@@ -82,8 +82,9 @@ socket.on('login', function(isSuccess) {
 						+ '3. 노통 님\n'
 						+ '4. 고냥이지 님\n'
 						+ '5. 인공사 님\n'
-						+ '6. 디아 님\n'
-						+ '7. 강령군주 님\n'
+						+ '6. pagolas 님\n'
+						+ '7. 디아 님\n'
+						+ '8. 강령군주 님\n'
 						+ '후원 계좌 : 기업 539-028793-01-012 박*준', 'yellow')
 	add_system_message('명령어 목록은 /? 을 입력해 볼 수 있습니다.')
 	add_system_message('패치 노트 보기 (클릭)', 'chartreuse').onclick = _ => window.open('/patch_note', '패치 노트')
