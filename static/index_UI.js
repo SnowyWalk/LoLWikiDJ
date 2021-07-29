@@ -622,6 +622,8 @@ function update_djlist_users(data_list)
 	data_list.map(function (e, i) {
 		var li = document.createElement('li')
 		li.classList.add('djlist_user')
+		if(i % 2 == 1)
+			li.classList.add('dark')
 
 		var number = document.createElement('number')
 		number.appendChild(document.createTextNode(''))
@@ -658,6 +660,8 @@ function update_djlist_djs(data_list)
 			li.classList.add('djing')
 		if(e.nick == g_nick)
 			li.style.color = 'crimson'
+		if(i % 2 == 1)
+			li.classList.add('dark')
 
 		var number = document.createElement('number')
 		number.appendChild(document.createTextNode(i == 0 ? '▶' : format('{0}.', i)))
