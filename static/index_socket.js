@@ -109,7 +109,8 @@ socket.on('users', function(data_list) {
 
 /* 서버로부터 DJ 목록 요청의 답신을 받은 경우 */
 socket.on('djs', function(data_list) {
-	data_list.splice(0, 0, data_list.splice(-1)[0]) // 맨 뒤의 순번을 맨 앞으로 가져오기. (현재 재생중인 DJ로 편하게 표현하기 위해)
+	if(data_list.length > 0)
+		data_list.splice(0, 0, data_list.splice(-1)[0]) // 맨 뒤의 순번을 맨 앞으로 가져오기. (현재 재생중인 DJ로 편하게 표현하기 위해)
 	g_djs = data_list
 	update_djlist_djs(g_djs)
 })
