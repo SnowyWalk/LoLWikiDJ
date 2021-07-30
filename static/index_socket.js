@@ -111,6 +111,7 @@ socket.on('chat_update', function (data) {
 /* 서버로부터 참가자 목록 요청의 답신을 받은 경우 */
 socket.on('users', function(data_list) {
 	g_users = data_list
+	update_users_count()
 	update_djlist_users(g_users)
 })
 

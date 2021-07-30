@@ -625,6 +625,11 @@ function update_chat_noti() // 내가 안 본 채팅 카운트 출력
 	}
 }
 
+function update_users_count()
+{
+	user_count.firstChild.textContent = g_users.length
+}
+
 // ========================= 메인 화면 - 우측 채팅 - 멤버 리스트 =========================
 
 function update_djlist_users(data_list)
