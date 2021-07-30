@@ -89,6 +89,9 @@ var g_queue = []
 var g_good_list = []
 var g_bad_list = []
 
+/* 최근 재생된 영상 데이터 */
+var g_recent_video_list = [] // [ { video_id, thumbnail, title, dj }, ... ]
+
 /* DEBUG 용 */
 var g_last_query = ''
 
@@ -682,6 +685,11 @@ io.sockets.on('connection', function(socket)
 			await db_update('Accounts', format('Playlists = "{0}"', JSON.stringify(my_playlists)), format('Name LIKE "{0}"', socket.name))
 			await db_update('Playlists', format('Deleted = "1"'), format('Id = "{0}"', playlist_id))
 
+			// 좋아요 표시한 재생목록이었다면 할당 해제
+			var likeplaylist_id = await db_select('LikePlaylist', 'Accounts', format('Name LIKE "{0}"', socket.name), 'LIMIT 1').then( ret => ret[0].LikePlaylist )
+			if(likeplaylist_id == playlist_id)
+				await db_update('Accounts', 'LikePlaylist = NULL', format('Name LIKE "{0}"', socket.name))
+
 			await db_commit()
 
 			update_playlist(socket)
@@ -915,69 +923,6 @@ io.sockets.on('connection', function(socket)
 		}
 	}
 
-	/* VideoId의 DB Id를 반환 (없으면 추가) / return : {successed, failed (VideoId만 있음), blocked (Id만 없음)} */
-	async function get_video_index(video_id_list)
-	{
-		try
-		{
-			if(typeof(video_id_list) != 'object')
-			video_id_list = [video_id_list]
-
-			// [{VideoId: 'vQHVGXdcqEQ', Id: 0, Name: '', Length: 0}, { ... }, ...] 으로 변환
-			var ret_list = video_id_list.map( x => Object({VideoId: x, Id: 0, Name: '', Length: 0}) )
-
-			// 기존 DB에 등록된 애들은 Id 가져와서 적용
-			var select_ret = await db_select('Id, VideoId, Name, Length', 'Videos', format('VideoId In ({0})', video_id_list.map(x => format('\'{0}\'', x)).join(', ')))
-			Array.from(select_ret).forEach(x => {
-				var data = ret_list.find(f => f.VideoId == x.VideoId)
-				data.Id = x.Id
-				data.Name = x.Name
-				data.Length = x.Length
-			})
-
-			// DB에 없던 놈들은 모아서 DB에 등록 (병렬 Promise 사용)
-			async function put_video_to_db(video_id) {
-				// 1-1. youtube data request
-				var video_data = await request_youtube_video(video_id).then(parse_youtube_video_data).catch(() => false)
-				// var { tags, ...other_data } = video_data
-				
-				if(!video_data)
-					return
-
-				log('INFO', 'put_video_to_db - yt data', video_data.title)
-
-				var data = ret_list.find(f => f.VideoId == video_id)
-				data.Name = video_data.title
-				data.Length = video_data.duration
-
-				// 외부 재생 제한 영상의 경우
-				if(!video_data.embeddable)
-					return
-
-				// 1-2. Videos DB에 등록
-				// 1-3. insertId 가져오기
-				var inserted_id = await db_insert('Videos', ['Name', 'VideoId', 'Length', 'Thumbnail'], [video_data.title, video_id, video_data.duration, video_data.thumbnail_url])
-								.then((ret) => ret.insertId)
-				
-				data.Id = inserted_id
-			}
-			var to_register_videoId_list = ret_list.filter(e => !e.Id).map(e => e.VideoId) // ['vQHVGXdcqEQ', ...]
-			if(to_register_videoId_list.length > 0)
-			{
-				var promises = to_register_videoId_list.map( x => put_video_to_db(x) )
-				await Promise.all(promises)
-			}
-
-			return ret_list
-		}
-		catch (exception)
-		{
-			log_exception('get_video_index', exception)
-		}
-
-	}
-
-
 	/* 좋아요/싫어요 투표 신호 */
 	socket.on('rating', function(isGood) {
 		if(!socket.name)
@@ -1013,6 +958,10 @@ io.sockets.on('connection', function(socket)
 		}
 
 		log('INFO', 'rating', format('{0} 가 {1} 클릭 --> good: {2}, bad: {3}', socket.name, isGood ? 'good' : 'bad', JSON.stringify(g_good_list), JSON.stringify(g_bad_list)))
+
+		// 재생목록에 추가
+		if(isGood && !is_in_good)
+			add_to_likeplaylist(socket.name, g_video_id)
 
 		// 모두에게 좋/싫 알림
 		update_current_rating(io.sockets)
@@ -1174,6 +1123,67 @@ function update_users()
 function update_djs()
 {
 	io.sockets.emit('djs', g_djs.map(x => Object({ nick: x, icon_id: g_users_dic[x].icon_id, icon_ver: g_users_dic[x].icon_ver })))
+}
+
+/* VideoId의 DB Id를 반환 (없으면 추가) / return : {successed, failed (VideoId만 있음), blocked (Id만 없음)} */
+async function get_video_index(video_id_list)
+{
+	try
+	{
+		if(typeof(video_id_list) != 'object')
+			video_id_list = [video_id_list]
+
+		// [{VideoId: 'vQHVGXdcqEQ', Id: 0, Name: '', Length: 0}, { ... }, ...] 으로 변환
+		var ret_list = video_id_list.map( x => Object({VideoId: x, Id: 0, Name: '', Length: 0}) )
+
+		// 기존 DB에 등록된 애들은 Id 가져와서 적용
+		var select_ret = await db_select('Id, VideoId, Name, Length', 'Videos', format('VideoId In ({0})', video_id_list.map(x => format('\'{0}\'', x)).join(', ')))
+		Array.from(select_ret).forEach(x => {
+			var data = ret_list.find(f => f.VideoId == x.VideoId)
+			data.Id = x.Id
+			data.Name = x.Name
+			data.Length = x.Length
+		})
+
+		// DB에 없던 놈들은 모아서 DB에 등록 (병렬 Promise 사용)
+		async function put_video_to_db(video_id) {
+			// 1-1. youtube data request
+			var video_data = await request_youtube_video(video_id).then(parse_youtube_video_data).catch(() => false)
+			// var { tags, ...other_data } = video_data
+			
+			if(!video_data)
+				return
+
+			log('INFO', 'put_video_to_db - yt data', video_data.title)
+
+			var data = ret_list.find(f => f.VideoId == video_id)
+			data.Name = video_data.title
+			data.Length = video_data.duration
+
+			// 외부 재생 제한 영상의 경우
+			if(!video_data.embeddable)
+				return
+
+			// 1-2. Videos DB에 등록
+			// 1-3. insertId 가져오기
+			var inserted_id = await db_insert('Videos', ['Name', 'VideoId', 'Length', 'Thumbnail'], [video_data.title, video_id, video_data.duration, video_data.thumbnail_url])
+							.then((ret) => ret.insertId)
+			
+			data.Id = inserted_id
+		}
+		var to_register_videoId_list = ret_list.filter(e => !e.Id).map(e => e.VideoId) // ['vQHVGXdcqEQ', ...]
+		if(to_register_videoId_list.length > 0)
+		{
+			var promises = to_register_videoId_list.map( x => put_video_to_db(x) )
+			await Promise.all(promises)
+		}
+
+		return ret_list
+	}
+	catch (exception)
+	{
+		log_exception('get_video_index', exception)
+	}
 }
 
 /* 서버를 8080 포트로 listen */
@@ -1433,6 +1443,61 @@ async function update_playlist(socket, show_playlist_id = 0) // show_playlist_id
 	catch (exception)
 	{
 		log_exception('playlist', exception)
+	}
+}
+
+/* 좋아요 누른 영상 목록에 추가 */
+async function add_to_likeplaylist(nick, video_id)
+{
+	try
+	{
+		await db_beginTransaction()
+
+		var likeplaylist_id = await db_select('LikePlaylist', 'Accounts', format('Name LIKE "{0}"', nick), 'LIMIT 1').then( ret => ret[0].LikePlaylist )
+		if(!likeplaylist_id) // 만약 좋아요 재생목록이 없다면 새로 만들고 해당 리스트를 좋아요재생목록으로 지정
+		{
+			// 새 재생목록 생성
+			var new_playlist_id = await db_insert('Playlists', ['Name', 'VideoList'], ['좋아요 누른 영상', '[]']).then(ret => ret.insertId)
+			
+			// 유저의 현재 재생목록에 추가
+			await db_update('Accounts', format('Playlists = JSON_ARRAY_APPEND(Playlists, "$", {0})', new_playlist_id), format('Name LIKE "{0}"', nick))
+			await db_update('Accounts', format('LikePlaylist = {0}', new_playlist_id), format('Name LIKE "{0}"', nick))
+			
+			log('INFO', 'add_to_likeplaylist', format('{0} 이(가) 좋아요 재생목록을 생성 ({1})', nick, new_playlist_id))
+
+			likeplaylist_id = new_playlist_id
+		}
+
+		var result = await get_video_index(video_id)
+		var successed = result.filter(x => x.Id)
+		// var blocked = result.filter(x => !x.Id && x.Name)
+		// var failed = result.filter(x => !x.Id && !x.Name)
+
+		// 재생목록에 이미 있는 영상인지 중복체크
+		var cur_videos = await db_select('VideoList', 'Playlists', format('Id = {0}', likeplaylist_id), 'LIMIT 1').then(e => e[0].VideoList).then(JSON.parse)
+		var duplicated = successed.filter(x => cur_videos.indexOf(x.Id) != -1)
+		if(duplicated.length > 0)
+			successed = successed.filter(x => !duplicated.find(y => y.Id == x.Id))
+
+		if(successed.length == 0)
+		{
+			log('ERROR', 'add_to_likeplaylist', '알 수 없는 에러')
+			await db_commit()
+			return
+		}
+
+		await db_update('Playlists', format('VideoList = JSON_MERGE_PRESERVE(VideoList, JSON_ARRAY({0}))', successed.map(x => x.Id).join(', ')), format('Id = {0}', likeplaylist_id))
+		
+		await db_commit()
+		
+		// 업데이트
+		if(nick in g_users_dic)
+			update_playlist(g_users_dic[nick].socket)
+	}
+	catch (exception)
+	{
+		log_exception('add_to_likeplaylist', exception)
+		await db_rollback()
 	}
 }
 
