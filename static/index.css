@@ -324,6 +324,19 @@ body {
   background-image: url(chat_menu.png);
 }
 
+#chat_noti_count {
+  position: relative; 
+  background-color: crimson; 
+  border-radius: 50%;
+  top: 21px;
+  height: 15px;
+  display: none;
+  padding-left: 5px;
+  padding-right: 5px;
+  color: yellow;
+  margin-left: 32px;  
+}
+
 #mainchat_header_djlist {
   background-image: url(djlist_menu2.png);
 }

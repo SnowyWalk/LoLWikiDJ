@@ -4,6 +4,8 @@ var socket = io()
 var g_nick = ''
 var g_isLogin = false
 var g_icon_id = 0
+var g_current_chat_category = mainchat_header_chat // 채팅 카테고리 초기화 (기본값: 채팅) [채팅|접속자(DJ)|최근곡|옵션]
+var g_chat_noti_count = 0 // 내가 보지 못한 채팅 카운트
 
 /* 플레이어 관련 데이터 */
 var g_cued_time_ms = 0

@@ -1,5 +1,3 @@
-var g_current_chat_category = mainchat_header_chat // 채팅 카테고리 초기화 (기본값: 채팅) [채팅|접속자(DJ)|최근곡|옵션]
-
 /* 캐싱 */
 var g_progress_bar_width = 0
 
@@ -591,6 +589,8 @@ function set_chat_category(category_element) // category_element : mainchat_head
 		{
 			chat_extra.style.display = 'block'
 			chat_scroll()
+			g_chat_noti_count = 0
+			update_chat_noti()
 		}
 	}
 
@@ -609,6 +609,22 @@ function get_chat_category_panel(category_element) // category_element : maincha
 	
 	return null
 }
+
+function update_chat_noti() // 내가 안 본 채팅 카운트 출력
+{	
+	if(g_chat_noti_count > 0)
+	{
+		if(chat_noti_count.style.display != 'inline')
+			chat_noti_count.style.display = 'inline'
+		chat_noti_count.firstChild.textContent = g_chat_noti_count
+	}
+	else
+	{
+		if(chat_noti_count.style.display != 'none')
+			chat_noti_count.style.display = 'none'
+	}
+}
+
 // ========================= 메인 화면 - 우측 채팅 - 멤버 리스트 =========================
 
 function update_djlist_users(data_list)

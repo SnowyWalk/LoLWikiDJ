@@ -99,6 +99,12 @@ socket.on('chat_update', function (data) {
 	if(!g_isLogin)
 		return
 
+	if(g_current_chat_category != mainchat_header_chat)
+	{
+		g_chat_noti_count += 1
+		update_chat_noti()
+	}
+
 	add_message(data)
 })
 
