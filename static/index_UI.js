@@ -706,7 +706,37 @@ function update_djlist_djs(data_list)
 
 // ========================= 메인 화면 - 우측 채팅 - 최근곡 =========================
 
+function update_recent_video_list()
+{
+	// 모든 자식 노드 삭제
+	while ( recent_list.hasChildNodes() ) 
+		recent_list.removeChild( recent_list.firstChild )
 
+	g_recent_video_list.map(function(e, i) {
+		var li = document.createElement('div')
+		li.classList.add(i % 2 == 0 ? 'even' : 'odd')
+		li.classList.add('recent_list_video')
+		li.classList.add('system_message')
+		li.classList.add('chat')
+		li.classList.add('play_info')
+
+		var img = document.createElement('img')
+		img.src = e.thumbnail
+		li.appendChild(img)
+
+		var div1 = document.createElement('div')
+		div1.appendChild(document.createTextNode(format('DJ : {0}', e.dj)))
+		div1.classList.add('play_info_dj')
+		li.appendChild(div1)
+
+		var div2 = document.createElement('div')
+		div2.appendChild(document.createTextNode(format('{0} ({1})', e.title, second_to_string(e.duration))))
+		div2.classList.add('play_info_title')
+		li.appendChild(div2)
+
+		recent_list.appendChild(li)
+	})
+}
 
 // ========================= 메인 화면 - 우측 채팅 - 옵션 =========================
 

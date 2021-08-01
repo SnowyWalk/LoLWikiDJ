@@ -7,6 +7,9 @@ var g_icon_id = 0
 var g_current_chat_category = mainchat_header_chat // 채팅 카테고리 초기화 (기본값: 채팅) [채팅|접속자(DJ)|최근곡|옵션]
 var g_chat_noti_count = 0 // 내가 보지 못한 채팅 카운트
 
+/* 최근 재생된 영상 데이터 */
+var g_recent_video_list = [] // [ { video_id, thumbnail, title, dj }, ... ]
+
 /* 플레이어 관련 데이터 */
 var g_cued_time_ms = 0
 var g_current_video_id = ''

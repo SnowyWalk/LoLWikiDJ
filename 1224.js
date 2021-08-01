@@ -91,6 +91,7 @@ var g_bad_list = []
 
 /* 최근 재생된 영상 데이터 */
 var g_recent_video_list = [] // [ { video_id, thumbnail, title, dj }, ... ]
+var g_recent_video_list_limit = 20 // 최대 저장 개수
 
 /* DEBUG 용 */
 var g_last_query = ''
@@ -309,6 +310,7 @@ io.sockets.on('connection', function(socket)
 			update_current_queue(socket) // 플레이 대기열 알림
 			update_current_rating(socket) // 좋/싫 알림
 			update_playlist(socket) // 플레이리스트 정보 전송
+			update_recent_video_list(socket) // 최근 영상 정보 전송
 
 			if(g_notice)
 				socket.emit('chat_update', {type: 'connect', name: 'SERVER', message: g_notice})
@@ -460,6 +462,8 @@ io.sockets.on('connection', function(socket)
 	
 				// 모두에게 영상 갱신
 				update_current_video(io.sockets)
+				add_to_recent_video_list(g_video_id, g_video_title, g_video_thumbnail, g_current_dj, g_video_duration)
+				update_recent_video_list(io.sockets)
 			}
 			else
 			{
@@ -522,6 +526,8 @@ io.sockets.on('connection', function(socket)
 
 			// 모두에게 영상 갱신
 			update_current_video(io.sockets)
+			add_to_recent_video_list(g_video_id, g_video_title, g_video_thumbnail, g_current_dj, g_video_duration)
+			update_recent_video_list(io.sockets)
 		}
 		catch(exception)
 		{
@@ -1286,6 +1292,8 @@ async function end_of_video() {
 
 		// 모두에게 영상 갱신
 		update_current_video(io.sockets)
+		add_to_recent_video_list(g_video_id, g_video_title, g_video_thumbnail, g_current_dj, g_video_duration)
+		update_recent_video_list(io.sockets)
 
 		// 모두에게 플레이 대기열 알림
 		update_current_queue(io.sockets)
@@ -1337,6 +1345,8 @@ async function end_of_video() {
 
 			// 모두에게 영상 갱신
 			update_current_video(io.sockets)
+			add_to_recent_video_list(g_video_id, g_video_title, g_video_thumbnail, g_current_dj, g_video_duration)
+			update_recent_video_list(io.sockets)
 
 			// 모두에게 플레이 대기열 알림
 			update_current_queue(io.sockets)
@@ -1499,6 +1509,25 @@ async function add_to_likeplaylist(nick, video_id)
 		log_exception('add_to_likeplaylist', exception)
 		await db_rollback()
 	}
+}
+
+/* 최근 재생 영상 목록에 영상 추가 */
+function add_to_recent_video_list(video_id, title, thumbnail, dj, duration)
+{
+	// g_recent_video_list
+	// g_recent_video_list_limit
+
+	// 오바하는 갯수 쳐내기 (이번에 들어갈 자리 마련하기위해 최대개수-1개로 만듬)
+	if(g_recent_video_list.length >= g_recent_video_list_limit)
+		g_recent_video_list.splice(g_recent_video_list_limit)
+
+	g_recent_video_list.splice(0, 0, { video_id: video_id, title: title, thumbnail: thumbnail, dj: dj, duration: duration })
+}
+
+/* 최근 영상 목록 Emit */
+function update_recent_video_list(dest_socket)
+{
+	dest_socket.emit('recent_video_list', g_recent_video_list)
 }
 
 /* 영상 종료 타이머 설정  */

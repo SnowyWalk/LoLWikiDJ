@@ -405,7 +405,8 @@ ul#djlist_users {
 
 .djlist_user {
   line-height: 39px;
-  margin-bottom: 10px;
+  padding-top: 5px;
+  padding-bottom: 5px;
   list-style-type: none;
   padding-left: 30px;
   padding-right: 30px;
@@ -415,6 +416,10 @@ ul#djlist_users {
   background-color: rgba(0, 0, 0, 0.06);
 }
 
+.djlist_user:not(.dark) {
+  background-color: rgba(0, 0, 0, 0.02);
+}
+
 .djlist_user > number {
   float: left;
   width: 30px;
@@ -422,7 +427,8 @@ ul#djlist_users {
 }
 
 #djlist_djs_header {
-  margin-top: 50px;
+  padding-top: 50px;
+  border-top: 2px solid;
 }
 
 ul#djlist_djs {
@@ -435,12 +441,17 @@ ul#djlist_djs {
 
 .djlist_dj {
   line-height: 39px;
-  margin-bottom: 10px;
+  padding-top: 5px;
+  padding-bottom: 5px;
   list-style-type: none;
 }
 
 .djlist_dj.dark {
   background-color: rgba(0, 0, 0, 0.06);
+}
+
+.djlist_dj:not(.dark) {
+  background-color: rgba(0, 0, 0, 0.02);
 }
 
 .djlist_dj > number {
@@ -455,6 +466,19 @@ ul#djlist_djs {
   width: 100%;
   overflow-y: auto;
   display: none;
+}
+
+ul#recent_list {
+  margin: 0px;
+  padding: 0px;
+}
+
+div.recent_list_video {
+  margin-top: 5px !important;
+  margin-bottom: 5px !important;
+  margin-left: 2px !important;
+  margin-right: 2px !important;
+  width: 93.4% !important;
 }
 
 /* 옵션 카테고리 */

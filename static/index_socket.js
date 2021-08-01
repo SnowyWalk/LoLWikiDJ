@@ -217,6 +217,11 @@ socket.on('tts', function(file_name) {
 	new_tts.play()
 })
 
+socket.on('recent_video_list', function(data_list) {
+	g_recent_video_list = data_list
+	update_recent_video_list()
+})
+
 function destroy_self() 
 {
 	delete this
