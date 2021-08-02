@@ -45,6 +45,21 @@ socket.on('connect', function () {
 		socket.emit('login', g_nick)
 })
 
+socket.on('check_user', function(is_duplicated) {
+	if(is_duplicated)
+	{
+		console.log('confirm')
+		var answer = confirm(format('[{0}] 계정으로 이미 로그인 되어있습니다.\n기존 연결을 해제하고 로그인할까요?', login_id.value))
+		if(!answer)
+		{
+			login_button.style.display = 'block'
+			return
+		}
+	}
+
+	socket.emit('login', g_nick)
+})
+
 socket.on('disconnect', function () {
 	add_message({type: 'system_message', message: '연결 끊김', bg: 'red'})
 })

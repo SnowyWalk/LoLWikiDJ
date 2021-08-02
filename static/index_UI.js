@@ -773,7 +773,8 @@ function onclick_chat_category_option_tts_sample()
 
 function onclick_chat_category_option_logout()
 {
-	localStorage.removeItem(g_storage_nick_key)
+	if(localStorage.getItem(g_storage_nick_key) == g_nick)
+		localStorage.removeItem(g_storage_nick_key)
 	location.reload()
 }
 

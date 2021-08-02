@@ -67,6 +67,9 @@ app.use('/static', express.static('./static'))
 app.use('/icon', express.static('./static/icon'))
 app.use('/tts', express.static('./tts'))
 
+/* CONSTANT */
+const ipReg = /((?:\d+\.){3}\d+)/
+
 /* 유저 목록 */
 var g_users_dic = [] // dic['닉네임'] = { socket: 소켓, icon_id: 아이콘 아이디, icon_ver: 아이콘 버전  }
 
@@ -176,7 +179,6 @@ function read_file_async(file_name)
 io.sockets.on('connection', function(socket) 
 {
 	/* 로그인 */
-	var ipReg = /((?:\d+\.){3}\d+)/
 	socket.on('login', async function(nick) {
 		// 소켓에 이름 저장해두기 
 		socket.name = nick
@@ -429,6 +431,22 @@ io.sockets.on('connection', function(socket)
 			g_users_dic[nick].socket.emit('refresh')
 		else
 			log('ERROR_CATCH', 'refresh', format('해당 대상 없음!'))
+	})
+
+	socket.on('check_user', function(nick) {
+		if(nick in g_users_dic == false)
+		{
+			socket.emit('check_user', false)
+			return
+		}
+
+		if(g_users_dic[nick].ip != socket.handshake.address.match(ipReg)[1])
+		{
+			socket.emit('check_user', false) // 원래는 이미 존재한다고 해야하지만, 용도가 교체 로그인 체크이므로 false 반환.
+			return
+		}
+
+		socket.emit('check_user', true)
 	})
 
 	/* TEST: QUEUE에 비디오 추가 */

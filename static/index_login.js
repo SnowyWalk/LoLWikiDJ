@@ -13,7 +13,7 @@ function login()
 	g_nick = g_nick.substr(0, 32)
 
 	console.log('window에서 login')
-	socket.emit('login', g_nick)
+	socket.emit('check_user', g_nick)
 }
 
 function disappear_login_scene()
