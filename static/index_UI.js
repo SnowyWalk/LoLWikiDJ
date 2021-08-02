@@ -722,6 +722,11 @@ function update_recent_video_list()
 
 		var img = document.createElement('img')
 		img.src = e.thumbnail
+		img.setAttribute('video_id', e.video_id)
+		img.onclick = onclick_play_data
+		img.onmouseenter = image_onmouseenter
+		img.onmouseout = image_onmouseout
+		img.onmousemove = image_onmousemove
 		li.appendChild(img)
 
 		var div1 = document.createElement('div')
