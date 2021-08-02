@@ -551,8 +551,8 @@ div.recent_list_video {
 }
 
 #image_expander_src {
-  min-width: 150px;
-  min-height: 150px;
+  min-width: 250px;
+  min-height: 250px;
 }
 
 /* 접속 알림 */
