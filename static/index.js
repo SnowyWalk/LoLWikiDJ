@@ -1,6 +1,7 @@
 var socket = io()
 
 /* 채팅/인증용 데이터 */
+const g_storage_nick_key = 'LoLWikiDJ'
 var g_nick = ''
 var g_isLogin = false
 var g_icon_id = 0

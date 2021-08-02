@@ -20,6 +20,14 @@ socket.on('connect', function () {
 		resize()
 		login_id.focus()
 	}
+
+	var stored_nick = localStorage.getItem(g_storage_nick_key)
+	if(g_player_ready && stored_nick)
+	{
+		login_id.value = stored_nick
+		login()
+		return
+	}
 	
 	if(!g_setting_auto_login)
 		return
@@ -32,7 +40,7 @@ socket.on('connect', function () {
 		return
 	}
 
-	add_system_message('인증 중 ...')
+	// add_system_message('인증 중 ...')
 	if(g_player_ready)
 		socket.emit('login', g_nick)
 })
@@ -65,6 +73,7 @@ socket.on('login', function(isSuccess) {
 	}
 
 	g_isLogin = true
+	localStorage.setItem(g_storage_nick_key, g_nick)
 
 	// 로그인 창 숨기기
 	init_block.style.opacity = 1

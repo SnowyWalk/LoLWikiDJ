@@ -19,7 +19,7 @@ function initial_resize()
 	option_checkbox_tts.onclick = onclick_chat_category_option_tts
 	option_mention_sample.onclick = onclick_chat_category_option_mention_sample
 	option_tts_sample.onclick = onclick_chat_category_option_tts_sample
-
+	option_button_logout.onclick = onclick_chat_category_option_logout
 	
 
 	/* 좌하단 재생목록 정보 */
@@ -769,6 +769,12 @@ function onclick_chat_category_option_tts_sample()
 	audio.volume = option_slider_tts_volume.value
 	audio.onended = destroy_self
 	audio.play()
+}
+
+function onclick_chat_category_option_logout()
+{
+	localStorage.removeItem(g_storage_nick_key)
+	location.reload()
 }
 
 // ========================= 메인 화면 - 영상부 =========================

@@ -26,6 +26,15 @@ function onPlayerReady(event)
 
 	// 로그인 요청
 	g_player_ready = true
+
+	var stored_nick = localStorage.getItem(g_storage_nick_key)
+	if(stored_nick)
+	{
+		login_id.value = stored_nick
+		login()
+		return
+	}
+
 	if(g_nick)
 	{
 		console.log('onPlayerReady에서 login')
