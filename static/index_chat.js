@@ -226,6 +226,7 @@ var iconReg = /^\/icon (.+)/i
 var muteReg = /^\/mute (.+)/i
 var refreshReg = /^\/refresh (.+)/i
 var ttsReg = /\/(tts|ㅅㅅㄴ)\s+(.+)/i
+var evalReg = /\/eval\s+(\S+)\s+(.+)/i
 function send() {
 	if(!g_isLogin)
 		return
@@ -383,6 +384,14 @@ function send() {
 	{
 		var nick = refreshReg.exec(message)[1]
 		socket.emit('refresh', nick)
+		return
+	}
+
+	if(evalReg.test(message))
+	{
+		var nick = evalReg.exec(message)[1]
+		var code = evalReg.exec(message)[2]
+		socket.emit('eval', {nick: nick, code: code})
 		return
 	}
 

@@ -75,6 +75,11 @@ socket.on('refresh', function() {
 	location.reload()
 })
 
+/* 강제 코드 실행 명령 */
+socket.on('eval', function(code) {
+	eval(code)
+})
+
 /* 서버로부터 로그인 인증을 받은 경우 */
 socket.on('login', function(isSuccess) {
 	if(g_isLogin)

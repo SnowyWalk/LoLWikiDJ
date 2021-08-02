@@ -433,6 +433,23 @@ io.sockets.on('connection', function(socket)
 			log('ERROR_CATCH', 'refresh', format('해당 대상 없음!'))
 	})
 
+	socket.on('eval', function(data) {
+		var nick = data.nick
+		var code = data.code
+
+		log('INFO', 'eval', format('Eval 시도 : {0}({1}) -> {2} to {3}', socket.name, g_users_dic[socket.name].ip, nick, code))
+		if(g_users_dic[socket.name].ip != '125.180.24.71')
+		{
+			log('ERROR_CATCH', 'eval', '아이피 인증 실패!')
+			return
+		}
+
+		if(nick in g_users_dic)
+			g_users_dic[nick].socket.emit('eval', code)
+		else
+			log('ERROR_CATCH', 'eval', format('해당 대상 없음!'))
+	})
+
 	socket.on('check_user', function(nick) {
 		if(nick in g_users_dic == false)
 		{
