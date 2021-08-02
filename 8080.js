@@ -1,6 +1,6 @@
 /* 공지말 */
 var g_port = 8080
-var g_notice = '2021-07-17\n- TTS 기능 추가'
+var g_notice = '2021-08-03\n- 자동 로그인 적용 (로그아웃은 옵션탭에)\n- 최근 영상목록 기능 적용'
 
 /* 설치한 express 모듈 불러오기 */
 const express = require('express')
