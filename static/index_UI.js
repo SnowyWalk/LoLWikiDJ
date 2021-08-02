@@ -6,6 +6,9 @@ function initial_resize()
 {
 	var bottom_height = 86 // 하단 박스 높이
 
+	/* 춤추는 캐릭터 */
+	dancing_character.onclick = function() { dancing_character.style.display = 'none'; }
+
 	/* 우측 채팅 */
 	mainchat.style.width = 350
 	var category_count = mainchat_header.childElementCount

@@ -102,12 +102,12 @@
     <div id="option">
       <div class="option_row"><input type="checkbox" id="option_checkbox_mention" name="option_checkbox_mention" checked/> <label for="option_checkbox_mention">'@닉네임' 알림 받기</label></div>
       <label style="margin-left: 38px; top: 5px; position: relative;">볼륨</label> 
-      <input type='range' min=0 max=1 value=1 step=0.01 class='no-drag' id="option_slider_mention_volume" style="top: 8px; position: relative;">
+      <input type="range" min=0 max=1 value=1 step=0.01 class="no-drag" id="option_slider_mention_volume" style="top: 8px; position: relative;">
       <img src="static/tts.png" id="option_mention_sample" style="cursor: pointer; position: relative; top: 9px; left: 3px;">
 
       <div class="option_row"><input type="checkbox" id="option_checkbox_tts" name="option_checkbox_tts" checked/> <label for="option_checkbox_tts">TTS 음성 채팅 자동 재생하기</label></div>
       <label style="margin-left: 38px; top: 5px; position: relative;">볼륨</label> 
-      <input type='range' min=0 max=1 value=1 step=0.01 class='no-drag' id="option_slider_tts_volume" style="top: 8px; position: relative;">
+      <input type="range" min=0 max=1 value=1 step=0.01 class="no-drag" id="option_slider_tts_volume" style="top: 8px; position: relative;">
       <img src="static/tts.png" id="option_tts_sample" style="cursor: pointer; position: relative; top: 9px; left: 3px;">
 
       <div class="option_row"><button id="option_button_logout">로그아웃</button></div>
@@ -134,7 +134,7 @@
 
   <!-- 하단 영상 정보 -->
   <div id="video_info">
-    <div id="video_info_dj">-<font color=gray><b><a id="video_link" href='#' onclick='show_video_link()'></a></b></font></div>
+    <div id="video_info_dj">-<font color=gray><b><a id="video_link" href='#' onclick="show_video_link()"></a></b></font></div>
     <div id="video_info_name">재생 중인 영상이 없습니다.</div>
     <div id="my_progress_bar"></div>
     <div id="my_progress_bar_after"></div>
@@ -142,7 +142,7 @@
   </div>
 
   <!-- 영상 플레이어 -->
-  <div id="block_video">재생 중인 영상이 없습니다.</div>
+  <div id="block_video" class="no-drag">재생 중인 영상이 없습니다.</div>
   <div id="video_player"></div>
 
   <!-- 영상 위 광고 -->
@@ -191,20 +191,24 @@
   </div>
 
   <!-- 유튜브 생방송 채팅 패널 -->
-  <div id='youtube_live_chat_box'>
-    <div id='youtube_live_chat_box_header' class='no-drag'>
-      <div id='youtube_live_chat_header_show_toggle'></div>
-      <div id='youtube_live_chat_header_slider_frame' class='no-drag'>
-        <input type='range' min=0.15 max=1 value=1 step=0.01 id='youtube_live_chat_header_slider' class='no-drag'>
+  <div id="youtube_live_chat_box">
+    <div id="youtube_live_chat_box_header" class="no-drag">
+      <div id="youtube_live_chat_header_show_toggle"></div>
+      <div id="youtube_live_chat_header_slider_frame" class="no-drag">
+        <input type="range" min=0.15 max=1 value=1 step=0.01 id="youtube_live_chat_header_slider" class="no-drag">
       </div>
     </div>
-    <iframe id='youtube_live_chat_iframe'></iframe>
-    <div id='youtube_live_chat_header_resize_box'></div>
+    <iframe id="youtube_live_chat_iframe"></iframe>
+    <div id="youtube_live_chat_header_resize_box"></div>
   </div>
 
   <!-- 라이브챗 전용 패널 -->
-  <div id='youtube_live_chat_global_move_panel'></div>
-  <div id='youtube_live_chat_global_resize_panel'></div>
+  <div id="youtube_live_chat_global_move_panel"></div>
+  <div id="youtube_live_chat_global_resize_panel"></div>
+
+  <!-- 춤추는 캐릭터 패널 -->
+  <div id="dancing_character"></div>
+
 
   <script src="https://www.youtube.com/iframe_api"></script>
   <script src="$_localhost/static/index.js?ver=$_version"></script>
@@ -215,7 +219,7 @@
   <script src="$_localhost/static/index_UI.js?ver=$_version"></script>
   <script src="$_localhost/static/index_yt_plugin.js?ver=$_version"></script>
   <script src="$_localhost/static/index_livechat.js?ver=$_version"></script>
-  <audio id='audio_chat_call' src="$_localhost/static/call.mp3?ver=$_version"></audio>
+  <audio id="audio_chat_call" src="$_localhost/static/call.mp3?ver=$_version"></audio>
 
 </body>
 

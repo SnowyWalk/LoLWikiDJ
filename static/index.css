@@ -987,3 +987,22 @@ div.recent_list_video {
   cursor: nw-resize;
   z-index: 100;
 }
+
+/* 춤추는 캐릭터 */
+#dancing_character {
+  width: 110px;
+  height: 128px;
+  background: url("chara_sprite.png") left center;
+  animation: play 0.8s steps(8) infinite;
+  position: fixed;
+  left: 600px;
+  top: 600px;
+  z-index: 3;
+  background-position-y: 256px;
+  /* pointer-events: none; */
+}
+@keyframes play {
+  100% {
+    background-position: -880px 256px;
+  }
+}
