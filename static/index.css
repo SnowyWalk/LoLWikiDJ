@@ -641,6 +641,7 @@ div.recent_list_video {
   padding-top: 7px;
   text-align: center;
   overflow-y: auto;
+  overflow-x: clip;
   border-radius: 3%;
 }
 
