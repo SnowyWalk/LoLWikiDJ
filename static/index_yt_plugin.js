@@ -68,7 +68,12 @@ function onPlayerStateChange(event)
 			livechat_hide()
 		}
 		else
-			livechat_set_video_id(g_current_video_id) // 생방이면 라이브챗 켜기
+		{
+			if(g_current_video_id)
+				livechat_set_video_id(g_current_video_id) // 생방이면 라이브챗 켜기
+			else
+				livechat_hide()
+		}
 
 		SetVideoBlock(!g_current_video_id)
 	 }
