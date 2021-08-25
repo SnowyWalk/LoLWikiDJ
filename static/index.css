@@ -311,6 +311,8 @@ body {
   /* width: 350px; */
   height: 100%;
   overflow: hidden;
+  position: absolute;
+  z-index: 1;
 }
 
 /* 우측 카테고리 헤더 */
@@ -779,9 +781,13 @@ div.recent_list_video {
 
 #playlist_control_panel_playlist_info_shuffle {
   float: right;
-  padding-left: 20px;
-  padding-right: 20px;
+  padding-left: 28px;
+  padding-right: 28px;
   cursor: pointer;
+  background-image: url(shuffle_button.png);
+  width: 40px;
+  background-repeat: no-repeat;
+  background-position: center;
 }
 
 /* #playlist_control_panel_playlist_info_select:hover {
@@ -790,23 +796,50 @@ div.recent_list_video {
 
 #playlist_control_panel_playlist_info_new_video_button {
   float: right;
-  padding-left: 20px;
-  padding-right: 20px;
+  padding-left: 28px;
+  padding-right: 28px;
   cursor: pointer;
+  background-image: url(new_video_button.png);
+  width: 40px;
+  background-repeat: no-repeat;
+  background-position: center;
 }
+
+#playlist_control_panel_playlist_info_new_video_button:hover::after {
+  content: '　';
+  position: relative;
+  top: 76px;
+  left: 41px;
+  font-size: 20px;
+  word-break: break-word;
+  line-height: 10px;
+  background-image: url(right_click.png);
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+}
+
 
 #playlist_control_panel_playlist_info_rename_button {
   float: right;
-  padding-left: 20px;
-  padding-right: 20px;
+  padding-left: 28px;
+  padding-right: 28px;
   cursor: pointer;
+  background-image: url(rename_button.png);
+  width: 40px;
+  background-repeat: no-repeat;
+  background-position: center;
 }
 
 #playlist_control_panel_playlist_info_delete_button {
   float: right;
-  padding-left: 20px;
-  padding-right: 20px;
+  padding-left: 28px;
+  padding-right: 28px;
   cursor: pointer;
+  background-image: url(delete_button.png);
+  width: 40px;
+  background-repeat: no-repeat;
+  background-position: center;
 }
 
 /* 영상 목록 리스트 */
@@ -875,8 +908,24 @@ div.recent_list_video {
   cursor: pointer;
 }
 
+.sort_button:hover:not([style*=filter])::after {
+/* .sort_button::after { */
+  content: '　';
+  position: relative;
+  top: 55px;
+  left: 50px;
+  font-size: 20px;
+  word-break: break-word;
+  line-height: 10px;
+  background-image: url(right_click.png);
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+}
+
 .sort_button.down {
-  transform: scaleY(-1);
+  background-image: url('arrow_invert.png');
+  /* transform: scaleY(-1); */
 }
 
 /* .even > .delete_button:hover {

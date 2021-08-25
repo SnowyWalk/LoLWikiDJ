@@ -830,6 +830,7 @@ io.sockets.on('connection', function(socket)
 			video_index: 배열에서의 해당 비디오의 인덱스
 			video_id: 검증용 Videos 인덱스
 			isDown: 위로 올릴건지, 아래로 내릴건지
+			isForceMost: 맨 위 또는 맨 아래로
 		} 
 		*/
 
@@ -858,11 +859,19 @@ io.sockets.on('connection', function(socket)
 			// if(!data.isDown && data.video_index == 0 || data.isDown && data.video_index == video_list.length - 1) // 범위를 넘어가는 정렬
 			// 	return
 
-			var dest_index = data.isDown ? data.video_index + 1 : data.video_index - 1
-			if(dest_index == -1)
-				dest_index = video_list.length - 1
-			if(dest_index == video_list.length)
-				dest_index = 0
+			var dest_index = 0
+			if(data.isForceMost)
+			{
+				dest_index = data.isDown ? video_list.length - 1 : 0
+			}
+			else
+			{
+				dest_index = data.isDown ? data.video_index + 1 : data.video_index - 1
+				if(dest_index == -1)
+					dest_index = video_list.length - 1
+				if(dest_index == video_list.length)
+					dest_index = 0
+			}
 
 			var poped_video_id = video_list.splice(data.video_index, 1)[0]
 			video_list.splice(dest_index, 0, poped_video_id)

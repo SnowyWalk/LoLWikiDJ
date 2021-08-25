@@ -115,6 +115,7 @@
       <div class="option_row"><button id="option_button_logout">로그아웃</button></div>
     </div>
 
+    <!-- 채팅 엑스트라 (챗 스크롤러) -->
     <div id="chat_extra">
       <div>
         <input type="text" id="chat_input" onpaste="chat_onpaste()" onkeydown="chat_keydown()" placeholder="메시지를 입력해주세요..">
@@ -122,8 +123,8 @@
       </div>
       <div id="chat_scroller" onclick="scrollDown()">스크롤해서 채팅이 멈췄습니다.</div> 
     </div>
-    <div id="image_expander"><img id="image_expander_src"></div>
   </div>
+  <div id="image_expander"><img id="image_expander_src"></div>
 
   
 
@@ -181,10 +182,10 @@
     <div id="playlist_control_panel_playlist_info">
       <div id="playlist_control_panel_playlist_info_name" class="nanum bold">-</div>
       <div id="playlist_control_panel_playlist_info_select" class="nanum bold hover">[선택하기]</div>
-      <div id="playlist_control_panel_playlist_info_shuffle" onclick="onclick_playlist_shuffle_button()" class="nanum bold hover">[셔플]</div>
-      <div id="playlist_control_panel_playlist_info_rename_button" onclick="onclick_playlist_rename_button()" class="nanum bold hover">[이름변경]</div>
-      <div id="playlist_control_panel_playlist_info_delete_button" onclick="onclick_playlist_delete_button()" class="nanum bold hover">[재생목록 삭제]</div>
-      <div id="playlist_control_panel_playlist_info_new_video_button" onclick="onclick_new_video_button()" class="nanum bold hover">[+]</div>
+      <div id="playlist_control_panel_playlist_info_shuffle" onclick="onclick_playlist_shuffle_button()" class="nanum bold hover"></div>
+      <div id="playlist_control_panel_playlist_info_rename_button" onclick="onclick_playlist_rename_button()" class="nanum bold hover"></div>
+      <div id="playlist_control_panel_playlist_info_delete_button" onclick="onclick_playlist_delete_button()" class="nanum bold hover"></div>
+      <div id="playlist_control_panel_playlist_info_new_video_button" onclick="onclick_new_video_button()" class="nanum bold hover"></div>
     </div> 
 
     <!-- 영상목록 리스트 헤더 -->
@@ -219,6 +220,11 @@
   <script src="$_localhost/static/index_UI.js?ver=$_version"></script>
   <script src="$_localhost/static/index_yt_plugin.js?ver=$_version"></script>
   <script src="$_localhost/static/index_livechat.js?ver=$_version"></script>
+  <!-- <link rel="stylesheet" type="text/css" href="$_localhost/node_modules/jquery-contextmenu/dist/jquery.contextMenu.min.css">
+  <link rel="stylesheet" type="text/css" href="$_localhost/node_modules/jquery-ui-dist/jquery-ui.min.css">
+  <script src="$_localhost/node_modules/jquery/dist/jquery.min.js"></script>
+  <script src="$_localhost/node_modules/jquery-contextmenu/dist/jquery.contextMenu.min.js"></script>
+  <script src="$_localhost/node_modules/jquery-ui-dist/jquery-ui.min.js"></script> -->
   <audio id="audio_chat_call" src="$_localhost/static/call.mp3?ver=$_version"></audio>
 
 </body>

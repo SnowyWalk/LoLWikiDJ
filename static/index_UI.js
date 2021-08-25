@@ -352,6 +352,7 @@ function select_playlist_button(playlist_id)
 		del.classList.add('hover')
 		del.style.float = 'right'
 		del.onclick = onclick_video_delete_button
+		del.addEventListener('contextmenu', onrclick_video_delete_button, false)
 		div.appendChild(del)
 
 		// 순서 정렬 버튼 추가
@@ -363,6 +364,10 @@ function select_playlist_button(playlist_id)
 		if(i == thisPlaylist.VideoList.length - 1)
 			sort_down.style.filter = 'brightness(3)'
 		sort_down.onclick = onclick_video_sort_down_button
+		if(i == thisPlaylist.VideoList.length - 1)
+			sort_down.addEventListener('contextmenu', function() { event.preventDefault() }, false)
+		else
+			sort_down.addEventListener('contextmenu', onrclick_video_sort_down_button, false)
 		div.appendChild(sort_down)
 
 		var sort_up = document.createElement('div')
@@ -373,6 +378,10 @@ function select_playlist_button(playlist_id)
 		if(i == 0)
 			sort_up.style.filter = 'brightness(3)'
 		sort_up.onclick = onclick_video_sort_up_button
+		if(i == 0)
+			sort_up.addEventListener('contextmenu', function() { event.preventDefault() }, false)
+		else
+			sort_up.addEventListener('contextmenu', onrclick_video_sort_up_button, false)
 		div.appendChild(sort_up)
 		
 
@@ -396,6 +405,11 @@ function select_playlist_button(playlist_id)
 function onclick_playlist_select_button()
 {
 	socket.emit('select_playlist', g_playlist_control_panel_current_playlist_id)
+}
+
+function onrclick_playlist_control_panel_playlist_info_select()
+{
+	event.preventDefault()
 }
 
 /* 컨트롤패널 - 재생목록 정보 - 새 영상 추가 버튼 onclick */
@@ -429,6 +443,11 @@ function onclick_playlist_shuffle_button()
 	socket.emit('shuffle', thisPlaylist.Id)
 }
 
+function onrclick_playlist_control_panel_playlist_info_shuffle()
+{
+	event.preventDefault()
+}
+
 /* 컨트롤패널 - 재생목록 정보 - 재생목록 이름 변경 onclick */
 function onclick_playlist_rename_button()
 {
@@ -449,6 +468,11 @@ function onclick_playlist_rename_button()
 	
 	socket.emit('rename_playlist', {name: new_name, playlist_id: g_playlist_control_panel_current_playlist_id})
 }	
+
+function onrclick_playlist_control_panel_playlist_info_rename_button()
+{
+	event.preventDefault()
+}
 
 /* 컨트롤패널 - 재생목록 정보 - 재생목록 삭제 버튼 onclick */
 function onclick_playlist_delete_button()
@@ -477,6 +501,11 @@ function onclick_playlist_delete_button()
 	var delete_playlist_id = thisPlaylist.Id
 	select_playlist_button(g_current_playlist_id)
 	socket.emit('delete_playlist', delete_playlist_id)
+}
+
+function onrclick_playlist_control_panel_playlist_info_delete_button()
+{
+	event.preventDefault()
 }
 
 // ========================= 컨트롤패널 - 영상목록 =========================
@@ -510,10 +539,22 @@ function onclick_video_delete_button()
 	socket.emit('delete_video', {playlist_id: thisPlaylist.Id, index: index, video_id: video_index})
 }
 
+function onrclick_video_delete_button()
+{
+	event.preventDefault()
+}
+
 /* 컨트롤패널 - 영상목록 - 위치변경(↑) onclick */
 function onclick_video_sort_up_button()
 {
 	request_change_video_sort(event.target, false)
+}
+
+function onrclick_video_sort_up_button()
+{
+	event.preventDefault()
+
+	request_change_video_sort(event.target, false, true)
 }
 
 /* 컨트롤패널 - 영상목록 - 위치변경(↓) onclick */
@@ -522,8 +563,15 @@ function onclick_video_sort_down_button()
 	request_change_video_sort(event.target, true)
 }
 
+function onrclick_video_sort_down_button()
+{
+	event.preventDefault()
+
+	request_change_video_sort(event.target, true, true)
+}
+
 /* 컨트롤패널 - 영상목록 - 영상 순서 변경 */
-function request_change_video_sort(element, isDown)
+function request_change_video_sort(element, isDown, isForceMost = false)
 {
 	var index = element.parentElement.getAttribute('ItemIndex')
 	if(index == null)
@@ -544,7 +592,7 @@ function request_change_video_sort(element, isDown)
 	}
 
 	var video_id = thisPlaylist.VideoList[index]
-	socket.emit('change_video_order', {playlist_id: thisPlaylist.Id, video_index: index, video_id: video_id, isDown: isDown })
+	socket.emit('change_video_order', {playlist_id: thisPlaylist.Id, video_index: index, video_id: video_id, isDown: isDown, isForceMost: isForceMost })
 }
 
 // ========================= 메인 화면 =========================
@@ -795,6 +843,7 @@ function SetVideoBlock(isBlock)
 var timeReg = /(t=\d+&|&t=\d+)/
 function show_video_link()
 {
+	event.preventDefault()
 	if(!video_link || !g_current_video_id)
 		return
 	
