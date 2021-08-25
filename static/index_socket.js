@@ -169,8 +169,10 @@ socket.on('update_current_video', function(data) {
 		g_current_duration = 0
 		g_current_video_id = ''
 		update_current_dj()
-		player.cueVideoById('')
-		player.stopVideo()
+		// player.cueVideoById('')
+		// player.stopVideo()
+		SetVideoBlock(true)
+		player.pauseVideo()
 		update_current_video_name()
 		livechat_hide()
 		return

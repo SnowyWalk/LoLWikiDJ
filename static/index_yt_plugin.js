@@ -40,6 +40,8 @@ function onPlayerReady(event)
 		console.log('onPlayerReady에서 login')
 		socket.emit('login', g_nick)
 	}
+
+	player.setLoop(false)
 }
 
 function onPlayerStateChange(event) 
@@ -79,7 +81,10 @@ function onPlayerStateChange(event)
 	 }
 
 	 if(event.data == 2)
-		player.playVideo();
+	 {
+		 if(g_current_video_id)
+			player.playVideo()
+	 }
 
 	if(event.data == 5)
 	{
