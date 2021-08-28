@@ -78,6 +78,7 @@ var g_current_dj = ''
 var g_video_id = ''
 var g_video_title = ''
 var g_video_thumbnail = ''
+var g_video_author = ''
 var g_video_duration = 0
 var g_played_time_ms = 0 // ms
 var g_end_timer = null
@@ -480,13 +481,13 @@ io.sockets.on('connection', function(socket)
 			var youtube_data = await request_youtube_video(data.video_id).then(parse_youtube_video_data)
 
 			log('INFO', 'queue', format('{0} 이(가) {1} ({2}) 예약 {3}', socket.name, youtube_data.title, parse_second_to_string(youtube_data.duration), data.video_id))
-			
 			if(!g_video_id)
 			{
 				log('INFO', 'play', youtube_data.title)
 				g_current_dj = data.dj
 				g_video_id = data.video_id
 				g_video_title = youtube_data.title
+				g_video_author = youtube_data.author
 				g_video_thumbnail = youtube_data.thumbnail_url
 				g_video_duration = youtube_data.duration
 				g_played_time_ms = Date.now()
@@ -551,6 +552,7 @@ io.sockets.on('connection', function(socket)
 			g_current_dj = data.dj
 			g_video_id = data.video_id
 			g_video_title = response_data.title
+			g_video_author = response_data.author
 			g_video_thumbnail = response_data.thumbnail_url
 			g_video_duration = response_data.duration
 			g_played_time_ms = Date.now()
@@ -1187,12 +1189,13 @@ async function get_video_index(video_id_list)
 		var ret_list = video_id_list.map( x => Object({VideoId: x, Id: 0, Name: '', Length: 0}) )
 
 		// 기존 DB에 등록된 애들은 Id 가져와서 적용
-		var select_ret = await db_select('Id, VideoId, Name, Length', 'Videos', format('VideoId In ({0})', video_id_list.map(x => format('\'{0}\'', x)).join(', ')))
+		var select_ret = await db_select('Id, VideoId, Name, Length, Author', 'Videos', format('VideoId In ({0})', video_id_list.map(x => format('\'{0}\'', x)).join(', ')))
 		Array.from(select_ret).forEach(x => {
 			var data = ret_list.find(f => f.VideoId == x.VideoId)
 			data.Id = x.Id
 			data.Name = x.Name
 			data.Length = x.Length
+			data.Author = x.Author
 		})
 
 		// DB에 없던 놈들은 모아서 DB에 등록 (병렬 Promise 사용)
@@ -1209,6 +1212,7 @@ async function get_video_index(video_id_list)
 			var data = ret_list.find(f => f.VideoId == video_id)
 			data.Name = video_data.title
 			data.Length = video_data.duration
+			data.Author = video_data.author
 
 			// 외부 재생 제한 영상의 경우
 			if(!video_data.embeddable)
@@ -1216,7 +1220,7 @@ async function get_video_index(video_id_list)
 
 			// 1-2. Videos DB에 등록
 			// 1-3. insertId 가져오기
-			var inserted_id = await db_insert('Videos', ['Name', 'VideoId', 'Length', 'Thumbnail'], [video_data.title, video_id, video_data.duration, video_data.thumbnail_url])
+			var inserted_id = await db_insert('Videos', ['Name', 'VideoId', 'Length', 'Thumbnail', 'Author'], [video_data.title, video_id, video_data.duration, video_data.thumbnail_url, video_data.author])
 							.then((ret) => ret.insertId)
 			
 			data.Id = inserted_id
@@ -1326,6 +1330,7 @@ async function end_of_video() {
 		g_video_thumbnail = next_queue_data.data.thumbnail_url
 		g_video_duration = next_queue_data.data.duration
 		g_video_title = next_queue_data.data.title
+		g_video_author = next_queue_data.data.author
 		g_played_time_ms = Date.now()
 
 		// 영상 종료 타이머 설정
@@ -1369,7 +1374,7 @@ async function end_of_video() {
 			
 			var first_video_id = video_list.splice(0, 1)[0]
 			video_list.push(first_video_id)
-			var video_info = await db_select('Id, Name, VideoId, Length, Thumbnail', 'Videos', format('Id = {0}', first_video_id), 'LIMIT 1').then(ret => ret[0])
+			var video_info = await db_select('Id, Name, VideoId, Length, Thumbnail, Author', 'Videos', format('Id = {0}', first_video_id), 'LIMIT 1').then(ret => ret[0])
 			
 			// 재생목록의 영상 순서 순환
 			await db_update('Playlists', format('VideoList = "{0}"', JSON.stringify(video_list)), format('Id = {0}', playlist_id))
@@ -1379,6 +1384,7 @@ async function end_of_video() {
 			g_video_thumbnail = video_info.Thumbnail
 			g_video_duration = video_info.Length
 			g_video_title = video_info.Name
+			g_video_author = video_info.Author
 			g_played_time_ms = Date.now()
 
 			// 영상 종료 타이머 설정
@@ -1411,6 +1417,7 @@ async function end_of_video() {
 		g_video_thumbnail = ''
 		g_video_duration = 0
 		g_video_title = ''
+		g_video_author = ''
 		io.sockets.emit('update_current_video', null)
 	}
 
@@ -1429,6 +1436,7 @@ function update_current_video(dest_socket)
 	dest_socket.emit('update_current_video', {
 		dj: g_current_dj,
 		video_id: g_video_id,
+		author: g_video_author,
 		title: g_video_title,
 		duration: g_video_duration,
 		thumbnail: g_video_thumbnail,
@@ -1485,11 +1493,11 @@ async function update_playlist(socket, show_playlist_id = 0) // show_playlist_id
 		if(video_index_list.length > 0)
 		{
 			// Videos DB에 비디오 정보를 한번에 조회
-			var video_info_list = await db_select('Id, Name, VideoId, Length, Thumbnail', 'Videos', format('Id IN ({0})', video_index_list.join(', '))).then(JSON.stringify).then(JSON.parse)
+			var video_info_list = await db_select('Id, Name, VideoId, Length, Thumbnail, Author', 'Videos', format('Id IN ({0})', video_index_list.join(', '))).then(JSON.stringify).then(JSON.parse)
 
 			// Video 정보를 Dic형태로 재구성
 			for(var e of video_info_list)
-				video_info_dic[e.Id] = { Name: e.Name, VideoId: e.VideoId, Length: e.Length, Thumbnail: e.Thumbnail }
+				video_info_dic[e.Id] = { Name: e.Name, VideoId: e.VideoId, Length: e.Length, Thumbnail: e.Thumbnail, Author: e.Author }
 		}
 
 		socket.emit('update_playlist', [video_info_dic, playlist_info_list, current_playlist, show_playlist_id])
@@ -1618,8 +1626,9 @@ function request_youtube_video(video_id)
 		var url = 'https://www.googleapis.com/youtube/v3/videos'
 		var key = 'AIzaSyARG5pgayIj8ghL0hwzrNL_3pl-QeRQYMc'
 		var part = 'id,snippet,contentDetails,status'
+		var hl = 'ko'
 		var regionCode = 'KR'
-		var requestUrl = format('{0}?key={1}&part={2}&regionCode={3}&id={4}', url, key, part, regionCode, video_id)
+		var requestUrl = format('{0}?key={1}&part={2}&regionCode={3}&hl={4}&id={5}', url, key, part, regionCode, hl, video_id)
 		g_last_query = requestUrl
 		request(requestUrl, function(err, response, body) {
 			if(err)
@@ -1633,7 +1642,8 @@ function parse_youtube_video_data(query_result)
 {
 	var item = query_result.items[0]
 	var video_data = {
-		title : item.snippet.title,
+		title : item.snippet.localized.title,
+		author: item.snippet.channelTitle,
 		thumbnail_url : item.snippet.thumbnails.high.url,
 		duration : parse_duration_to_second(item.contentDetails.duration),
 		embeddable : item.status.embeddable,

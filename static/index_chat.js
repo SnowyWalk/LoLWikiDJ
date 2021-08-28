@@ -460,7 +460,12 @@ function chat_keydown() {
 	if (window.event.keyCode == 13)
 		send()
 	else if(window.event.keyCode == 38 && g_last_chat)
+	{
 		chat_input.value = g_last_chat
+		setTimeout(_ => {
+			chat_input.setSelectionRange(chat_input.value.length, chat_input.value.length)
+		}, 10);
+	}
 }
 
 /* 채팅창 이미지 붙여넣기 이벤트 */

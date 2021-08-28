@@ -76,6 +76,7 @@ function resize() {
 
 	/* 채팅 */
 	mainchat.style.marginLeft = (window_width - mainchat.clientWidth) // 350
+	mainchat.style.height = window_height // 350
 
 	chat.style.height = (window_height - 50 - 50)
 	djlist.style.height = (window_height - 50)
@@ -961,7 +962,12 @@ function update_current_video_name()
 		video_link.innerText = ''
 		return
 	}
-	video_info_name.innerText = video_name
+	
+	if(g_current_author)
+		video_info_name.innerText = format('[{0}] {1}', g_current_author, video_name)
+	else
+		video_info_name.innerText = video_name
+
 	hide_video_link()
 }
 

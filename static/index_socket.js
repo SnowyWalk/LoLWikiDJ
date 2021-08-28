@@ -167,18 +167,21 @@ socket.on('update_current_video', function(data) {
 		g_current_dj = ''
 		g_current_title = ''
 		g_current_duration = 0
+		g_current_author = ''
 		g_current_video_id = ''
 		update_current_dj()
 		// player.cueVideoById('')
 		// player.stopVideo()
 		SetVideoBlock(true)
-		player.pauseVideo()
+		if(player)
+			player.pauseVideo()
 		update_current_video_name()
 		livechat_hide()
 		return
 	}
 
 	g_current_title = data.title
+	g_current_author = data.author
 	g_current_duration = data.duration
 	g_current_video_id = data.video_id
 	g_current_dj = data.dj

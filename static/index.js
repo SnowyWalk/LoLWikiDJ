@@ -16,6 +16,7 @@ var g_cued_time_ms = 0
 var g_current_video_id = ''
 var g_current_dj = ''
 var g_current_title = ''
+var g_current_author = ''
 var g_current_duration = 0
 var g_is_djing = false
 
