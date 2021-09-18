@@ -27,6 +27,13 @@ function onPlayerReady(event)
 	// 로그인 요청
 	g_player_ready = true
 
+	if(location.search.indexOf('OBS') != -1)
+	{
+		login_id.value = 'OBS'
+		login()
+		return
+	}
+
 	var stored_nick = localStorage.getItem(g_storage_nick_key)
 	if(stored_nick)
 	{

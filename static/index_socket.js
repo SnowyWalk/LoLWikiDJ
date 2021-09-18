@@ -21,6 +21,13 @@ socket.on('connect', function () {
 		login_id.focus()
 	}
 
+	if(g_player_ready && location.search.indexOf('OBS') != -1)
+	{
+		login_id.value = 'OBS'
+		login()
+		return
+	}
+
 	var stored_nick = localStorage.getItem(g_storage_nick_key)
 	if(g_player_ready && stored_nick)
 	{
@@ -116,7 +123,9 @@ socket.on('login', function(isSuccess) {
 						+ '8. 강령군주 님\n'
 						+ '후원 계좌 : 기업 539-028793-01-012 박*준', 'yellow')
 	add_system_message('명령어 목록은 /? 을 입력해 볼 수 있습니다.')
-	add_system_message('패치 노트 보기 (클릭)', 'chartreuse').onclick = _ => window.open('/patch_note', '패치 노트')
+	var patchnote = add_system_message('패치 노트 보기 (클릭)', 'chartreuse')
+	if(patchnote)
+		patchnote.onclick = _ => window.open('/patch_note', '패치 노트')
 
 	socket.emit('chat_newUser')
 

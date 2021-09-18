@@ -266,6 +266,12 @@ function livechat_onmouseup_drag_panel(ev)
 /* 라이브챗 타겟 설정 */
 function livechat_set_video_id(video_id) 
 {
+	if(g_nick == 'OBS')
+	{
+		livechat_hide()
+		return
+	}
+
 	livechat_show()
 
 	var this_src = livechat_get_src(video_id)
