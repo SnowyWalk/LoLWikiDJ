@@ -148,21 +148,22 @@ function control_panel_resize()
 	var window_width = window.innerWidth
 	var window_height = window.innerHeight
 	var bottom_height = 86 // 하단 박스 높이
+	var mainchatClientWidth = mainchat.clientWidth
 
 	var t_playlist_control_panel_playlist_header_width = playlist_control_panel_playlist_header.getBoundingClientRect().width
 
 	// 패널 판크기 조절
-	playlist_control_panel.style.width = (window_width - mainchat.clientWidth)
+	playlist_control_panel.style.width = (window_width - mainchatClientWidth)
 	playlist_control_panel.style.height = (window_height - bottom_height)
 
 	// 재생목록 헤더 크기 조절
 	playlist_control_panel_playlist_header.style.height = (window_height - bottom_height - 1)
 
 	// 재생목록 인포 크기 조절
-	playlist_control_panel_playlist_info.style.width = (window_width - t_playlist_control_panel_playlist_header_width - mainchat.clientWidth - 1)
+	playlist_control_panel_playlist_info.style.width = (window_width - t_playlist_control_panel_playlist_header_width - mainchatClientWidth - 1)
 
 	// 영상 목록 헤더 크기 조절
-	playlist_control_panel_videolist_header.style.width = (window_width - t_playlist_control_panel_playlist_header_width - mainchat.clientWidth - 1)
+	playlist_control_panel_videolist_header.style.width = (window_width - t_playlist_control_panel_playlist_header_width - mainchatClientWidth - 1)
 	playlist_control_panel_videolist_header.style.height = (window_height - bottom_height - playlist_control_panel_videolist_header.offsetTop - 1)
 
 	// 영상 목록 헤더 타이틀 길이 조절
@@ -171,11 +172,11 @@ function control_panel_resize()
 	var w3 = playlist_control_panel_playlist_info_rename_button.clientWidth
 	var w4 = playlist_control_panel_playlist_info_shuffle.clientWidth
 	var w5 = playlist_control_panel_playlist_info_select.clientWidth
-	playlist_control_panel_playlist_info_name.style.width = (window_width - t_playlist_control_panel_playlist_header_width - mainchat.clientWidth - 1) - w1 - w2 - w3 - w4 - w5 - 2 - 30
+	playlist_control_panel_playlist_info_name.style.width = (window_width - t_playlist_control_panel_playlist_header_width - mainchatClientWidth - 1) - w1 - w2 - w3 - w4 - w5 - 2 - 30
 
 	// 영상 목록의 텍스트 길이 조절
-	for(var e of document.getElementsByClassName('videolist_button'))
-		e.getElementsByClassName('text')[0].style.width = (window_width - t_playlist_control_panel_playlist_header_width - mainchat.clientWidth - 204 - 120 - 10 - 10 - 1 - 110 * 2)
+	for(var e of document.querySelectorAll('.videolist_button > .text'))
+		e.style.width = (window_width - t_playlist_control_panel_playlist_header_width - mainchatClientWidth - 204 - 120 - 10 - 10 - 1 - 110 * 2)
 }
 
 /* 플레이리스트 컨트롤패널 열기/닫기 */
@@ -197,7 +198,7 @@ function update_playlist(keep_preview = false)
 	// 모든 자식 노드 삭제
 	while ( playlist_control_panel_playlist_header.hasChildNodes() ) 
 		playlist_control_panel_playlist_header.removeChild( playlist_control_panel_playlist_header.firstChild )
-
+	
 	// 자식 노드들 추가
 	for(var e of g_playlist_info_list)
 	{
