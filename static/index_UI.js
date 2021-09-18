@@ -367,7 +367,7 @@ function select_playlist_button(playlist_id)
 			sort_down.style.filter = 'brightness(3)'
 		sort_down.onclick = onclick_video_sort_down_button
 		if(i == thisPlaylist.VideoList.length - 1)
-			sort_down.addEventListener('contextmenu', function() { event.preventDefault() }, false)
+			sort_down.addEventListener('contextmenu', event_preventDefault, false)
 		else
 			sort_down.addEventListener('contextmenu', onrclick_video_sort_down_button, false)
 		div.appendChild(sort_down)
@@ -381,7 +381,7 @@ function select_playlist_button(playlist_id)
 			sort_up.style.filter = 'brightness(3)'
 		sort_up.onclick = onclick_video_sort_up_button
 		if(i == 0)
-			sort_up.addEventListener('contextmenu', function() { event.preventDefault() }, false)
+			sort_up.addEventListener('contextmenu', event_preventDefault, false)
 		else
 			sort_up.addEventListener('contextmenu', onrclick_video_sort_up_button, false)
 		div.appendChild(sort_up)
@@ -399,6 +399,11 @@ function select_playlist_button(playlist_id)
 	}
 
 	control_panel_resize()
+}
+
+function event_preventDefault()
+{
+	event.preventDefault()
 }
 
 // ========================= 컨트롤패널 - 재생목록 정보 =========================
