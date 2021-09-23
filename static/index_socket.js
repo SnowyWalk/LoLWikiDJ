@@ -111,7 +111,7 @@ socket.on('login', function(isSuccess) {
 	login_pw.style.display = 'none'
 	login_button.style.display = 'none'
 
-	add_system_message('후원 랭킹\n'
+	add_system_message('후원 랭킹 (2021. 09. 23)\n'
 						+ '★ 0. Lily(샤르프로젝트) 님 ★\n' 
 						+ '1. 우뭇가사리 님\n' 
 						+ '2. 노통 님\n'
@@ -120,10 +120,10 @@ socket.on('login', function(isSuccess) {
 						+ '5. 랠래 님\n'
 						+ '6. 고냥이지 님\n'
 						+ '7. pagolas 님\n'
-						+ '8. 디아 님\n'
-						+ '9. 인공사 님\n'
-						+ '10. 강령군주 님\n'
-						+ '11. 돌고래대통령 님\n'
+						+ '8. 돌고래대통령 님\n'
+						+ '9. 디아 님\n'
+						+ '10. 인공사 님\n'
+						+ '11. 강령군주 님\n'
 						+ '후원 계좌 : 기업 539-028793-01-012 박*준', 'yellow')
 	add_system_message('명령어 목록은 /? 을 입력해 볼 수 있습니다.')
 	var patchnote = add_system_message('패치 노트 보기 (클릭)', 'chartreuse')
