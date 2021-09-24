@@ -248,6 +248,7 @@ function update_playlist(keep_preview = false)
 	div.classList.add('playlist_button')
 	div.classList.add(g_playlist_info_list.length % 2 == 0 ? 'even' : 'odd')
 	div.onclick = onclick_playlist_create_button
+	register_ui_tooltip_event(div, '새 재생목록 만들기')
 	playlist_control_panel_playlist_header.appendChild(div)
 
 	// 현재재생목록을 선택해서 리스트를 보여줌
@@ -345,12 +346,14 @@ function select_playlist_button(playlist_id)
 		img.innerText = format('{0} ({1})', thisData.Name, second_to_string(thisData.Length))
 		img.setAttribute('videoId', thisData.VideoId)
 		img.onclick = _ => copyToClipboard(format('https://www.youtube.com/watch?v={0}', event.target.getAttribute('videoId')))
+		register_ui_tooltip_event(img, '영상 주소 복사')
 		div.appendChild(img)
 
 		// 영상 이름 텍스트 생성 후 추가
 		var text = document.createElement('div')
 		text.innerText = format('{0} ({1})', thisData.Name, second_to_string(thisData.Length))
 		text.classList.add('text') // 쿼리를 위해
+		register_ui_tooltip_event(text, thisData.Name)
 		div.appendChild(text)
 
 		// 삭제 버튼 추가
@@ -360,6 +363,7 @@ function select_playlist_button(playlist_id)
 		del.style.float = 'right'
 		del.onclick = onclick_video_delete_button
 		del.addEventListener('contextmenu', onrclick_video_delete_button, false)
+		register_ui_tooltip_event(del, '영상 삭제')
 		div.appendChild(del)
 
 		// 순서 정렬 버튼 추가
@@ -372,9 +376,15 @@ function select_playlist_button(playlist_id)
 			sort_down.style.filter = 'brightness(3)'
 		sort_down.onclick = onclick_video_sort_down_button
 		if(i == thisPlaylist.VideoList.length - 1)
+		{
 			sort_down.addEventListener('contextmenu', event_preventDefault, false)
+			register_ui_tooltip_event(sort_down, '영상 순서 내리기(↓)')
+		}
 		else
+		{
 			sort_down.addEventListener('contextmenu', onrclick_video_sort_down_button, false)
+			register_ui_tooltip_event(sort_down, '영상 순서 내리기(↓)\n우클릭: 맨 아래로 내리기')
+		}
 		div.appendChild(sort_down)
 
 		var sort_up = document.createElement('div')
@@ -386,9 +396,15 @@ function select_playlist_button(playlist_id)
 			sort_up.style.filter = 'brightness(3)'
 		sort_up.onclick = onclick_video_sort_up_button
 		if(i == 0)
+		{
 			sort_up.addEventListener('contextmenu', event_preventDefault, false)
+			register_ui_tooltip_event(sort_up, '영상 순서 올리기(↑)')
+		}
 		else
+		{
 			sort_up.addEventListener('contextmenu', onrclick_video_sort_up_button, false)
+			register_ui_tooltip_event(sort_up, '영상 순서 올리기(↑)\n우클릭: 맨 위로 올리기')
+		}
 		div.appendChild(sort_up)
 
 		// 바로 재생 버튼 추가
@@ -398,6 +414,7 @@ function select_playlist_button(playlist_id)
 		play_now.style.float = 'right'
 		play_now.onclick = onclick_video_play_now_button
 		play_now.addEventListener('contextmenu', event_preventDefault, false)
+		register_ui_tooltip_event(play_now, '이 영상을 대기열에 추가')
 		div.appendChild(play_now)
 
 		div.classList.add('videolist_button')
@@ -816,6 +833,8 @@ function update_recent_video_list()
 		img.onmouseenter = image_onmouseenter
 		img.onmouseout = image_onmouseout
 		img.onmousemove = image_onmousemove
+		img.setAttribute('ui_tooltip_x_offset', 60)
+		register_ui_tooltip_event(img, '영상 주소 복사')
 		li.appendChild(img)
 
 		var div1 = document.createElement('div')
@@ -1119,4 +1138,56 @@ function update_rating_status()
 
 	etc_good_count.style.color = is_good_pick ? 'red' : 'black'
 	etc_bad_count.style.color = is_bad_pick ? 'blue' : 'black'
+}
+
+/* UI 툴팁 관련 처리들 */
+
+function register_ui_tooltip_event(element, message)
+{
+	element.setAttribute('ui_tooltip_alt', message)
+	element.addEventListener('mouseenter', ui_tooltip_onmouseenter, )
+	element.addEventListener('mouseleave', ui_tooltip_onmouseleave)
+	element.addEventListener('mousemove', ui_tooltip_onmousemove)
+}
+
+function ui_tooltip_onmouseenter()
+{
+	if(event.target != event.currentTarget)
+		return
+
+	var target = event.currentTarget
+	ui_tooltip.style.display = 'block'
+	ui_tooltip.firstChild.nodeValue = target.getAttribute('ui_tooltip_alt')
+	var extra_margin_top = target.getAttribute('ui_tooltip_y_offset')
+	ui_tooltip.style.marginTop = (extra_margin_top ? extra_margin_top : 0)
+	var extra_margin_left = target.getAttribute('ui_tooltip_x_offset')
+	ui_tooltip.style.marginLeft = (extra_margin_left ? extra_margin_left : 0)
+	ui_tooltip_set_pos(event.clientX, event.clientY)
+}
+
+function ui_tooltip_onmouseleave()
+{
+	if(event.target != event.currentTarget)
+		return
+
+	ui_tooltip.style.display = 'none'
+	ui_tooltip.firstChild.nodeValue = ''
+}
+
+function ui_tooltip_onmousemove()
+{
+	ui_tooltip_set_pos(event.clientX, event.clientY)
+}
+
+function ui_tooltip_set_pos(x, y)
+{
+	x -= ui_tooltip.clientWidth / 2
+	y -= ui_tooltip.clientHeight + 10
+	if(x < 0)
+		x = 0
+	if(y < 0)
+		y = 0
+
+	ui_tooltip.style.left = x
+	ui_tooltip.style.top = y
 }

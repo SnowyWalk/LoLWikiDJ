@@ -506,6 +506,12 @@ div.recent_list_video {
   margin-top: 25px;
 }
 
+/* 로그아웃 버튼 */
+#option_button_logout {
+  width: 328px;
+  height: 40px;
+}
+
 /* 채팅 영역 */
 #chat {
   height: 95%;
@@ -558,11 +564,13 @@ div.recent_list_video {
   display: none;
   z-index: 20;
   border: 1px solid gray;
+  pointer-events: none;
 }
 
 #image_expander_src {
   min-width: 350px;
   min-height: 250px;
+  pointer-events: none;
 }
 
 /* 접속 알림 */
@@ -1074,4 +1082,24 @@ div.recent_list_video {
   100% {
     background-position: -880px 256px;
   }
+}
+
+/* UI 툴팁 */
+#ui_tooltip {
+  width: fit-content;
+  max-width: 800px;
+  height: fit-content;
+  border-radius: 10px;
+  padding-left: 8px;
+  padding-right: 8px;
+  padding-top: 3px;
+  padding-bottom: 3px;
+  background: rgba(0, 0, 0, 0.75);
+  color: white;
+  text-align: center;
+  white-space: pre-line;
+  position: fixed;
+  display: none;
+  z-index: 21;
+  pointer-events: none;
 }

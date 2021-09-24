@@ -93,6 +93,11 @@ function onPlayerStateChange(event)
 			player.playVideo()
 	 }
 
+	 if(event.data == 3)
+	 {
+		player.setPlaybackQuality(document.querySelector('[name=video_quality]:checked').value)
+	 }
+
 	if(event.data == 5)
 	{
 		SetVideoBlock(!g_current_video_id)

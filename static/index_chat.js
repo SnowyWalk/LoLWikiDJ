@@ -185,6 +185,8 @@ function add_play_message(data)
 	img.onmouseenter = image_onmouseenter
 	img.onmouseout = image_onmouseout
 	img.onmousemove = image_onmousemove
+	img.setAttribute('ui_tooltip_x_offset', 60)
+	register_ui_tooltip_event(img, '영상 주소 복사')
 	base.appendChild(img)
 
 	var dj = document.createElement('div')
@@ -544,8 +546,8 @@ function image_onmousemove()
 
 function image_expander_set_pos(x, y)
 {
-	x -= image_expander.clientWidth + 25 // border 1px라서 최소 3
-	y -= image_expander.clientHeight + 25 // border 1px라서 최소 3
+	x -= image_expander.clientWidth + 10 // border 1px라서 최소 3
+	y -= image_expander.clientHeight + 10 // border 1px라서 최소 3
 	if(x < 0)
 		x = 0
 	if(y < 0)

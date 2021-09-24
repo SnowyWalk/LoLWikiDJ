@@ -202,7 +202,7 @@ socket.on('update_current_video', function(data) {
 	update_dj_state()
 	g_cued_time_ms = Date.now() - data.seek_s * 1000
 	var seek_time_s = (Date.now() - g_cued_time_ms) / 1000
-	player.cueVideoById(data.video_id, seek_time_s, 'low')
+	player.cueVideoById(data.video_id, seek_time_s, document.querySelector('[name=video_quality]:checked').value)
 })
 
 /* 좋/실 갱신 신호 받음*/
