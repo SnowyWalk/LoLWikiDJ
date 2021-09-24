@@ -910,6 +910,17 @@ div.recent_list_video {
   cursor: pointer;
 }
 
+.play_now_button {
+  background-image: url('play_now.png');
+  width: 70px;
+  height: 70px;
+  padding: 5px;
+  background-size: 50%;
+  background-repeat: no-repeat;
+  background-position: center;
+  cursor: pointer;
+}
+
 .sort_button:hover:not([style*=filter])::after {
 /* .sort_button::after { */
   content: '　';

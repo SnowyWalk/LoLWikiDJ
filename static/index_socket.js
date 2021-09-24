@@ -168,7 +168,7 @@ socket.on('djs', function(data_list) {
 socket.on('update_current_video', function(data) {
 	if(data)
 	{
-		if(data.video_id)
+		if(data.video_id && data.video_id != g_current_video_id)
 			add_play_message(data)
 	}
 	else

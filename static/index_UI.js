@@ -390,7 +390,15 @@ function select_playlist_button(playlist_id)
 		else
 			sort_up.addEventListener('contextmenu', onrclick_video_sort_up_button, false)
 		div.appendChild(sort_up)
-		
+
+		// 바로 재생 버튼 추가
+		var play_now = document.createElement('div')
+		play_now.classList.add('play_now_button')
+		play_now.classList.add('hover')
+		play_now.style.float = 'right'
+		play_now.onclick = onclick_video_play_now_button
+		play_now.addEventListener('contextmenu', event_preventDefault, false)
+		div.appendChild(play_now)
 
 		div.classList.add('videolist_button')
 		div.classList.add(i % 2 == 0 ? 'even' : 'odd')
@@ -551,9 +559,27 @@ function onclick_video_delete_button()
 	socket.emit('delete_video', {playlist_id: thisPlaylist.Id, index: index, video_id: video_index})
 }
 
+/* 컨트롤패널 - 영상목록 - 영상 삭제버튼 onrclick */
 function onrclick_video_delete_button()
 {
 	event.preventDefault()
+}
+
+/* 컨트롤패널 - 영상목록 - 영상 재생버튼 onclick */
+function onclick_video_play_now_button()
+{
+	var video_index = event.target.parentElement.getAttribute('videoindex')
+	if(video_index == null)
+		video_index = event.target.parentElement.parentElement.getAttribute('videoindex')
+	
+	if(video_index == null)
+	{
+		console.log('좋버그 발생 onclick_video_play_now_button')
+		return
+	}
+	video_index = eval(video_index)
+	
+	socket.emit('queue_video_index', video_index)
 }
 
 /* 컨트롤패널 - 영상목록 - 위치변경(↑) onclick */

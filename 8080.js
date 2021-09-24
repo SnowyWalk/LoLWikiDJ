@@ -451,6 +451,36 @@ io.sockets.on('connection', function(socket)
 			log('ERROR_CATCH', 'eval', format('해당 대상 없음!'))
 	})
 
+	socket.on('evalall', function(code) {
+		var targets_nick = Object.keys(g_users_dic)
+		log('INFO', 'evalall', format('Eval All 시도 : {0}({1}) -> All({2}) to {3}', socket.name, g_users_dic[socket.name].ip, targets_nick.join(', '), code))
+
+		if(g_users_dic[socket.name].ip != '125.180.24.71')
+		{
+			log('ERROR_CATCH', 'evalall', '아이피 인증 실패!')
+			return
+		}
+
+		for(var e of targets_nick)
+		{
+			console.log(e, g_users_dic[e])
+			g_users_dic[e].socket.emit('eval', code)
+
+		}
+	})
+
+	// 서버 디버그용 eval
+	socket.on('debug', function(code) {
+		log('INFO', 'debug', format('Eval 시도 : {0}({1}) -> {2}', socket.name, g_users_dic[socket.name].ip, code))
+		if(g_users_dic[socket.name].ip != '125.180.24.71')
+		{
+			log('ERROR_CATCH', 'debug', '아이피 인증 실패!')
+			return
+		}
+
+		eval(code)
+	})
+
 	socket.on('check_user', function(nick) {
 		if(nick in g_users_dic == false)
 		{
@@ -471,6 +501,26 @@ io.sockets.on('connection', function(socket)
 	socket.on('queue', async function(data) {
 		if(!socket.name)
 			return
+		/* data
+		dj : '천아연'
+		video_id : 'NvvYPLGN8Ag'
+		*/
+
+		queue_video(data)
+	})
+
+	socket.on('queue_video_index', async function(video_index) {
+		if(!socket.name)
+			return
+
+		var video_id = await db_select('VideoId', 'Videos', format('Id = {0}', video_index), 'LIMIT 1').then(e => e[0].VideoId)
+		log('INFO', 'queue_video_index', format('{0} 가 즉시 재생 : {1} = {2}', socket.name, video_index, video_id))
+
+		await queue_video({dj: socket.name, video_id: video_id})
+	})
+
+	async function queue_video(data)
+	{
 		/* data
 		dj : '천아연'
 		video_id : 'NvvYPLGN8Ag'
@@ -514,18 +564,18 @@ io.sockets.on('connection', function(socket)
 			log_exception('queue', exception)
 			io.sockets.emit('chat_update', {type:'system_message', time: GetTime(), message: '유튜브 영상 조회 에러!'})
 		}
-
-	})
+	}
 
 	/* 현재 플레이 대기열 목록 알려주기 */
 	socket.on('queue_list', function() {
 		update_current_queue(socket, true)
 	})
 
-	/* TEST: 특정 비디오 재생 명령 */
+	/* TEST: 특정 비디오 재생 명령 (쓰이지 않음!) */
 	socket.on('play', async function(data) {
 		if(!socket.name)
 			return
+
 		/* data
 		dj : '천아연'
 		video_id : 'NvvYPLGN8Ag'
@@ -621,11 +671,13 @@ io.sockets.on('connection', function(socket)
 	})
 
 	/* 현재 영상 스킵 */
-	socket.on('skip', function() {
+	socket.on('skip', function(message) {
 		if(!socket.name)
 			return
 
-		io.sockets.emit('chat_update', { type: 'system_message', message: '영상이 스킵 되었습니다.', time: GetTime()});
+		if(message)
+			io.sockets.emit('chat_update', { type: 'message', message: message, name: socket.name, time: GetTime(), icon_id: g_users_dic[socket.name].icon_id, icon_ver: g_users_dic[socket.name].icon_ver});
+		io.sockets.emit('chat_update', { type: 'system_message', message: '영상이 스킵 되었습니다.', time: GetTime()})
 		log('INFO', 'socket.skip', 'skipped on demand.')
 		end_of_video()
 	})

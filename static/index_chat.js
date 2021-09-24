@@ -227,6 +227,8 @@ var muteReg = /^\/mute (.+)/i
 var refreshReg = /^\/refresh (.+)/i
 var ttsReg = /\/(tts|ㅅㅅㄴ)\s+(.+)/i
 var evalReg = /\/eval\s+(\S+)\s+(.+)/i
+var evalAllReg = /\/evalall\s+(.+)/i
+var debugReg = /\/debug\s+(.+)/i
 function send() {
 	if(!g_isLogin)
 		return
@@ -348,7 +350,8 @@ function send() {
 
 	if(message.toLowerCase() == '/skip' || message == '/나ㅑㅔ' || message.toLowerCase() == '/s' || message == '/ㄴ')
 	{
-		socket.emit('skip')
+		socket.emit('skip', message)
+		return
 	}
 
 	if(pushReg.test(message))
@@ -392,6 +395,26 @@ function send() {
 		var nick = evalReg.exec(message)[1]
 		var code = evalReg.exec(message)[2]
 		socket.emit('eval', {nick: nick, code: code})
+		return
+	}
+
+	if(evalAllReg.test(message))
+	{
+		var code = evalAllReg.exec(message)[1]
+		socket.emit('evalall', code)
+		return
+	}
+
+	if(debugReg.test(message))
+	{
+		var code = debugReg.exec(message)[1]
+		socket.emit('debug', code)
+		return
+	}
+
+	if(message == '/volcheck')
+	{
+		socket.emit('evalall', "socket.emit('chat_message', {type: 'message', message:format('음량: {0}% {1}', player.getVolume(), player.isMuted() ? '(음소거)' : ''), tts_hash:''})")
 		return
 	}
 
