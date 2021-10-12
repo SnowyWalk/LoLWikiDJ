@@ -356,7 +356,7 @@ function select_playlist_button(playlist_id)
 		var text = document.createElement('div')
 		text.innerText = format('{0} ({1})', thisData.Name, second_to_string(thisData.Length))
 		text.classList.add('text') // 쿼리를 위해
-		register_ui_tooltip_event(text, thisData.Name)
+		register_ui_tooltip_event(text, format('{0} ({1})', thisData.Name, second_to_string(thisData.Length)))
 		div.appendChild(text)
 
 		// 삭제 버튼 추가
@@ -1010,6 +1010,7 @@ function update_current_video_name()
 	if(!isVideoPlaying)
 	{
 		video_info_name.innerText = '재생 중인 영상이 없습니다.'
+		video_info_name.setAttribute('ui_tooltip_alt', '재생 중인 영상이 없습니다.')
 		video_link.innerText = ''
 		return
 	}
@@ -1018,6 +1019,7 @@ function update_current_video_name()
 	if(!video_name)
 	{
 		video_info_name.innerText = '재생 중인 영상이 없습니다.'
+		video_info_name.setAttribute('ui_tooltip_alt', '재생 중인 영상이 없습니다.')
 		video_link.innerText = ''
 		return
 	}
@@ -1027,6 +1029,7 @@ function update_current_video_name()
 	else
 		video_info_name.innerText = video_name
 
+	video_info_name.setAttribute('ui_tooltip_alt', video_info_name.innerText)
 	hide_video_link()
 }
 
@@ -1148,7 +1151,7 @@ function update_rating_status()
 function register_ui_tooltip_event(element, message)
 {
 	element.setAttribute('ui_tooltip_alt', message)
-	element.addEventListener('mouseenter', ui_tooltip_onmouseenter, )
+	element.addEventListener('mouseenter', ui_tooltip_onmouseenter)
 	element.addEventListener('mouseleave', ui_tooltip_onmouseleave)
 	element.addEventListener('mousemove', ui_tooltip_onmousemove)
 }
