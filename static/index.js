@@ -60,6 +60,7 @@ window.onload = function() {
 		login_id.style.display = 'block'
 		login_pw.style.display = 'block'
 		login_button.style.display = 'block'
+		login_remember_nick_holder.style.display = 'block'
 		resize()
 		login_id.focus()
 	}

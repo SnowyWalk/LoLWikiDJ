@@ -44,7 +44,7 @@ body {
 #login_bg {
   position: fixed;
   width: 320px;
-  height: 200px;
+  height: 220px;
   background-color: whitesmoke;
   border: 4px solid gray;
   border-radius: 0.5em;
@@ -92,6 +92,12 @@ body {
   background-color: goldenrod;
   border-radius: 0.5em;
   cursor: pointer;
+  display: none;
+  z-index: 101;
+}
+
+#login_remember_nick_holder {
+  position: fixed;
   display: none;
   z-index: 101;
 }
@@ -304,7 +310,7 @@ body {
   font-weight: bold;
   font-size: xxx-large;
   text-align: center;
-  z-index: 2;
+  z-index: 3;
   display: none;
 }
 
@@ -510,6 +516,10 @@ div.recent_list_video {
 #option_button_logout {
   width: 328px;
   height: 40px;
+  font-size: 18px;
+  font-weight: bold;
+  color: red;
+  letter-spacing: 1px;
 }
 
 /* 채팅 영역 */
