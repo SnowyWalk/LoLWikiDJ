@@ -17,6 +17,7 @@ socket.on('connect', function () {
 		login_id.style.display = 'block'
 		login_pw.style.display = 'block'
 		login_button.style.display = 'block'
+		login_remember_nick_holder.style.display = 'block'
 		resize()
 		login_id.focus()
 	}
@@ -32,6 +33,7 @@ socket.on('connect', function () {
 	if(g_player_ready && stored_nick)
 	{
 		login_id.value = stored_nick
+		login_remember_nick.checked = true
 		login()
 		return
 	}
@@ -100,7 +102,10 @@ socket.on('login', function(isSuccess) {
 	}
 
 	g_isLogin = true
-	localStorage.setItem(g_storage_nick_key, g_nick)
+	if(login_remember_nick.checked)
+		localStorage.setItem(g_storage_nick_key, g_nick)
+	else if(localStorage.getItem(g_storage_nick_key) == g_nick)
+		localStorage.removeItem(g_storage_nick_key)
 
 	// 로그인 창 숨기기
 	init_block.style.opacity = 1
@@ -110,6 +115,7 @@ socket.on('login', function(isSuccess) {
 	login_id.style.display = 'none'
 	login_pw.style.display = 'none'
 	login_button.style.display = 'none'
+	login_remember_nick_holder.style.display = 'none'
 
 	add_system_message('후원 랭킹 (2021. 09. 23)\n'
 						+ '★ 0. Lily(샤르프로젝트) 님 ★\n' 

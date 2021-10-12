@@ -38,6 +38,7 @@ function onPlayerReady(event)
 	if(stored_nick)
 	{
 		login_id.value = stored_nick
+		login_remember_nick.checked = true
 		login()
 		return
 	}

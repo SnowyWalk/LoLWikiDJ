@@ -68,13 +68,16 @@ function resize() {
 	login_port.style.top = (window_height - login_bg.clientHeight) / 2 - 30 + 4
 
 	login_id.style.left = (window_width - login_bg.clientWidth) / 2 + 13
-	login_id.style.top = window_height / 2 - login_id.clientHeight - 7.5
+	login_id.style.top = window_height / 2 - login_id.clientHeight - 7.5 - 10
 
 	login_pw.style.left = (window_width - login_bg.clientWidth) / 2 + 13
-	login_pw.style.top = window_height / 2 + 7.5
+	login_pw.style.top = window_height / 2 + 7.5 - 10 
 
 	login_button.style.left = (window_width - login_bg.clientWidth) / 2 + 13 + login_id.clientWidth + 15
-	login_button.style.top = window_height / 2 - login_id.clientHeight - 8
+	login_button.style.top = window_height / 2 - login_id.clientHeight - 8 - 10
+
+	login_remember_nick_holder.style.left = (window_width - login_bg.clientWidth) / 2 + 13
+	login_remember_nick_holder.style.top = window_height / 2 + 66 - 10 
 
 
 	/* 채팅 */

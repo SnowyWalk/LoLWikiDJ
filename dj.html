@@ -64,6 +64,10 @@
     <input type="text" id="login_id" placeholder="닉네임" onkeydown="login_keydown()">
     <input type="text" id="login_pw" placeholder="PW (미구현)" onkeydown="login_keydown()" disabled>
     <div id="login_button" class="nanum bold" onclick="login()">Login</div>
+    <div id="login_remember_nick_holder" class="nanum">
+      <input type="checkbox" id="login_remember_nick"/>
+      <label for="login_remember_nick">자동 로그인</label>
+    </div>
   </div>
 
   <!-- 우측 채팅 영역 -->
