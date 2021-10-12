@@ -1217,6 +1217,12 @@ io.sockets.on('connection', function(socket)
 		log('INFO', 'TTS', format('{0} make tts ({1}) : {2}', socket.name, data.tts_hash, data.text))
 		make_tts(data.text, data.tts_hash)
 	})
+
+
+	socket.on('ad', function(message) {
+		var hRate = Math.random()
+		io.sockets.emit('ad', { message: message, hRate: hRate })
+	})
 }) 
 
 function update_users()

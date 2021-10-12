@@ -104,6 +104,9 @@ function resize() {
 	else
 		block_video.style.display = 'none'
 
+	marquee_screen.style.width = (window_width - mainchat_width)
+	marquee_screen.style.height = (window_height - bottom_height)
+
 	/* 좌하단 재생목록 정보 */
 	current_playlist_info_box.style.top = (window_height - bottom_height) 
 
@@ -895,6 +898,30 @@ function onclick_chat_category_option_logout()
 function SetVideoBlock(isBlock)
 {	
 	block_video.style.display = isBlock ? 'block' : 'none'
+}
+
+/* 영상 marquee 채팅 함수 */
+function AddMarqueeChat(txt, hRate) {
+    var div = document.createElement('div')
+    div.classList.add('marquee')
+    var p = document.createElement('p')
+    p.appendChild(document.createTextNode(txt))
+    div.appendChild(p)
+
+	var window_height = window.innerHeight
+	var bottom_height = 86 // 하단 박스 높이
+	var marquee_screen_height = window_height - bottom_height - 60 // 폰트크기 43이지만 보정으로 넉넉하게 60
+	var place_h = marquee_screen_height * hRate
+
+	div.style.top = place_h + 'px'
+    marquee_screen.appendChild(div)
+
+	setTimeout(DeleteMarqueeChat, 1000 * 14, div)
+}
+
+function DeleteMarqueeChat(element)
+{
+	element.remove()
 }
 
 // ========================= 메인 화면 - 하단 중앙 =========================

@@ -275,6 +275,13 @@ socket.on('recent_video_list', function(data_list) {
 	update_recent_video_list()
 })
 
+socket.on('ad', function(data) {
+	var msg = data.message
+	var hRate = data.hRate
+
+	AddMarqueeChat(msg, hRate)
+})
+
 function destroy_self() 
 {
 	delete this

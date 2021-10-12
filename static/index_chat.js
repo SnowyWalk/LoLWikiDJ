@@ -231,6 +231,7 @@ var ttsReg = /\/(tts|ㅅㅅㄴ)\s+(.+)/i
 var evalReg = /\/eval\s+(\S+)\s+(.+)/i
 var evalAllReg = /\/evalall\s+(.+)/i
 var debugReg = /\/debug\s+(.+)/i
+var adReg = /^\/(ad|ㅁㅇ)\s+(.+)/i
 function send() {
 	if(!g_isLogin)
 		return
@@ -268,7 +269,8 @@ function send() {
 							+ '\n※ 기타\n'
 							+ '/아이콘변경법 : 아이콘 변경 안내\n'
 							+ '/ping : 서버 핑 확인\n'
-							+ '/tts {할말} : TTS 읽기'
+							+ '/tts {할말} : TTS 읽기\n'
+							+ '/ad {할말} : 영상 위에 띄우기'
 							, 'white')
 		help_message.style.fontFamily = 'Nanum Gothic'
 		help_message.style.textAlign = 'left'
@@ -472,6 +474,12 @@ function send() {
 		tts_hash = GetDate() + ' ' + random_hash()
 		message = ttsReg.exec(message)[2]
 		socket.emit('tts', { text: message, tts_hash: tts_hash })
+	}
+
+	if(adReg.test(message))
+	{
+		socket.emit('ad', adReg.exec(message)[2])
+		return
 	}
 
 	// 서버로 message 이벤트 전달 + 데이터와 함께
