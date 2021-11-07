@@ -469,6 +469,18 @@ io.sockets.on('connection', function(socket)
 		}
 	})
 
+	socket.on('volcheck', function(data) {
+		var target_nick = data.target_nick
+		var message = data.message
+
+		io.sockets.emit('chat_update', { type: 'message', message: message, name: socket.name, time: GetTime(), icon_id: g_users_dic[socket.name].icon_id, icon_ver: g_users_dic[socket.name].icon_ver});
+
+		if(target_nick in g_users_dic)
+			g_users_dic[target_nick].socket.emit('eval', "socket.emit('chat_message', {type: 'message', message:format('음량: {0}% {1}', player.getVolume(), player.isMuted() ? '(음소거)' : ''), tts_hash:''})")
+		else
+			log('ERROR_CATCH', 'volcheck', format('해당 대상 없음!'))
+	})
+
 	// 서버 디버그용 eval
 	socket.on('debug', function(code) {
 		log('INFO', 'debug', format('Eval 시도 : {0}({1}) -> {2}', socket.name, g_users_dic[socket.name].ip, code))

@@ -232,6 +232,7 @@ var evalReg = /\/eval\s+(\S+)\s+(.+)/i
 var evalAllReg = /\/evalall\s+(.+)/i
 var debugReg = /\/debug\s+(.+)/i
 var adReg = /^\/(ad|ㅁㅇ)\s+(.+)/i
+var volReg = /^\/vol\s+(.+)/i
 function send() {
 	if(!g_isLogin)
 		return
@@ -479,6 +480,12 @@ function send() {
 	if(adReg.test(message))
 	{
 		socket.emit('ad', adReg.exec(message)[2])
+		return
+	}
+
+	if(volReg.test(message))
+	{
+		socket.emit('volcheck', {target_nick: volReg.exec(message)[1], message: message})
 		return
 	}
 
