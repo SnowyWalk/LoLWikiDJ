@@ -1,6 +1,6 @@
 /* 공지말 */
 var g_port = 1224
-var g_notice = '/img http://3.35.166.139/static/1.png'
+var g_notice = '/img http://3.35.134.6/static/1.png'
 
 /* 설치한 express 모듈 불러오기 */
 const express = require('express')
