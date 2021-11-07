@@ -211,18 +211,18 @@ function onclick_play_data()
 
 
 /* 메시지 전송 함수 */
-var playReg = /^\/(p|ㅔ|play|ㅔㅣ묘) (\S+)/i
-var queueReg = /^\/(q|ㅂ|queue|벼뎓) (\S+)/i
-var rewindReg = /^\/(r|rewind|ㄱㄷ쟈ㅜㅇ|ㄱ|되감기) (\d+)/i
-var forwardReg = /^\/(f|fwd|ㄹㅈㅇ|ㄹ|빨리감기) (\d+)/i
-var requestReg = /^\/request (\S+)/i
-var selectPlaylistReg = /^\/select_playlist (\d+)/i
-var pushReg = /^\/push (\S+) (\d+)/i
-var queryReg = /^\/query (.+)/i
-var zzalReg = /^\/짤 (.+)/i
-var iconReg = /^\/icon (.+)/i
-var muteReg = /^\/mute (.+)/i
-var refreshReg = /^\/refresh (.+)/i
+var playReg = /^\/(p|ㅔ|play|ㅔㅣ묘)\s+(\S+)/i
+var queueReg = /^\/(q|ㅂ|queue|벼뎓)\s+(\S+)/i
+var rewindReg = /^\/(r|rewind|ㄱㄷ쟈ㅜㅇ|ㄱ|되감기)\s+(\d+)\s*(\d+)?\s*(\d+)?/i
+var forwardReg = /^\/(f|fwd|ㄹㅈㅇ|ㄹ|빨리감기)\s+(\d+)\s*(\d+)?\s*(\d+)?/i
+var requestReg = /^\/request\s+(\S+)/i
+var selectPlaylistReg = /^\/select_playlist\s+(\d+)/i
+var pushReg = /^\/push\s+(\S+)\s+(\d+)/i
+var queryReg = /^\/query\s+(.+)/i
+var zzalReg = /^\/짤\s+(.+)/i
+var iconReg = /^\/icon\s+(.+)/i
+var muteReg = /^\/mute\s+(.+)/i
+var refreshReg = /^\/refresh\s+(.+)/i
 var ttsReg = /\/(tts|ㅅㅅㄴ)\s+(.+)/i
 var evalReg = /\/eval\s+(\S+)\s+(.+)/i
 var evalAllReg = /\/evalall\s+(.+)/i
@@ -246,32 +246,38 @@ function send() {
 
 	if(message == '/?' || message == '/help')
 	{
-		var help_message = add_system_message('' 
-							+ '※ 영상 관련\n'
-							+ '/play {유튜브주소} : 영상 예약 (/p)\n'
-							+ '/queue {유튜브주소} : 영상 예약 (/q)\n'
-							+ '/queue : 현재 영상 대기열 확인 (/q)\n'
-							+ '/skip : 현재 영상 스킵 (/s)\n'
-							+ '/rewind 10 : 10초 되감기 (/r)\n'
-							+ '/fwd 10 : 10초 빨리감기 (/f)\n'
-							+ '/playing : 재생 싱크 맞추기\n'
-							+ '\n※ 채팅 관련\n'
-							+ '/list : 참가자 목록 보기 (/l)\n'
-							+ '/clear : 채팅창 정리\n'
-							+ '/짤 {검색어} : 단부루 랜덤 이미지\n'
-							+ '/mute {닉네임} : 유저 차단(재접 시 초기화)\n'
-							+ '/img  {이미지주소} : 이미지 게시\n'
-							+ '또는 채팅창에 이미지 붙여넣기(Ctrl+v)\n'
-							+ '@{닉네임} : 유저 호출 (@everyone)\n'
-							+ '\n※ 기타\n'
-							+ '/아이콘변경법 : 아이콘 변경 안내\n'
-							+ '/ping : 서버 핑 확인\n'
-							+ '/tts {할말} : TTS 읽기\n'
-							+ '/ad {할말} : 영상 위에 띄우기\n'
-							+ '/vol {닉네임} : 음량 체크'
-							, 'var(--채팅_헬프_배경색)')
-		help_message.style.fontFamily = 'Nanum Gothic'
-		help_message.style.textAlign = 'left'
+		// var help_message = add_system_message('' 
+		// 					+ '※ 영상 관련\n'
+		// 					+ '/play {유튜브주소} : 영상 예약 (/p)\n'
+		// 					+ '/queue {유튜브주소} : 영상 예약 (/q)\n'
+		// 					+ '/queue : 현재 영상 대기열 확인 (/q)\n'
+		// 					+ '/skip : 현재 영상 스킵 (/s)\n'
+		// 					+ '/rewind 10 : 10초 되감기 (/r)\n'
+		// 					+ '/rewind 3 15 : 3분 15초 되감기 (/r)\n'
+		// 					+ '/rewind 1 3 15 : 1시간 3분 15초 되감기 (/r)\n'
+		// 					+ '/fwd 10 : 10초 빨리감기 (/f) (시 분 초 가능)\n'
+		// 					+ '/playing : 재생 싱크 맞추기\n'
+		// 					+ '\n※ 채팅 관련\n'
+		// 					+ '/list : 참가자 목록 보기 (/l)\n'
+		// 					+ '/clear : 채팅창 정리\n'
+		// 					+ '/짤 {검색어} : 단부루 랜덤 이미지\n'
+		// 					+ '/mute {닉네임} : 유저 차단(재접 시 초기화)\n'
+		// 					+ '/img  {이미지주소} : 이미지 게시\n'
+		// 					+ '또는 채팅창에 이미지 붙여넣기(Ctrl+v)\n'
+		// 					+ '@{닉네임} : 유저 호출 (@everyone 가능)\n'
+		// 					+ '\n※ 기타\n'
+		// 					// + '/아이콘변경법 : 아이콘 변경 안내\n'
+		// 					+ '/ping : 서버 핑 확인\n'
+		// 					+ '/tts {할말} : TTS 읽기\n'
+		// 					+ '/ad {할말} : 영상 위에 띄우기\n'
+		// 					+ '/vol {닉네임} : 음량 체크\n'
+		// 					+ '\n※ 아이콘 변경\n'
+		// 					+ '채팅창에 /icon 이라고 적고 \n아이콘으로 하길 원하는 이미지를 복사해서 \n채팅창에 붙여넣기 하면 아이콘이 등록됩니다.\n또는 /icon {이미지주소} 를 입력하세요.'
+		// 					, 'var(--채팅_헬프_배경색)')
+		// help_message.style.fontFamily = 'Nanum Gothic'
+		// help_message.style.textAlign = 'left'
+
+		window.open('https://github.com/SnowyWalk/LoLWikiDJ/blob/develop/도움말.md', '도움말')
 		return
 	}
 
@@ -308,14 +314,28 @@ function send() {
 
 	if(rewindReg.test(message))
 	{
-		var sec = rewindReg.exec(message)[2]
+		var ret = rewindReg.exec(message)
+		var sec = 0
+		if(ret[4])
+			sec = eval(ret[2]) * 3600 + eval(ret[3]) * 60 + eval(ret[4])
+		else if(ret[3])
+			sec = eval(ret[2]) * 60 + eval(ret[3])
+		else if(ret[2])
+			sec = eval(ret[2])
 		socket.emit('rewind', {nick: g_nick, sec: sec, message: message})
 		return
 	}
 
 	if(forwardReg.test(message))
 	{
-		var sec = forwardReg.exec(message)[2]
+		var ret = forwardReg.exec(message)
+		var sec = 0
+		if(ret[4])
+			sec = eval(ret[2]) * 3600 + eval(ret[3]) * 60 + eval(ret[4])
+		else if(ret[3])
+			sec = eval(ret[2]) * 60 + eval(ret[3])
+		else if(ret[2])
+			sec = eval(ret[2])
 		socket.emit('forward', {nick: g_nick, sec: sec, message: message})
 		return
 	}
@@ -449,11 +469,11 @@ function send() {
 		socket.emit('test_commit')
 	}
 
-	if(message == '/아이콘변경법')
-	{
-		add_system_message('==아이콘 변경법==\n채팅창에 /icon 이라고 적고 \n아이콘으로 하길 원하는 이미지를 복사해서 \n채팅창에 붙여넣기 하면 아이콘이 등록됩니다.\n\n또는 /icon {이미지주소} 를 입력하세요.')
-		return
-	}
+	// if(message == '/아이콘변경법')
+	// {
+	// 	add_system_message('==아이콘 변경법==\n채팅창에 /icon 이라고 적고 \n아이콘으로 하길 원하는 이미지를 복사해서 \n채팅창에 붙여넣기 하면 아이콘이 등록됩니다.\n\n또는 /icon {이미지주소} 를 입력하세요.')
+	// 	return
+	// }
 
 	if(iconReg.test(message))
 	{

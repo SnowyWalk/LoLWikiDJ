@@ -66,6 +66,7 @@ app.use('/fonts', express.static('./static/fonts'))
 app.use('/static', express.static('./static'))
 app.use('/icon', express.static('./static/icon'))
 app.use('/tts', express.static('./tts'))
+app.use('/patch_note', express.static('./patch_note'))
 
 /* CONSTANT */
 const ipReg = /((?:\d+\.){3}\d+)/
