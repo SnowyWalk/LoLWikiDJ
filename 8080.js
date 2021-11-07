@@ -1520,14 +1520,14 @@ function update_current_queue(dest_socket, is_on_demand = false)
 	if(g_queue.length == 0)
 	{
 		if(is_on_demand)
-			dest_socket.emit('chat_update', {type: 'system_message', time: GetTime(), message: '플레이 대기열 없음', bg: '#39e065' })
+			dest_socket.emit('chat_update', {type: 'system_message', time: GetTime(), message: '플레이 대기열 없음', bg: 'var(--채팅_시스템)' })
 		return
 	}
 
 	var str = '플레이 대기열\n\n'
 	str += g_queue.map( (x, i) => format('{0}. {1} - {2} ({3})', i+1, x.dj, x.data.title, parse_second_to_string(x.data.duration))).join('\n\n')
 
-	dest_socket.emit('chat_update', {type: 'system_message', time: GetTime(), message: str, bg: '#39e065'})
+	dest_socket.emit('chat_update', {type: 'system_message', time: GetTime(), message: str, bg: 'var(--채팅_시스템)'})
 }
 
 /* 좋아요/싫어요 알림 */

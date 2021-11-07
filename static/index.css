@@ -1,3 +1,68 @@
+:root {
+  --배경색: lightblue; /* rgb(24, 24, 24) */
+  --글자색: black; /* white */
+  --보더색: black; /* rgb(106, 106, 106) */
+  --호버이펙트: rgba(0, 0, 0, 0.118); /* rgba(255, 255, 255, 0.118) */
+  --호버이펙트_역: rgba(0, 0, 0, 0.118); /* rgba(0, 0, 0, 0.118) */
+
+  --채팅_후원랭킹: yellow; /* #727200 */
+  --채팅_패치노트: chartreuse; /* #538522 */
+  --채팅_시스템: rgb(160, 224, 57); /* rgb(56, 56, 56) */
+  --채팅_접속: aquamarine; /* #3f6a5d */
+  --채팅_떠남: indianred; /* #4c2a2a */
+  --채팅_나: crimson; /* #d77a7a */
+  --채팅_배경_나: lemonchiffon; /* rgb(24, 24, 24) */
+  --채팅_남: mediumslateblue; /* #97c5ff */
+  --채팅_배경_남: white; /* rgb(24, 24, 24) */
+  --채팅_스크롤러_배경색: #000000a6; /* rgba(0, 0, 0, 0.75) */
+  --채팅_스크롤러_보더: 0px; /* 1px gray solid */
+
+  --채팅_입력창_배경색: white; /* rgb(24, 24, 24) */
+  --채팅_입력창_글자색: black; /* white */
+  --채팅_입력창_보더색: rgb(118, 118, 118); /* rgb(102, 102, 102) */
+  --채팅_입력창_보더색_포커스: rgb(118, 118, 118); /* rgb(63, 148, 228) */
+  --채팅_입력창_보더_위: fuck; /* 0px */
+  --채팅_입력창_보더_오른쪽: fuck; /* 0px */
+  --채팅_입력창_보더_왼쪽: fuck; /* 0px */
+  --채팅_입력창_아웃라인: fuck; /* none */
+  --채팅_입력창_전송버튼_배경색: fuck; /* transparent */
+  --채팅_입력창_전송버튼_보더: fuck; /* 0px */
+
+  --채팅_카테고리_배경색: lightskyblue; /* rgb(222, 222, 222) */
+  --채팅_카테고리_필터: none; /* invert(1) */
+  --채팅_카테고리_선택: lightblue; /* rgb(222, 222, 222) */
+  --채팅_카테고리_선택_보더: none; /* 3px rgb(85, 85, 85) solid */
+  --채팅_카테고리_호버: #6192b1; /* rgb(85, 85, 85) */
+  --채팅_카테고리_챗알림_배경색: crimson; /* rgb(18, 235, 194) */
+  --채팅_카테고리_챗알림_글자색: yellow; /* 0000ff */
+  --채팅_카테고리_챗알림_폰트옵션: normal; /* bold */
+
+  --현재_재생목록_박스_배경색: rgb(160, 224, 57); /* rgb(70, 70, 70) */
+  --영상주소복사_글자색: -webkit-link; /* cornflowerblue */
+
+  --플레이리스트_배경색: lightskyblue; /* rgb(33, 33, 33) */
+  --플레이리스트_좌측_배경색_짝수: rgb(137, 209, 232); /* rgb(33, 33, 33) */
+  --플레이리스트_좌측_배경색_홀수: rgb(96, 197, 230); /* rgb(33, 33, 33) */
+  --플레이리스트_좌측_배경색_선택: rgb(160, 224, 57); /* rgb(130, 130, 130) */
+  --플레이리스트_헤더_배경색: lightskyblue; /* rgb(24, 24, 24) */
+  --플레이리스트_헤더_배경색_선택됨: linear-gradient(0deg, rgba(160, 224, 57, 0.23), rgba(160, 224, 57, 0.12)); /* linear-gradient(90deg, rgba(80, 80, 80, 0.5), rgba(0, 0, 0, 0.0)) */
+  --플레이리스트_헤더_보더_왼쪽: 1px solid cadetblue; /* 0px */
+  --플레이리스트_헤더_보더_아래: 4px solid cadetblue; /* 0px */
+  --플레이리스트_헤더_버튼_영상추가_필터: none; /* invert(1) */
+  --플레이리스트_헤더_버튼_영상삭제_필터: none; /* invert(1) */
+  --플레이리스트_헤더_버튼_이름변경_필터: none; /* invert(1) */
+  --플레이리스트_헤더_버튼_셔플_필터: none; /* invert(1) */
+  --플레이리스트_헤더_버튼_선택됨: rgb(160, 224, 57); /* rgb(76, 76, 76) */
+  --플레이리스트_영상_배경색: lightskyblue; /* rgb(15, 15, 15) */
+  --플레이리스트_영상_보더_왼쪽: 1px solid cadetblue; /* 0px */
+  --플레이리스트_영상_배경색_짝수: rgb(137, 209, 232); /* rgb(15, 15, 15) */
+  --플레이리스트_영상_배경색_홀수: rgb(96, 197, 230); /* rgb(15, 15, 15) */
+
+  --UI_툴팁_보더: 0px; /* 1px solid gray */
+
+  color: var(--글자색);
+}
+
 body {
   overflow: hidden;
   margin: 0;
@@ -10,14 +75,35 @@ body {
   font-weight: bold;
 }
 .hover:hover {
-  background-color: rgba(0, 0, 0, 0.118) !important;
+  background-color: var(--호버이펙트) !important;
 }
+.hover_reverse:hover {
+  background-color: var(--호버이펙트_역) !important;
+}
+
 .no-drag {
   -ms-user-select: none; 
   -moz-user-select: -moz-none; 
   -webkit-user-select: none; 
   -khtml-user-select: none; 
   user-select: none;
+}
+
+/* 스크롤바 스타일 */
+::-webkit-scrollbar {
+  width: 16px;
+}
+
+::-webkit-scrollbar-thumb {
+  height: 56px;
+  border-radius: 8px;
+  border: 4px solid transparent;
+  background-clip: content-box;
+  background-color: rgb(170, 170, 170);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: rgb(113, 113, 113);
 }
 
 /* * { font-family: "Nanum Gothic" !important; } */
@@ -107,15 +193,17 @@ body {
 /* 현재 재생목록 정보 */
 #current_playlist_info_box {
   position: fixed;
-  background-color: lightblue;
+  background-color: var(--배경색);
   left: 0px;
   height: 86px;
   cursor: pointer;
 }
 
+
 #current_playlist_info_box:hover {
-  background-color: rgb(160, 224, 57);
+  background-color: var(--현재_재생목록_박스_배경색);
 }
+
 
 /* 선택된 재생목록 (const) */
 #current_playlist_name_const {
@@ -149,7 +237,7 @@ body {
 
 /* 현재 비디오 정보 */
 #video_info {
-  background-color: lightblue;
+  background-color: var(--배경색);
   height: 86px;
   /* width: 622px; */
   position: fixed;
@@ -157,6 +245,7 @@ body {
   border-top: 0;
   border-bottom: 0;
   border-style: solid;
+  border-color: var(--보더색);
 }
 
 #video_info_dj { 
@@ -192,6 +281,7 @@ body {
   padding-left: 10px;
   font-family: "Nanum Gothic";
   cursor: pointer;
+  color: var(--영상주소복사_글자색);
 }
 
 /* 영상 시간 프로그레스 바 */
@@ -229,12 +319,13 @@ body {
 
 #etc_box {
   position: fixed;
-  background-color: lightblue;
+  background-color: var(--배경색);
   border-width: thin;
   border-top: 0;
   border-bottom: 0;
   border-left: 0;
   border-style: solid;
+  border-color: var(--보더색);
 }
 
 #etc_dj_button {
@@ -298,7 +389,12 @@ body {
   left:0px; 
   position: fixed;
   z-index: 1;
+  box-sizing: border-box;
+  border-bottom: 1px solid;
+  border-right: 1px solid;
+  border-color: var(--보더색);
 }
+
 /* 유튜브 영상 커버 */
 #block_video {
   position: fixed;
@@ -312,6 +408,10 @@ body {
   text-align: center;
   z-index: 3;
   display: none;
+  box-sizing: border-box;
+  border-right: 1px solid;
+  border-bottom: 1px solid;
+  border-color: var(--보더색);
 }
 
 #marquee_screen {
@@ -393,7 +493,7 @@ body {
 #mainchat {
   margin: auto;
   /* border-radius: 20px; */
-  background-color: lightblue;
+  background-color: var(--배경색);
   text-align: center;
   /* width: 350px; */
   height: 100%;
@@ -415,15 +515,16 @@ body {
 
 #chat_noti_count {
   position: relative; 
-  background-color: crimson; 
+  background-color: var(--채팅_카테고리_챗알림_배경색); 
   border-radius: 50%;
   top: 21px;
   height: 15px;
   display: none;
   padding-left: 5px;
   padding-right: 5px;
-  color: yellow;
+  color: var(--채팅_카테고리_챗알림_글자색);
   margin-left: 32px;
+  font-weight: var(--채팅_카테고리_챗알림_폰트옵션);
 }
 
 #mainchat_header_djlist {
@@ -455,9 +556,10 @@ body {
 .mainchat_header_btn {
   height: 100%;
   background-repeat: no-repeat;
-  background-color: lightskyblue;
+  background-color: var(--채팅_카테고리_배경색);
   background-position: center;
   float: left;
+  filter: var(--채팅_카테고리_필터);
 }
 
 .mainchat_header_btn:not([selected]) {
@@ -465,11 +567,13 @@ body {
 }
 
 .mainchat_header_btn:not([selected]):hover {
-  background-color: #6192b1;
+  background-color: var(--채팅_카테고리_호버);
 }
 
 .mainchat_header_btn[selected] {
-  background-color: lightblue;
+  background-color: var(--채팅_카테고리_선택);
+  border-bottom: var(--채팅_카테고리_선택_보더);
+  box-sizing: border-box;
 }
 
 /* 참여자 카테고리 */
@@ -518,6 +622,7 @@ ul#djlist_users {
 #djlist_djs_header {
   padding-top: 50px;
   border-top: 2px solid;
+  border-color: var(--보더색);
 }
 
 ul#djlist_djs {
@@ -608,6 +713,14 @@ div.recent_list_video {
   margin-top: 11px;
   position: relative;
   z-index: 1;
+
+  background-color: var(--채팅_입력창_배경색);
+  color: var(--채팅_입력창_글자색);
+  border-color: var(--채팅_입력창_보더색);
+}
+
+#chat_input:focus {
+  border-color: var(--채팅_입력창_보더색_포커스);
 }
 
 #chat_send {
@@ -615,6 +728,7 @@ div.recent_list_video {
   top: 2px;
   position: relative;
   /* left: 5px; */
+  color: var(--글자색);
 }
 
 /* 스크롤 도우미 버튼 */
@@ -622,7 +736,7 @@ div.recent_list_video {
   top: -75px;
   left: 0px;
   z-index: 2;
-  background-color: #000000a6;
+  background-color: var(--채팅_스크롤러_배경색);
   display: none; /* 아니면 inline */
   position: relative;
   -webkit-box-align: center;
@@ -639,6 +753,7 @@ div.recent_list_video {
   padding-right: 15px;
   border-radius: 10px;
   cursor: pointer;
+  border: var(--채팅_스크롤러_보더);
 }
 
 /* 이미지 돋보기 */
@@ -648,6 +763,7 @@ div.recent_list_video {
   z-index: 20;
   border: 1px solid gray;
   pointer-events: none;
+  border-color: var(--보더색);
 }
 
 #image_expander_src {
@@ -660,7 +776,7 @@ div.recent_list_video {
 .connect {
   width: 90%;
   margin: auto;
-  background-color: aquamarine;
+  background-color: var(--채팅_접속);
   text-align: center;
   margin-top: 10px;
   font-family: 'Dovemayo';
@@ -670,7 +786,7 @@ div.recent_list_video {
 .disconnect {
   width: 90%;
   margin: auto;
-  background-color: indianred;
+  background-color: var(--채팅_떠남);
   text-align: center;
   margin-top: 10px;
   font-family: 'Dovemayo';
@@ -681,9 +797,13 @@ div.recent_list_video {
   width: 90%;
   margin: auto;
   margin-top: 10px;
-  background-color: lemonchiffon;
+  background-color: var(--채팅_배경_나);
   border-radius: 5px;
   text-align: left;
+}
+
+.me .nick {
+  color: var(--채팅_나);
 }
 
 /* 상대방이 보낸 메시지 */
@@ -691,9 +811,13 @@ div.recent_list_video {
   width: 90%;
   margin: auto;
   margin-top: 10px;
-  background-color: white;
+  background-color: var(--채팅_배경_남);
   border-radius: 5px;
   text-align: left;
+}
+
+.other .nick {
+  color: var(--채팅_남);
 }
 
 /* 시스템 메시지 */
@@ -702,7 +826,7 @@ div.recent_list_video {
   padding-left: 2.5%;
   padding-right: 2.5%;
   margin: auto;
-  background-color: rgb(160, 224, 57);
+  background-color: var(--채팅_시스템);
   text-align: center;
   margin-top: 10px;
   font-family: 'Dovemayo';
@@ -752,6 +876,7 @@ div.recent_list_video {
   cursor: pointer;
   border: 1px solid;
   box-sizing: border-box;
+  border-color: var(--보더색);
 }
 
 .play_info > .play_info_dj {
@@ -771,12 +896,13 @@ div.recent_list_video {
   left: 0px;
   top: 0px;
   z-index: 10;
-  background-color: lightskyblue;
+  background-color: var(--플레이리스트_배경색);
   display: none;
   border: solid 1px;
   box-sizing: border-box;
   border-top: 0;
   border-left: 0;
+  border-color: var(--보더색);
 }
 
 /* 재생목록 리스트 */
@@ -794,7 +920,7 @@ div.recent_list_video {
 }
 
 .playlist_button.odd {
-  background-color: rgb(96, 197, 230);
+  background-color: var(--플레이리스트_좌측_배경색_홀수);
 }
 
 /* .playlist_button.odd:hover {
@@ -802,7 +928,7 @@ div.recent_list_video {
 } */
 
 .playlist_button.even {
-  background-color: rgb(137, 209, 232);
+  background-color: var(--플레이리스트_좌측_배경색_짝수);
 }
 
 /* .playlist_button.even:hover {
@@ -810,7 +936,7 @@ div.recent_list_video {
 } */
 
 .playlist_button[selected] {
-  background-color: rgb(160, 224, 57) !important ;
+  background-color: var(--플레이리스트_좌측_배경색_선택) !important;
 }
 
 .playlist_button > .text {
@@ -848,12 +974,13 @@ div.recent_list_video {
 #playlist_control_panel_playlist_info {
   top: 0px;
   position: absolute;
-  border-bottom: 4px solid cadetblue;
+  background-color: var(--플레이리스트_헤더_배경색);
+  border-bottom: var(--플레이리스트_헤더_보더_아래);
   box-sizing: border-box;
   font-size: 30px;
   line-height: 100px;
   padding-left: 30px;
-  border-left: 1px solid cadetblue;
+  border-left: var(--플레이리스트_헤더_보더_왼쪽);
 }
 
 #playlist_control_panel_playlist_info > div {
@@ -875,7 +1002,7 @@ div.recent_list_video {
 }
 
 #playlist_control_panel_playlist_info_select[selected] {
-  background-color: rgb(160, 224, 57);
+  background-color: var(--플레이리스트_헤더_배경색_선택됨);
 }
 
 #playlist_control_panel_playlist_info_shuffle {
@@ -887,6 +1014,7 @@ div.recent_list_video {
   width: 40px;
   background-repeat: no-repeat;
   background-position: center;
+  filter: var(--플레이리스트_헤더_버튼_셔플_필터);
 }
 
 /* #playlist_control_panel_playlist_info_select:hover {
@@ -902,6 +1030,7 @@ div.recent_list_video {
   width: 40px;
   background-repeat: no-repeat;
   background-position: center;
+  filter: var(--플레이리스트_헤더_버튼_영상추가_필터);
 }
 
 #playlist_control_panel_playlist_info_new_video_button:hover::after {
@@ -928,6 +1057,7 @@ div.recent_list_video {
   width: 40px;
   background-repeat: no-repeat;
   background-position: center;
+  filter: var(--플레이리스트_헤더_버튼_이름변경_필터);
 }
 
 #playlist_control_panel_playlist_info_delete_button {
@@ -939,6 +1069,7 @@ div.recent_list_video {
   width: 40px;
   background-repeat: no-repeat;
   background-position: center;
+  filter: var(--플레이리스트_헤더_버튼_영상삭제_필터);
 }
 
 /* 영상 목록 리스트 */
@@ -947,7 +1078,8 @@ div.recent_list_video {
   top: 100px;
   overflow-y: auto;
   box-sizing: border-box;
-  border-left: 1px solid cadetblue;
+  background-color: var(--플레이리스트_영상_배경색);
+  border-left: var(--플레이리스트_영상_보더_왼쪽);
 }
 
 #playlist_control_panel_videolist_header > div > img {
@@ -960,11 +1092,11 @@ div.recent_list_video {
 }
 
 .videolist_button.even {
-  background-color: rgb(137, 209, 232);
+  background-color: var(--플레이리스트_영상_배경색_짝수);
 }
 
 .videolist_button.odd {
-  background-color: rgb(96, 197, 230);
+  background-color: var(--플레이리스트_영상_배경색_홀수);
 }
 
 .videolist_button > img {
@@ -1007,6 +1139,19 @@ div.recent_list_video {
   cursor: pointer;
 }
 
+.sort_button.top {
+  background-image: url('arrow_top.png');
+}
+
+.sort_button.down {
+  background-image: url('arrow_invert.png');
+  /* transform: scaleY(-1); */
+}
+
+.sort_button.down.top {
+  background-image: url('arrow_invert_top.png');
+}
+
 .play_now_button {
   background-image: url('play_now.png');
   width: 70px;
@@ -1018,7 +1163,7 @@ div.recent_list_video {
   cursor: pointer;
 }
 
-.sort_button:hover:not([style*=filter])::after {
+.sort_button:hover:not(.top)::after {
 /* .sort_button::after { */
   content: '　';
   position: relative;
@@ -1033,10 +1178,7 @@ div.recent_list_video {
   background-position: center;
 }
 
-.sort_button.down {
-  background-image: url('arrow_invert.png');
-  /* transform: scaleY(-1); */
-}
+
 
 /* .even > .delete_button:hover {
   background-color: rgb(107, 179, 202);
@@ -1112,6 +1254,7 @@ div.recent_list_video {
   width: 100%;
   background-color: black;
   position: absolute;
+  border-color: var(--보더색);
 }
 
 /* 리사이즈 박스 */
@@ -1185,4 +1328,5 @@ div.recent_list_video {
   display: none;
   z-index: 21;
   pointer-events: none;
+  border: var(--UI_툴팁_보더);
 }

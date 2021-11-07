@@ -1,5 +1,8 @@
 var socket = io()
 
+/* 테마 기억 */
+const g_storage_theme_key = 'LoLWikiDJ_Theme'
+
 /* 채팅/인증용 데이터 */
 const g_storage_nick_key = 'LoLWikiDJ'
 var g_nick = ''
@@ -51,6 +54,8 @@ var g_setting_auto_login = false
 window.onload = function() {
 	g_isWindowLoaded = true
 
+	set_theme(localStorage.getItem(g_storage_theme_key))
+
 	initial_resize()
 	
 	if(g_isConnected && !g_isLogin)
@@ -81,6 +86,9 @@ window.onload = function() {
 	playlist_control_panel_playlist_info_shuffle.addEventListener('contextmenu', onrclick_playlist_control_panel_playlist_info_shuffle, false)
 	playlist_control_panel_playlist_info_select.addEventListener('contextmenu', onrclick_playlist_control_panel_playlist_info_select, false)
 
+	theme_default.onchange = _ => set_theme(document.querySelector('[name=theme]:checked').value)
+	theme_dark.onchange = _ => set_theme(document.querySelector('[name=theme]:checked').value)
+	
 	register_ui_tooltip_event(video_info_name, '재생 중인 영상이 없습니다.')
 	register_ui_tooltip_event(etc_bad_button, '싫어요 5표 이상 누적 시 영상이 스킵됩니다.')
 

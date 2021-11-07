@@ -4,6 +4,8 @@ var mainchat_width = 350
 var playlist_control_panel_playlist_header_width = 300
 var playlist_control_panel_videolist_header_top = 100 // playlist_control_panel_playlist_info_height 와 동일
 
+var current_theme = 'default' // [default, dark]
+
 /* UI 사이즈 셋업 (최초에 한번만 실행)*/
 function initial_resize()
 {
@@ -320,7 +322,7 @@ function select_playlist_button(playlist_id)
 
 	// 상단부 재생목록 인포 이름, 색상 세팅
 	playlist_control_panel_playlist_info_name.innerText = thisPlaylist.Name
-	playlist_control_panel_playlist_info.style.background = (thisPlaylist.Id == g_current_playlist_id ? 'linear-gradient(0deg, #a0e0393b, #a0e0391f)' : '')
+	playlist_control_panel_playlist_info.style.background = (thisPlaylist.Id == g_current_playlist_id ? 'var(--플레이리스트_헤더_배경색_선택됨)' : '')
 	
 	// 활성화 버튼 세팅
 	// TODO: 텍스트에서 이미지로 변경. (선택 이라는 이미지로 할지 어떻게할지 고민중)
@@ -379,7 +381,7 @@ function select_playlist_button(playlist_id)
 		sort_down.classList.add('hover')
 		sort_down.style.float = 'right'
 		if(i == thisPlaylist.VideoList.length - 1)
-			sort_down.style.filter = 'brightness(3)'
+			sort_down.classList.add('top')
 		sort_down.onclick = onclick_video_sort_down_button
 		if(i == thisPlaylist.VideoList.length - 1)
 		{
@@ -399,7 +401,7 @@ function select_playlist_button(playlist_id)
 		sort_up.classList.add('hover')
 		sort_up.style.float = 'right'
 		if(i == 0)
-			sort_up.style.filter = 'brightness(3)'
+			sort_up.classList.add('top')
 		sort_up.onclick = onclick_video_sort_up_button
 		if(i == 0)
 		{
@@ -1169,8 +1171,8 @@ function update_rating_status()
 	etc_good_count.innerText = good_count
 	etc_bad_count.innerText = bad_count
 
-	etc_good_count.style.color = is_good_pick ? 'red' : 'black'
-	etc_bad_count.style.color = is_bad_pick ? 'blue' : 'black'
+	etc_good_count.style.color = is_good_pick ? 'red' : 'var(--글자색)'
+	etc_bad_count.style.color = is_bad_pick ? 'blue' : 'var(--글자색)'
 }
 
 /* UI 툴팁 관련 처리들 */
@@ -1223,4 +1225,163 @@ function ui_tooltip_set_pos(x, y)
 
 	ui_tooltip.style.left = x
 	ui_tooltip.style.top = y
+}
+
+// (--\S+):\s+(.*);\s*/\*\s*(.+?)\s*\*/
+// root_style.setProperty('$1', '$2')
+// root_style.setProperty('$1', '$3')
+function set_theme(theme_name)
+{
+	current_theme = theme_name || 'default'
+
+	localStorage.setItem(g_storage_theme_key, current_theme)
+	document.querySelector(format('[name=theme][value={0}]', current_theme)).checked = true
+
+	var root_style = document.querySelector(':root').style
+	if(current_theme == 'default')
+	{
+		root_style.setProperty('--배경색', 'lightblue')
+		root_style.setProperty('--글자색', 'black')
+		root_style.setProperty('--보더색', 'black')
+		root_style.setProperty('--호버이펙트', 'rgba(0, 0, 0, 0.118)')
+		root_style.setProperty('--호버이펙트_역', 'rgba(0, 0, 0, 0.118)')
+	  
+		root_style.setProperty('--채팅_후원랭킹', 'yellow')
+		root_style.setProperty('--채팅_패치노트', 'chartreuse')
+		root_style.setProperty('--채팅_시스템', 'rgb(160, 224, 57)')
+		root_style.setProperty('--채팅_접속', 'aquamarine')
+		root_style.setProperty('--채팅_떠남', 'indianred')
+		root_style.setProperty('--채팅_나', 'crimson')
+		root_style.setProperty('--채팅_배경_나', 'lemonchiffon')
+		root_style.setProperty('--채팅_남', 'mediumslateblue')
+		root_style.setProperty('--채팅_배경_남', 'white')
+		root_style.setProperty('--채팅_스크롤러_배경색', '#000000a6')
+		root_style.setProperty('--채팅_스크롤러_보더', '0px')
+	  
+		root_style.setProperty('--채팅_입력창_배경색', 'white')
+		root_style.setProperty('--채팅_입력창_글자색', 'black')
+		root_style.setProperty('--채팅_입력창_보더색', 'rgb(118, 118, 118)')
+		root_style.setProperty('--채팅_입력창_보더색_포커스', 'rgb(118, 118, 118)')
+		root_style.setProperty('--채팅_입력창_보더_위', 'fuck')
+		root_style.setProperty('--채팅_입력창_보더_오른쪽', 'fuck')
+		root_style.setProperty('--채팅_입력창_보더_왼쪽', 'fuck')
+		root_style.setProperty('--채팅_입력창_아웃라인', 'fuck')
+		root_style.setProperty('--채팅_입력창_전송버튼_배경색', 'fuck')
+		root_style.setProperty('--채팅_입력창_전송버튼_보더', 'fuck')
+	  
+		root_style.setProperty('--채팅_카테고리_배경색', 'lightskyblue')
+		root_style.setProperty('--채팅_카테고리_필터', 'none')
+		root_style.setProperty('--채팅_카테고리_선택', 'lightblue')
+		root_style.setProperty('--채팅_카테고리_선택_보더', 'none')
+		root_style.setProperty('--채팅_카테고리_호버', '#6192b1')
+		root_style.setProperty('--채팅_카테고리_챗알림_배경색', 'crimson')
+		root_style.setProperty('--채팅_카테고리_챗알림_글자색', 'yellow')
+		root_style.setProperty('--채팅_카테고리_챗알림_폰트옵션', 'normal')
+	  
+		root_style.setProperty('--현재_재생목록_박스_배경색', 'rgb(160, 224, 57)')
+		root_style.setProperty('--영상주소복사_글자색', '-webkit-link')
+	  
+		root_style.setProperty('--플레이리스트_배경색', 'lightskyblue')
+		root_style.setProperty('--플레이리스트_좌측_배경색_짝수', 'rgb(137, 209, 232)')
+		root_style.setProperty('--플레이리스트_좌측_배경색_홀수', 'rgb(96, 197, 230)')
+		root_style.setProperty('--플레이리스트_좌측_배경색_선택', 'rgb(160, 224, 57)')
+		root_style.setProperty('--플레이리스트_헤더_배경색', 'lightskyblue')
+		root_style.setProperty('--플레이리스트_헤더_배경색_선택됨', 'linear-gradient(0deg, rgba(160, 224, 57, 0.23), rgba(160, 224, 57, 0.12))')
+		root_style.setProperty('--플레이리스트_헤더_보더_왼쪽', '1px solid cadetblue')
+		root_style.setProperty('--플레이리스트_헤더_보더_아래', '4px solid cadetblue')
+		root_style.setProperty('--플레이리스트_헤더_버튼_영상추가_필터', 'none')
+		root_style.setProperty('--플레이리스트_헤더_버튼_영상삭제_필터', 'none')
+		root_style.setProperty('--플레이리스트_헤더_버튼_이름변경_필터', 'none')
+		root_style.setProperty('--플레이리스트_헤더_버튼_셔플_필터', 'none')
+		root_style.setProperty('--플레이리스트_헤더_버튼_선택됨', 'rgb(160, 224, 57)')
+		root_style.setProperty('--플레이리스트_영상_배경색', 'lightskyblue')
+		root_style.setProperty('--플레이리스트_영상_보더_왼쪽', '1px solid cadetblue')
+		root_style.setProperty('--플레이리스트_영상_배경색_짝수', 'rgb(137, 209, 232)')
+		root_style.setProperty('--플레이리스트_영상_배경색_홀수', 'rgb(96, 197, 230)')
+	  
+		root_style.setProperty('--UI_툴팁_보더', '0px')
+	}
+	else if(current_theme == 'dark')
+	{
+		root_style.setProperty('--배경색', 'rgb(24, 24, 24)')
+		root_style.setProperty('--글자색', 'white')
+		root_style.setProperty('--보더색', 'rgb(106, 106, 106)')
+		root_style.setProperty('--호버이펙트', 'rgba(255, 255, 255, 0.118)')
+		root_style.setProperty('--호버이펙트_역', 'rgba(0, 0, 0, 0.118)')
+	  
+		root_style.setProperty('--채팅_후원랭킹', '#727200')
+		root_style.setProperty('--채팅_패치노트', '#538522')
+		root_style.setProperty('--채팅_시스템', 'rgb(56, 56, 56)')
+		root_style.setProperty('--채팅_접속', '#3f6a5d')
+		root_style.setProperty('--채팅_떠남', '#4c2a2a')
+		root_style.setProperty('--채팅_나', '#d77a7a')
+		root_style.setProperty('--채팅_배경_나', 'rgb(24, 24, 24)')
+		root_style.setProperty('--채팅_남', '#97c5ff')
+		root_style.setProperty('--채팅_배경_남', 'rgb(24, 24, 24)')
+		root_style.setProperty('--채팅_스크롤러_배경색', 'rgba(0, 0, 0, 0.75)')
+		root_style.setProperty('--채팅_스크롤러_보더', '1px gray solid')
+	  
+		root_style.setProperty('--채팅_입력창_배경색', 'rgb(24, 24, 24)')
+		root_style.setProperty('--채팅_입력창_글자색', 'white')
+		root_style.setProperty('--채팅_입력창_보더색', 'rgb(102, 102, 102)')
+		root_style.setProperty('--채팅_입력창_보더색_포커스', 'rgb(63, 148, 228)')
+		root_style.setProperty('--채팅_입력창_보더_위', '0px')
+		root_style.setProperty('--채팅_입력창_보더_오른쪽', '0px')
+		root_style.setProperty('--채팅_입력창_보더_왼쪽', '0px')
+		root_style.setProperty('--채팅_입력창_아웃라인', 'none')
+		root_style.setProperty('--채팅_입력창_전송버튼_배경색', 'transparent')
+		root_style.setProperty('--채팅_입력창_전송버튼_보더', '0px')
+	  
+		root_style.setProperty('--채팅_카테고리_배경색', 'rgb(222, 222, 222)')
+		root_style.setProperty('--채팅_카테고리_필터', 'invert(1)')
+		root_style.setProperty('--채팅_카테고리_선택', 'rgb(222, 222, 222)')
+		root_style.setProperty('--채팅_카테고리_선택_보더', '3px rgb(85, 85, 85) solid')
+		root_style.setProperty('--채팅_카테고리_호버', 'rgb(85, 85, 85)')
+		root_style.setProperty('--채팅_카테고리_챗알림_배경색', 'rgb(18, 235, 194)')
+		root_style.setProperty('--채팅_카테고리_챗알림_글자색', '0000ff')
+		root_style.setProperty('--채팅_카테고리_챗알림_폰트옵션', 'bold')
+	  
+		root_style.setProperty('--현재_재생목록_박스_배경색', 'rgb(70, 70, 70)')
+		root_style.setProperty('--영상주소복사_글자색', 'cornflowerblue')
+	  
+		root_style.setProperty('--플레이리스트_배경색', 'rgb(33, 33, 33)')
+		root_style.setProperty('--플레이리스트_좌측_배경색_짝수', 'rgb(33, 33, 33)')
+		root_style.setProperty('--플레이리스트_좌측_배경색_홀수', 'rgb(33, 33, 33)')
+		root_style.setProperty('--플레이리스트_좌측_배경색_선택', 'rgb(130, 130, 130)')
+		root_style.setProperty('--플레이리스트_헤더_배경색', 'rgb(24, 24, 24)')
+		root_style.setProperty('--플레이리스트_헤더_배경색_선택됨', 'linear-gradient(90deg, rgba(80, 80, 80, 0.5), rgba(0, 0, 0, 0.0))')
+		root_style.setProperty('--플레이리스트_헤더_보더_왼쪽', '0px')
+		root_style.setProperty('--플레이리스트_헤더_보더_아래', '0px')
+		root_style.setProperty('--플레이리스트_헤더_버튼_영상추가_필터', 'invert(1)')
+		root_style.setProperty('--플레이리스트_헤더_버튼_영상삭제_필터', 'invert(1)')
+		root_style.setProperty('--플레이리스트_헤더_버튼_이름변경_필터', 'invert(1)')
+		root_style.setProperty('--플레이리스트_헤더_버튼_셔플_필터', 'invert(1)')
+		root_style.setProperty('--플레이리스트_헤더_버튼_선택됨', 'rgb(76, 76, 76)')
+		root_style.setProperty('--플레이리스트_영상_배경색', 'rgb(15, 15, 15)')
+		root_style.setProperty('--플레이리스트_영상_보더_왼쪽', '0px')
+		root_style.setProperty('--플레이리스트_영상_배경색_짝수', 'rgb(15, 15, 15)')
+		root_style.setProperty('--플레이리스트_영상_배경색_홀수', 'rgb(15, 15, 15)')
+	  
+		root_style.setProperty('--UI_툴팁_보더', '1px solid gray')
+	}
+
+
+	if(current_theme == 'default')
+	{
+		chat_input.style.borderLeft = ''
+		chat_input.style.borderRight = ''
+		chat_input.style.borderTop = ''
+		chat_input.style.outline = ''
+		chat_send.style.backgroundColor = ''
+		chat_send.style.border = ''
+	}
+	else if(current_theme == 'dark')
+	{
+		chat_input.style.borderLeft = 'var(--채팅_입력창_보더_왼쪽)'
+		chat_input.style.borderRight = 'var(--채팅_입력창_보더_오른쪽)'
+		chat_input.style.borderTop = 'var(--채팅_입력창_보더_위쪽)'
+		chat_input.style.outline = 'var(--채팅_입력창_아웃라인)'
+		chat_send.style.backgroundColor = 'var(--채팅_입력창_전송버튼_배경색)'
+		chat_send.style.border = 'var(--채팅_입력창_전송버튼_보더)'
+	}
 }

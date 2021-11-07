@@ -58,7 +58,7 @@
 <body>
 
  <!-- 초기화 전 전체블록 -->
-  <div id="init_block" style="background-image: url('$_localhost/static/bg.jpg')">
+  <div id="init_block" style="background-image: url('$_localhost/static/bg.jpg'); color: black">
     <div id="login_bg"></div>
     <div id="login_port">$_port</div>
     <input type="text" id="login_id" placeholder="닉네임" onkeydown="login_keydown()">
@@ -127,6 +127,14 @@
           <div style="margin-bottom: 8px;"> <input type="radio" id="video_quality_720p" name="video_quality" value="hd720"/><label for="video_quality_720p">720p</label></div>
           <div style="margin-bottom: 8px;"> <input type="radio" id="video_quality_1080p" name="video_quality" value="hd1080"/><label for="video_quality_1080p">1080p</label></div>
           <div style="margin-bottom: 5px;"> <input type="radio" id="video_quality_highres" name="video_quality" value="highres"/><label for="video_quality_highres">가능한 최대 화질 (1080p 이상 포함)</label></div>
+        </fieldset>
+      </div>
+
+      <div class="option_row">
+        <fieldset style="width: 296px;" class="nanum">
+          <legend style="text-align: center; font-weight: bold;">테마 설정</legend>
+          <div style="margin-bottom: 15px;"><input type="radio" id="theme_default" name="theme" value="default" checked style="margin-bottom: 5px;"/><label for="theme_default">밝은 테마</label></div>
+          <div style="margin-bottom: 5px;"> <input type="radio" id="theme_dark" name="theme" value="dark"/><label for="theme_dark">다크</label></div>
         </fieldset>
       </div>
 
@@ -200,10 +208,10 @@
     <div id="playlist_control_panel_playlist_info">
       <div id="playlist_control_panel_playlist_info_name" class="nanum bold">-</div>
       <div id="playlist_control_panel_playlist_info_select" class="nanum bold hover">[선택하기]</div>
-      <div id="playlist_control_panel_playlist_info_shuffle" onclick="onclick_playlist_shuffle_button()" class="nanum bold hover" ui_tooltip_y_offset="90"></div>
-      <div id="playlist_control_panel_playlist_info_rename_button" onclick="onclick_playlist_rename_button()" class="nanum bold hover" ui_tooltip_y_offset="90"></div>
-      <div id="playlist_control_panel_playlist_info_delete_button" onclick="onclick_playlist_delete_button()" class="nanum bold hover" ui_tooltip_y_offset="90"></div>
-      <div id="playlist_control_panel_playlist_info_new_video_button" onclick="onclick_new_video_button()" class="nanum bold hover" ui_tooltip_y_offset="90"></div>
+      <div id="playlist_control_panel_playlist_info_shuffle" onclick="onclick_playlist_shuffle_button()" class="nanum bold hover_reverse" ui_tooltip_y_offset="90"></div>
+      <div id="playlist_control_panel_playlist_info_rename_button" onclick="onclick_playlist_rename_button()" class="nanum bold hover_reverse" ui_tooltip_y_offset="90"></div>
+      <div id="playlist_control_panel_playlist_info_delete_button" onclick="onclick_playlist_delete_button()" class="nanum bold hover_reverse" ui_tooltip_y_offset="90"></div>
+      <div id="playlist_control_panel_playlist_info_new_video_button" onclick="onclick_new_video_button()" class="nanum bold hover_reverse" ui_tooltip_y_offset="90"></div>
     </div> 
 
     <!-- 영상목록 리스트 헤더 -->

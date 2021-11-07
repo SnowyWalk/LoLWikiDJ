@@ -59,16 +59,12 @@ function add_message(data)
 				font.style.fontSize = '18px'
 				message.style.fontSize = '18px'
 			}
+			
 			if(data.name == g_nick)
-			{
 				className = 'me'
-				font.color = 'crimson'
-			}
 			else
-			{
 				className = 'other'
-				font.color = 'mediumslateblue'
-			}
+
 			font.classList.add('nick')
 			if(byteReg.test(data.name[0]))
 				font.style.paddingLeft = '2px'
