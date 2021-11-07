@@ -89,6 +89,7 @@ window.onload = function() {
 	theme_default.onchange = _ => set_theme(document.querySelector('[name=theme]:checked').value)
 	theme_dark.onchange = _ => set_theme(document.querySelector('[name=theme]:checked').value)
 	
+	register_ui_tooltip_event(video_link, '클릭하면 유튜브 주소가 복사됩니다.')
 	register_ui_tooltip_event(video_info_name, '재생 중인 영상이 없습니다.')
 	register_ui_tooltip_event(etc_bad_button, '싫어요 5표 이상 누적 시 영상이 스킵됩니다.')
 
