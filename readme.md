@@ -14,7 +14,7 @@
 
 # 2021-10-13
 ### - AD 명령어 추가
-<img src="/patch_note/20211013.png" width=50%>
+<img src="/patch_note/20211013.png" width=75%>
 
 <br>
 
