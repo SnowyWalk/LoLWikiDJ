@@ -1308,8 +1308,8 @@ function set_theme(theme_name)
 	else if(current_theme == 'dark')
 	{
 		root_style.setProperty('--배경색', 'rgb(24, 24, 24)')
-		root_style.setProperty('--글자색', 'white')
-		root_style.setProperty('--보더색', 'rgb(106, 106, 106)')
+		root_style.setProperty('--글자색', '#ccc')
+		root_style.setProperty('--보더색', 'rgb(35, 35, 35)')
 		root_style.setProperty('--호버이펙트', 'rgba(255, 255, 255, 0.118)')
 		root_style.setProperty('--호버이펙트_역', 'rgba(0, 0, 0, 0.118)')
 
