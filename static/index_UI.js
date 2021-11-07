@@ -1245,6 +1245,9 @@ function set_theme(theme_name)
 		root_style.setProperty('--보더색', 'black')
 		root_style.setProperty('--호버이펙트', 'rgba(0, 0, 0, 0.118)')
 		root_style.setProperty('--호버이펙트_역', 'rgba(0, 0, 0, 0.118)')
+
+		root_style.setProperty('--스크롤바색', 'rgb(96, 96, 96)')
+		root_style.setProperty('--스크롤바색_호버', 'rgb(144, 144, 144)')
 	  
 		root_style.setProperty('--채팅_후원랭킹', 'yellow')
 		root_style.setProperty('--채팅_패치노트', 'chartreuse')
@@ -1257,7 +1260,8 @@ function set_theme(theme_name)
 		root_style.setProperty('--채팅_배경_남', 'white')
 		root_style.setProperty('--채팅_스크롤러_배경색', '#000000a6')
 		root_style.setProperty('--채팅_스크롤러_보더', '0px')
-	  
+		root_style.setProperty('--채팅_헬프_배경색', 'white')
+
 		root_style.setProperty('--채팅_입력창_배경색', 'white')
 		root_style.setProperty('--채팅_입력창_글자색', 'black')
 		root_style.setProperty('--채팅_입력창_보더색', 'rgb(118, 118, 118)')
@@ -1308,6 +1312,9 @@ function set_theme(theme_name)
 		root_style.setProperty('--보더색', 'rgb(106, 106, 106)')
 		root_style.setProperty('--호버이펙트', 'rgba(255, 255, 255, 0.118)')
 		root_style.setProperty('--호버이펙트_역', 'rgba(0, 0, 0, 0.118)')
+
+		root_style.setProperty('--스크롤바색', 'rgb(170, 170, 170)')
+		root_style.setProperty('--스크롤바색_호버', 'rgb(113, 113, 113)')
 	  
 		root_style.setProperty('--채팅_후원랭킹', '#727200')
 		root_style.setProperty('--채팅_패치노트', '#538522')
@@ -1320,6 +1327,7 @@ function set_theme(theme_name)
 		root_style.setProperty('--채팅_배경_남', 'rgb(24, 24, 24)')
 		root_style.setProperty('--채팅_스크롤러_배경색', 'rgba(0, 0, 0, 0.75)')
 		root_style.setProperty('--채팅_스크롤러_보더', '1px gray solid')
+		root_style.setProperty('--채팅_헬프_배경색', 'rgb(56, 56, 56)')
 	  
 		root_style.setProperty('--채팅_입력창_배경색', 'rgb(24, 24, 24)')
 		root_style.setProperty('--채팅_입력창_글자색', 'white')

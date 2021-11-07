@@ -262,13 +262,14 @@ function send() {
 							+ '/mute {닉네임} : 유저 차단(재접 시 초기화)\n'
 							+ '/img  {이미지주소} : 이미지 게시\n'
 							+ '또는 채팅창에 이미지 붙여넣기(Ctrl+v)\n'
-							+ '@{닉네임} : 유저 호출\n'
+							+ '@{닉네임} : 유저 호출 (@everyone)\n'
 							+ '\n※ 기타\n'
 							+ '/아이콘변경법 : 아이콘 변경 안내\n'
 							+ '/ping : 서버 핑 확인\n'
 							+ '/tts {할말} : TTS 읽기\n'
-							+ '/ad {할말} : 영상 위에 띄우기'
-							, 'white')
+							+ '/ad {할말} : 영상 위에 띄우기\n'
+							+ '/vol {닉네임} : 음량 체크'
+							, 'var(--채팅_헬프_배경색)')
 		help_message.style.fontFamily = 'Nanum Gothic'
 		help_message.style.textAlign = 'left'
 		return
