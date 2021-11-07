@@ -2,11 +2,11 @@
 
 # 2021-11-07
 ### - 다크 모드 테마 적용 
-
-![abc](./patch_note/20211107 다크모드.png)
-
+![](/patch_note/20211107_다크모드.png)
 ### - '@everyone' 호출 기능 추가
+![](/patch_note/20211107_everyone.png)
 ### - '/vol 유저명' 볼륨 확인 명령어 추가
+![](/patch_note/20211107_vol.png)
 ### - 유튜브 Shorts 주소도 재생 가능하도록 수정
 ### - 기타 편의성 패치
 
@@ -14,6 +14,7 @@
 
 # 2021-10-13
 ### - AD 명령어 추가
+<img src="/patch_note/20211013.png" width=50%>
 
 <br>
 
