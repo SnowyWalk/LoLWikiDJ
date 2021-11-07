@@ -2,6 +2,8 @@
 var youtubeReg = /(\?|&)v=([^&\?]+)/
 var youtubeReg2 = /\/v\/([^\/]+)/
 var youtubeReg3 = /youtu\.be\/([^\?]+)/
+var youtubeReg4 = /shorts\/([^\?]+)/
+
 function youtube_url_parse(url_or_id)
 {
 	if(youtubeReg.test(url_or_id))
@@ -10,6 +12,8 @@ function youtube_url_parse(url_or_id)
 		return youtubeReg2.exec(url_or_id)[1]
 	else if(youtubeReg3.test(url_or_id))
 		return youtubeReg3.exec(url_or_id)[1]
+	else if(youtubeReg4.test(url_or_id))
+		return youtubeReg4.exec(url_or_id)[1]
 	return url_or_id
 }
 
