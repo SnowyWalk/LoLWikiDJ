@@ -28,6 +28,15 @@ function initial_resize()
 	option_mention_sample.onclick = onclick_chat_category_option_mention_sample
 	option_tts_sample.onclick = onclick_chat_category_option_tts_sample
 	option_button_logout.onclick = onclick_chat_category_option_logout
+
+	option_tts_1_sample.onclick = onclick_chat_category_option_tts_1_sample
+	option_tts_2_sample.onclick = onclick_chat_category_option_tts_2_sample
+	option_tts_3_sample.onclick = onclick_chat_category_option_tts_3_sample
+	option_tts_4_sample.onclick = onclick_chat_category_option_tts_4_sample
+	option_tts_5_sample.onclick = onclick_chat_category_option_tts_5_sample
+	option_tts_6_sample.onclick = onclick_chat_category_option_tts_6_sample
+	option_tts_7_sample.onclick = onclick_chat_category_option_tts_7_sample
+	option_tts_8_sample.onclick = onclick_chat_category_option_tts_8_sample
 	
 
 	/* 좌하단 재생목록 정보 */
@@ -892,6 +901,22 @@ function onclick_chat_category_option_logout()
 	if(localStorage.getItem(g_storage_nick_key) == g_nick)
 		localStorage.removeItem(g_storage_nick_key)
 	location.reload()
+}
+
+function onclick_chat_category_option_tts_1_sample() { play_tts_voice_sample(1) }
+function onclick_chat_category_option_tts_2_sample() { play_tts_voice_sample(2) }
+function onclick_chat_category_option_tts_3_sample() { play_tts_voice_sample(3) }
+function onclick_chat_category_option_tts_4_sample() { play_tts_voice_sample(4) }
+function onclick_chat_category_option_tts_5_sample() { play_tts_voice_sample(5) }
+function onclick_chat_category_option_tts_6_sample() { play_tts_voice_sample(6) }
+function onclick_chat_category_option_tts_7_sample() { play_tts_voice_sample(7) }
+function onclick_chat_category_option_tts_8_sample() { play_tts_voice_sample(8) }
+
+function play_tts_voice_sample(num)
+{
+	var audio = new Audio(format('static/TTS샘플_{0}', num))
+	audio.onended = destroy_self
+	audio.play()
 }
 
 // ========================= 메인 화면 - 영상부 =========================

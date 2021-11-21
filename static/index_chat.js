@@ -491,7 +491,8 @@ function send() {
 	{
 		tts_hash = GetDate() + ' ' + random_hash()
 		message = ttsReg.exec(message)[2]
-		socket.emit('tts', { text: message, tts_hash: tts_hash })
+		var voice_name = document.querySelector('[name=tts_voice_name]:checked').value
+		socket.emit('tts', { text: message, tts_hash: tts_hash, voice_name: voice_name })
 	}
 
 	if(adReg.test(message))

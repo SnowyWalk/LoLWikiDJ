@@ -1227,8 +1227,8 @@ io.sockets.on('connection', function(socket)
 	})
 
 	socket.on('tts', async function(data) {
-		log('INFO', 'TTS', format('{0} make tts ({1}) : {2}', socket.name, data.tts_hash, data.text))
-		make_tts(data.text, data.tts_hash)
+		log('INFO', 'TTS', format('{0} make tts ({1}, {2}) : {3}', socket.name, data.tts_hash, data.voice_name, data.text))
+		make_tts(data.text, data.tts_hash, socket.name, data.voice_name)
 	})
 
 
@@ -1826,11 +1826,11 @@ function db_rollback()
 	})
 }
 
-async function make_tts(text, tts_hash)
+async function make_tts(text, tts_hash, target_nick, voice_name)
 {
 	const request = {
 	  input: {text: text},
-	  voice: {languageCode: 'ko-KR', ssmlGender: 'FEMALE'},
+	  voice: {languageCode: 'ko-KR', ssmlGender: 'FEMALE', name: voice_name},
 	  audioConfig: {audioEncoding: 'MP3'},
 	}
 	const [response] = await tts_client.synthesizeSpeech(request)
@@ -1839,5 +1839,5 @@ async function make_tts(text, tts_hash)
 	await writeFile(file_name, response.audioContent, 'binary')
 
 	for(var e in g_users_dic)
-		g_users_dic[e].socket.emit('tts', file_name)
+		g_users_dic[e].socket.emit('tts', {file_name: file_name, target_nick: target_nick})
 }
