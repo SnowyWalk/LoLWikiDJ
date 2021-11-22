@@ -975,6 +975,33 @@ function hide_video_link()
 	video_link.innerText = '[영상 링크 복사]'
 }
 
+function onclick_video_info_volume_btn()
+{
+	if(!player)
+		return
+
+	if(!player.isMuted())
+		player.mute()
+	else
+		player.unMute()
+
+	update_video_volume()
+}
+
+function onchange_video_info_volume_slider()
+{
+	player.setVolume(video_info_volume_slider.value)
+}
+
+function update_video_volume()
+{
+	if(!player || !player.getVolume)
+		return
+
+	video_info_volume_btn.style.backgroundImage = player.isMuted() ? 'url("static/tts_x.png")' : 'url("static/tts.png")'
+	video_info_volume_slider.value = player.getVolume()
+}
+
 /* 영상 플레이 타임 갱신 */
 var cached_my_progress_bar_after_innerText = null
 var cached_my_progress_bar_after_style_width = null
@@ -1045,8 +1072,6 @@ function update_video_time()
 		return val1 != val2
 	}
 }
-
-
 
 /* DJ 업뎃 */
 function update_current_dj()

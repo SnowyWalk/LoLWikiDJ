@@ -1,3 +1,5 @@
+@charset "utf-8";
+
 :root {
   --배경색: lightblue; /* rgb(24, 24, 24) */
   --글자색: black; /* #ccc */
@@ -262,6 +264,38 @@ body {
   content: 'DJ';
   font-weight: bold;
   padding-right: 6px;
+}
+
+/* 볼륨 조절 박스 */
+#video_info_volume_box {
+  position: absolute;
+  right: 0px;
+  top: 0px;
+  width: 200px;
+  height: 25px;
+  /* border-left: 1px solid;
+  border-bottom: 1px solid; */
+  border-color: var(--보더색);
+  box-sizing: content-box;
+}
+
+#video_info_volume_slider {
+  position: relative;
+  width: 155px;
+  height: 100%;
+  float: right;
+  margin: 0px;
+  margin-right: 10px;
+}
+
+#video_info_volume_btn {
+  background: url('tts.png');
+  background-size: 100%;
+  position: relative;
+  height: 25px;
+  float: left;
+  width: 25px;
+  cursor: pointer;
 }
 
 #video_info_name {

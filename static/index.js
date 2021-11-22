@@ -70,6 +70,7 @@ window.onload = function() {
 		login_id.focus()
 	}
 
+	setInterval(update_video_volume, 100)
 	setInterval(update_video_time, 100)
 
 	window.onresize = resize
@@ -80,6 +81,11 @@ window.onload = function() {
 		if (window.event.keyCode == 13)
 			chat_input.focus()
 	}
+
+	video_info_volume_btn.onclick = onclick_video_info_volume_btn
+	video_info_volume_slider.onchange = onchange_video_info_volume_slider
+	video_info_volume_slider.oninput = onchange_video_info_volume_slider
+
 	playlist_control_panel_playlist_info_new_video_button.addEventListener('contextmenu', onrclick_playlist_control_panel_playlist_info_new_video_button, false)
 	playlist_control_panel_playlist_info_delete_button.addEventListener('contextmenu', onrclick_playlist_control_panel_playlist_info_delete_button, false)
 	playlist_control_panel_playlist_info_rename_button.addEventListener('contextmenu', onrclick_playlist_control_panel_playlist_info_rename_button, false)
