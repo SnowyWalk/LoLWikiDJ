@@ -308,3 +308,31 @@ socket.on('lol_article_detail', function(data) {
 
 	lol_rpanel_update()
 })
+
+socket.on('lol_auth_request', function(code) {
+	lol_rpanel_header_button.innerHTML = format('[룰루에게 <tt><i>{0}</i></tt> 을 교육하고 다시 눌러주세요.]', code)
+})
+
+socket.on('lol_login', function(android_id_and_user_info) {
+	g_lol_android_id = android_id_and_user_info[0]
+	g_lol_user_info = android_id_and_user_info[1]
+	localStorage.setItem(g_storage_lol_key, g_lol_android_id)
+
+	lol_lpanel_update()
+	lol_rpanel_update()
+})
+
+socket.on('lol_user_info', function(user_info) {
+	g_lol_user_info = user_info
+
+	lol_lpanel_update()
+	lol_rpanel_update()
+})
+
+socket.on('lol_write_reply', function(data) {
+	g_lol_current_detail = data
+	lol_rpanel_reply_board_input.value = ''
+
+	lol_rpanel_update()
+	lol_rpanel_body.scroll(0, 99999999)
+})

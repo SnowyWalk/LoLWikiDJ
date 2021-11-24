@@ -106,6 +106,7 @@ const iconv = require('iconv-lite')
 const headers = { 'Content-Type': 'application/x-www-form-urlencoded' }
 const newlineHTMLReg = /&lt;br \/&gt;\n/g
 const android_id = 'LoLWikiDJ'
+var g_lol_auth_dic = {} // '설보': '135489'
 
 // app.get('/static/fonts/*', function(request, response, next) {
 // 	response.header( "Access-Control-Allow-Origin", "*")
@@ -1274,12 +1275,60 @@ io.sockets.on('connection', function(socket)
 
 	socket.on('lol_get_article_detail', async function(seq) {
 		var ret = await lol_get_article_detail(seq)
-		console.log(ret)
 		socket.emit('data', ret)
 
 		socket.emit('lol_article_detail', ret)
 	})
 
+	/* 롤백 계정 인증 요청 */
+	socket.on('lol_auth_request', async function(post_seq) {
+		var this_android_id = await lol_get_android_id_from_article(post_seq)
+
+		log('INFO', 'lol_auth_request', format('{0} 가 계정인증 요청 -> {1}', socket.name, this_android_id))
+
+		if(!this_android_id)
+			return
+
+		if(socket.name in g_lol_auth_dic)
+		{
+			var lulu_comment = await lol_get_lulu_comment(this_android_id)
+			log('INFO', 'lol_auth_request', format('인증번호: {0}, 룰루: {1}', g_lol_auth_dic[socket.name], lulu_comment))
+			if(lulu_comment == g_lol_auth_dic[socket.name])
+			{
+				g_lol_auth_dic[socket.name] = ''
+				var user_info = await lol_get_user_info(this_android_id)
+				socket.emit('lol_login', [this_android_id, user_info]) // 인증성공
+				return
+			}
+		}
+
+		var random_code_6 = Math.round(Math.random() * 1000000)
+		g_lol_auth_dic[socket.name] = random_code_6
+		log('INFO', 'lol_auth_request', format('{0}에게 인증번호 {1} 발급', socket.name, random_code_6))
+		socket.emit('lol_auth_request', random_code_6) // 인증코드 건네줌
+	})
+
+	/* 내 정보 */
+	socket.on('lol_user_info', async function(android_id) {
+		var user_info = await lol_get_user_info(android_id)
+		log('INFO', 'lol_user_info', format('{0} 롤백 유저정보 요청 : {1}({2})', socket.name, user_info['nickname'], android_id))
+
+		socket.emit('lol_user_info', user_info)
+	})
+
+	/* 댓글 작성 */
+	socket.on('lol_write_reply', async function(data) {
+		var android_id = data.android_id
+		var post_seq = data.post_seq
+		var body = data.body
+
+		log('INFO', 'lol_write_reply', format('{0}가 {1} 계정으로 댓글 남김 -> {2} : {3}', socket.name, android_id, post_seq, body))
+
+		await lol_write_reply(post_seq, android_id, body)
+
+		var ret = await lol_get_article_detail(post_seq)
+		socket.emit('lol_write_reply', ret)
+	})
 }) 
 
 function update_users()
@@ -1920,14 +1969,14 @@ async function lol_get_article_list(seq = 0, cnt = 30)
 async function lol_get_article_detail(seq)
 {
 	var detail = await lol_GET('http://lolwiki.kr/freeboard/get_post_detail_2020.php', { boardid: 'freeboard', post_seq: seq} )
-	.then(res => res.trim())
-	.then(res => res.replace(newlineHTMLReg, '\\r\\n'))
-	.then(res => res.replace(/\n/g, '\\r\\n'))
-	.then(res => res.replace(/'/g, '"'))
-	.then(res => res.replace(/&lt;/g, '<'))
-	.then(res => res.replace(/&gt;/g, '>'))
-	.then(JSON.parse)
-	.then(e => e['results'][0])
+		.then(res => res.trim())
+		.then(res => res.replace(newlineHTMLReg, '\\r\\n'))
+		.then(res => res.replace(/\n/g, '\\r\\n'))
+		.then(res => res.replace(/'/g, '"'))
+		.then(res => res.replace(/&lt;/g, '<'))
+		.then(res => res.replace(/&gt;/g, '>'))
+		.then(JSON.parse)
+		.then(e => e['results'][0])
 
 	var reply = await lol_GET('http://lolwiki.kr/freeboard/get_reply_2020.php', 
 		{ boardid: 'freeboard', post_seq: seq, android_id: android_id} )
@@ -1954,6 +2003,57 @@ async function lol_get_article_detail(seq)
 	
 		replys: reply['results']
 	}
+}
+
+/* 글 post_seq로부터 글작성자의 android_id 얻기 */
+const lol_android_id_from_memo_reg = /name=\'to_id\' value=\'(.+)\'/
+async function lol_get_android_id_from_article(post_seq)
+{
+	var html = await lol_POST('http://lolwiki.kr/freeboard/memo_write_2020.php', 
+		{ app_id: 'DEMACIA', android_id: android_id, memo_to: post_seq, to: post_seq } )
+		.catch(err => console.log('lol_get_android_id_from_article error', err))
+
+	if(!lol_android_id_from_memo_reg.test(html))
+	{
+		log('ERROR', 'lol_get_android_id_from_article', 'RegEx 실패 ' + post_seq)
+		console.log(html)
+		return ''
+	}
+	return lol_android_id_from_memo_reg.exec(html)[1]
+}
+
+/* 룰루 교육한 내용 */
+const lol_lulu_comment_reg = /<span style=font-size:16px;font-weight:bold;>(\d+).*?<br>/
+async function lol_get_lulu_comment(android_id)
+{
+	var html = await lol_POST('http://lolwiki.kr/lulu/index.html',
+		{ android_id: android_id, app_id: 'DEMACIA' })
+
+	if(!lol_lulu_comment_reg.test(html))
+	{
+		log('ERROR', 'lol_get_lulu_comment', 'RegEx 실패' + android_id)
+		console.log(html)
+		return ''
+	}
+	return lol_lulu_comment_reg.exec(html)[1]
+}
+
+/* 내 정보 얻어오기 */
+async function lol_get_user_info(android_id)
+{
+	var ret = await lol_POST('http://lolwiki.kr/freeboard/get_userinfo_new.php', 
+		{ boardid: 'freeboard', android_id: android_id })
+		.then(JSON.parse)
+		.then(e => e['results'][0])
+
+	return ret
+}
+
+/* 댓글 작성 */
+async function lol_write_reply(post_seq, android_id, body) 
+{
+	await lol_POST('http://lolwiki.kr/freeboard/insert_reply_pic.php', 
+		{ boardid: 'freeboard', post_seq: post_seq, android_id: android_id, text: encodeURI(body) } )
 }
 
 async function lol_GET(url, body = {}) {

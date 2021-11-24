@@ -1598,6 +1598,7 @@ div.recent_list_video {
 #lol_rpanel_header_button {
   color: red;
   font-weight: bold;
+  cursor: pointer;
 }
 
 #lol_rpanel_body {
@@ -1614,7 +1615,6 @@ div.recent_list_video {
   height: calc(100% / 16 * 9);
   margin-bottom: 40px;
   display: none;
-  display: flex;
   flex-direction: column;
   align-items: center;
 }
@@ -1653,6 +1653,7 @@ div.recent_list_video {
 
 #lol_rpanel_reply_board_list {
   padding: 0px;
+  margin-right: 15px;
 }
 
 .lol_reply_list_item {
@@ -1688,3 +1689,34 @@ div.recent_list_video {
   border-left: 2px solid var(--롤백_보더색);
   padding-left: 10px;
 }
+
+.lol_reply_list_item [reply_body] [img] {
+  max-width: 100%;
+}
+
+#lol_rpanel_reply_board_write_container {
+  display: flex;
+  margin-right: 15px;
+  margin-bottom: 5px;
+}
+
+#lol_rpanel_reply_board_input {
+  font-size: 17px;
+  height: 40px;
+  flex-grow: 1;
+  background-color: var(--채팅_입력창_배경색);
+  color: var(--채팅_입력창_글자색);
+  border: 1px solid var(--채팅_입력창_보더색);
+  padding-left: 10px;
+  padding-right: 10px;
+}
+
+#lol_rpanel_reply_board_send {
+  flex-shrink: 0;
+  margin-left: 6px;
+  padding-left: 15px;
+  padding-right: 15px;
+  height: 40px;
+  color: var(--글자색);
+}
+

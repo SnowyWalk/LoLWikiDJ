@@ -1438,6 +1438,10 @@ function set_theme(theme_name)
 		chat_input.style.outline = ''
 		chat_send.style.backgroundColor = ''
 		chat_send.style.border = ''
+
+		lol_rpanel_reply_board_input.style.outline = ''
+		lol_rpanel_reply_board_send.style.backgroundColor = ''
+		lol_rpanel_reply_board_send.style.border = ''
 	}
 	else if(current_theme == 'dark')
 	{
@@ -1447,6 +1451,10 @@ function set_theme(theme_name)
 		chat_input.style.outline = 'var(--채팅_입력창_아웃라인)'
 		chat_send.style.backgroundColor = 'var(--채팅_입력창_전송버튼_배경색)'
 		chat_send.style.border = 'var(--채팅_입력창_전송버튼_보더)'
+
+		lol_rpanel_reply_board_input.style.outline = 'var(--채팅_입력창_아웃라인)'
+		lol_rpanel_reply_board_send.style.backgroundColor = 'var(--채팅_입력창_전송버튼_배경색)'
+		lol_rpanel_reply_board_send.style.border = 'var(--채팅_입력창_전송버튼_보더)'
 	}
 }
 
@@ -1455,6 +1463,16 @@ function set_theme(theme_name)
 /* 글 목록 업뎃 */
 function lol_lpanel_update()
 {
+	// 헤더 유저정보
+	if(!g_lol_user_info)
+	{
+		lol_lpanel_account.firstChild.nodeValue = '로그인 해주세요.'
+	}
+	else
+	{
+		lol_lpanel_account.innerHTML = format('<b>{0}</b> ({1} 스택)', g_lol_user_info['nickname'], g_lol_user_info['point'])
+	}
+
 	// 모든 자식 노드 삭제
 	while ( lol_lpanel_board_list.hasChildNodes() ) 
 		lol_lpanel_board_list.removeChild( lol_lpanel_board_list.firstChild )
@@ -1489,7 +1507,7 @@ function lol_lpanel_update()
 			reply_cnt.toggleAttribute('reply_cnt', true)
 			reply_cnt.innerHTML = format('[{0}]', e['reply_cnt'])
 			title_container.appendChild(reply_cnt)
-	}
+		}
 		center_div.appendChild(title_container)
 
 		// 하단
@@ -1527,21 +1545,35 @@ function lol_onclick_article()
 		console.log('seq가 없다?!', seq)
 		return
 	}
+	g_lol_rpanel_scroll_top_switch = true
 	socket.emit('lol_get_article_detail', seq)
 }
 
 /* 글 내용 패널 업데이트 */
 function lol_rpanel_update()
 {
-	var is_invalid = (!g_lol_current_detail || !g_lol_current_detail['post_seq'].length)
+	var is_invalid = (!g_lol_current_detail || !('post_seq' in g_lol_current_detail) || !g_lol_current_detail['post_seq'].length)
 	if(is_invalid)
 	{
+		g_lol_current_detail = {}
 		g_lol_current_detail['post_title'] = '글이 존재하지 않습니다.'
-		g_lol_current_detail['post_text'] = '사용자'
+		g_lol_current_detail['post_text'] = '글이 존재하지 않습니다.'
+		g_lol_current_detail['nickname'] = '사용자'
+		g_lol_current_detail['stack'] = '0'
 		g_lol_current_detail['likes'] = '0'
 		g_lol_current_detail['views'] = '0'
 		g_lol_current_detail['post_date'] = '시간'
+		g_lol_current_detail['youtube_url'] = ''
+		g_lol_current_detail['badge_use'] = ''
+		g_lol_current_detail['icon_img'] = ''
+		g_lol_current_detail['pic_multi'] = ''
+		g_lol_current_detail['doodlr'] = '0'
+		g_lol_current_detail['pic_new'] = ''
+		g_lol_current_detail['fixedpic'] = ''
+		g_lol_current_detail['replys'] = []
 	}
+
+	// console.log(g_lol_current_detail)
 
 	// 헤더
 	lol_rpanel_header_icon.src = lol_get_icon_url(g_lol_current_detail['icon_img'], g_lol_current_detail['badge_use'])
@@ -1549,6 +1581,15 @@ function lol_rpanel_update()
 	lol_rpanel_header_title.firstChild.nodeValue = g_lol_current_detail['post_title']
 	lol_rpanel_header_nick.firstChild.nodeValue = g_lol_current_detail['nickname']
 	lol_rpanel_header_spec.innerHTML = format('{0} 조회 <b>{1}</b>', g_lol_current_detail['stack'], g_lol_current_detail['views'])
+
+	if(g_lol_android_id == g_lol_guest_id)
+	{
+		lol_rpanel_header_button.firstChild.nodeValue = '[이 계정에 로그인하기]'
+	}
+	else
+	{
+		lol_rpanel_header_button.innerHTML = '[차단하기]'
+	}
 
 	// 영상
 	if(g_lol_current_detail['youtube_url'].length > 0)
@@ -1658,10 +1699,12 @@ function lol_rpanel_update()
 
 		reply_body.appendChild(nick_container)
 
-		if(e['icon_img'].length > 0)
+		// 댓글이미지
+		if(e['reply_img'].length > 0)
 		{
 			var img = document.createElement('img')
 			img.toggleAttribute('img', true)
+			img.src = format('http://lolwiki.kr/freeboard/uploads/files/{0}/{1}', lol_get_date_from_filename(e['reply_img']), e['reply_img'])
 			reply_body.appendChild(img)
 		}
 
@@ -1674,6 +1717,33 @@ function lol_rpanel_update()
 
 		lol_rpanel_reply_board_list.appendChild(div)
 	}
+
+	// 댓글 작성칸
+	if(g_lol_android_id != g_lol_guest_id && !is_invalid)
+	{
+		lol_rpanel_reply_board_write_container.style.display = 'flex'
+	}
+	else
+	{
+		lol_rpanel_reply_board_write_container.style.display = 'none'
+	}
+
+	if(g_lol_rpanel_scroll_top_switch)
+	{
+		g_lol_rpanel_scroll_top_switch = false
+		lol_rpanel_body.scroll(0, 0)
+	}
+}
+
+function lol_write_reply()
+{
+	if(lol_rpanel_reply_board_input.value.length == 0)
+		return
+
+	if(g_lol_android_id == g_lol_guest_id)
+		return
+
+	socket.emit('lol_write_reply', { android_id: g_lol_android_id, post_seq: g_lol_current_detail['post_seq'], body: lol_rpanel_reply_board_input.value })
 }
 
 /* UI 업뎃 */

@@ -55,13 +55,21 @@ var g_setting_auto_login = false
 var g_lol_panel_show = false
 var g_lol_article_list = []
 var g_lol_current_detail = null
-var g_lol_android_id = 'LoLWikiDJ_Guest'
+const g_lol_guest_id = 'LoLWikiDJ_Guest'
+var g_lol_android_id = g_lol_guest_id
 var g_lol_article_scroll_seq = 0
+var g_lol_rpanel_scroll_top_switch = false
+const g_storage_lol_key = 'LoLWikiDJ_lol'
+var g_lol_user_info = null
 
 window.onload = function() {
 	g_isWindowLoaded = true
 
 	set_theme(localStorage.getItem(g_storage_theme_key))
+
+	var cached_lol_android_id = localStorage.getItem(g_storage_lol_key)
+	if(cached_lol_android_id)
+		g_lol_android_id = cached_lol_android_id
 
 	initial_resize()
 	
@@ -110,6 +118,9 @@ window.onload = function() {
 			lol_lpanel.scroll(0, 0)
 		}
 
+		if(g_lol_android_id != g_lol_guest_id)
+			socket.emit('lol_user_info', g_lol_android_id)
+
 		lol_panel_update()
 	})
 	lol_rpanel_body_instant_queue.onclick = _ => {
@@ -120,6 +131,29 @@ window.onload = function() {
 		{
 			socket.emit('lol_get_article_list', {seq: g_lol_article_scroll_seq, cnt: 30})
 		}
+	}
+
+	lol_rpanel_header_button.onclick = _ => {
+		if(g_lol_android_id == g_lol_guest_id)
+		{
+			// 이 계정에 로그인하기
+			if(!g_lol_current_detail || g_lol_current_detail['post_seq'].length == 0)
+				return
+
+			socket.emit('lol_auth_request', g_lol_current_detail['post_seq'])
+			return
+		}
+
+		// TODO: 차단하기
+	}
+
+	lol_rpanel_reply_board_input.onkeydown = _ => {
+		if (event.keyCode == 13)
+			lol_write_reply()
+	}
+
+	lol_rpanel_reply_board_send.onclick = _ => {
+		lol_write_reply()
 	}
 
 	playlist_control_panel_playlist_info_new_video_button.addEventListener('contextmenu', onrclick_playlist_control_panel_playlist_info_new_video_button, false)
