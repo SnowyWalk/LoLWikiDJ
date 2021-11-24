@@ -101,6 +101,12 @@ var g_recent_video_list_limit = 20 // 최대 저장 개수
 /* DEBUG 용 */
 var g_last_query = ''
 
+/* 롤백용 */
+const iconv = require('iconv-lite')
+const headers = { 'Content-Type': 'application/x-www-form-urlencoded' }
+const newlineHTMLReg = /&lt;br \/&gt;\n/g
+const android_id = 'LoLWikiDJ'
+
 // app.get('/static/fonts/*', function(request, response, next) {
 // 	response.header( "Access-Control-Allow-Origin", "*")
 // })
@@ -1234,8 +1240,46 @@ io.sockets.on('connection', function(socket)
 
 	socket.on('ad', function(message) {
 		var hRate = Math.random()
+		log('INFO', 'AD', format('{0} make ad : {1}', socket.name, message))
 		io.sockets.emit('ad', { message: message, hRate: hRate })
 	})
+
+
+	/* ============================== 롤백 on =================================== */
+
+	socket.on('lol_get_article_list', async function(data) {
+		var seq = data.seq
+		var cnt = data.cnt
+
+		var ret = await lol_get_article_list(seq, cnt)
+		socket.emit('data', ret)
+
+
+		/*
+			아이콘	icon_img
+			제목	post_title
+			댓글	reply_cnt
+			before
+			닉넴	nickname
+			조회	views
+			추천	likes
+			짤여부 (+두들러, 유튭링크)	pic_new, youtube_url, doodlr
+			기본아이콘	badge_use
+
+			(내부)
+			post_seq
+		*/
+		socket.emit('lol_article_list', ret)
+	})
+
+	socket.on('lol_get_article_detail', async function(seq) {
+		var ret = await lol_get_article_detail(seq)
+		console.log(ret)
+		socket.emit('data', ret)
+
+		socket.emit('lol_article_detail', ret)
+	})
+
 }) 
 
 function update_users()
@@ -1840,4 +1884,99 @@ async function make_tts(text, tts_hash, target_nick, voice_name)
 
 	for(var e in g_users_dic)
 		g_users_dic[e].socket.emit('tts', {file_name: file_name, target_nick: target_nick})
+}
+
+
+/* ========================================== 롤백 =============================================================== */
+
+async function lol_get_article_list(seq = 0, cnt = 30)
+{
+	var articles = await lol_POST('http://lolwiki.kr/freeboard/get_post.php', 
+		{ boardid: 'freeboard', android_id: android_id, seq: seq, search: '', cnt: cnt, isvote: false, iszzal: false, ismine: false, nickSearch: '' } )
+		.catch(err => console.log('lol_get_article_list error', err))
+		.then(res => res.replace(/\r/g, ''))
+		.then(res => res.replace(/\n/g, '\\r\\n'))
+		.then(JSON.parse)
+		.catch(err => console.log('lol_get_article_list JSON parse error', err))
+
+	return articles['results'].map(e => ({ icon_img: e['icon_img'], 
+											post_title: e['post_title'], 
+											reply_cnt: e['reply_cnt'], 
+											before: e['before'],  
+											nickname: e['nickname'],
+											views: e['views'],
+											likes: e['likes'],
+											pic_new: e['pic_new'],
+											youtube_url: e['youtube_url'],
+											doodlr: e['doodlr'],
+											badge_use: e['badge_use'],
+											alarm: e['alarm'],
+											pic_multi: e['pic_multi'],
+											fixedpic: e['fixedpic'],
+											post_seq: e['post_seq']}))
+}
+
+/* 글 내용 받아오기 */
+async function lol_get_article_detail(seq)
+{
+	var detail = await lol_GET('http://lolwiki.kr/freeboard/get_post_detail_2020.php', { boardid: 'freeboard', post_seq: seq} )
+	.then(res => res.trim())
+	.then(res => res.replace(newlineHTMLReg, '\\r\\n'))
+	.then(res => res.replace(/\n/g, '\\r\\n'))
+	.then(res => res.replace(/'/g, '"'))
+	.then(res => res.replace(/&lt;/g, '<'))
+	.then(res => res.replace(/&gt;/g, '>'))
+	.then(JSON.parse)
+	.then(e => e['results'][0])
+
+	var reply = await lol_GET('http://lolwiki.kr/freeboard/get_reply_2020.php', 
+		{ boardid: 'freeboard', post_seq: seq, android_id: android_id} )
+		.then(res => res.replace(/\n/g, '\\r\\n'))
+		.then(res => res.replace(/'/g, '"'))
+		.then(JSON.parse)
+
+	return { post_title: detail['post_title'],
+		post_text: detail['post_text'],
+		post_seq: detail['post_seq'],
+		post_date: detail['post_date'],
+		likes: detail['likes'],
+		pic_new: detail['pic_new'],
+		pic_multi: detail['pic_multi'],
+		youtube_url: detail['youtube_url'],
+		views: detail['views'],
+		stack: detail['stack'],
+		nickname: detail['nickname'],
+		doodlr: detail['doodlr'],
+		icon_img: detail['icon_img'],
+		badge_use: detail['badge_use'],
+		doodlrurls: detail['doodlrurls'],
+		fixedpic: detail['fixedpic'],
+	
+		replys: reply['results']
+	}
+}
+
+async function lol_GET(url, body = {}) {
+	return await request({ 
+		url: url, 
+		headers: headers, 
+		method: 'GET', 
+		qs: body, 
+		encoding: null })
+		.catch(err => console.log('lol_GET error', err))
+		.then(e => iconv.decode(e, 'euc-kr'))
+}
+
+async function lol_POST(url, body = {}) {
+	return await request.post({ 
+		url: url, 
+		headers: headers, 
+		method: 'POST', 
+		form: body, 
+		encoding: null })
+		.catch(err => console.log('lol_POST error', err))
+		.then(e => iconv.decode(e, 'euc-kr'))
+	// const writeFile = util.promisify(fs.writeFile)
+	// await writeFile('asd.txt', a)
+	// return a
 }

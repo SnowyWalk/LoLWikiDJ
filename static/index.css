@@ -1,6 +1,6 @@
 @charset "utf-8";
 
-:root {
+:root[theme=default] {
   --배경색: lightblue; /* rgb(24, 24, 24) */
   --글자색: black; /* #ccc */
   --보더색: black; /* rgb(35, 35, 35) */
@@ -65,6 +65,83 @@
   --플레이리스트_영상_배경색_홀수: rgb(96, 197, 230); /* rgb(15, 15, 15) */
 
   --UI_툴팁_보더: 0px; /* 1px solid gray */
+
+  --롤백_배경색: white;
+  --롤백_보더색: rgb(244,244,244);
+  --롤백_호버색: yellow;
+
+  color: var(--글자색);
+}
+
+:root[theme=dark] {
+  --배경색: rgb(24, 24, 24);
+  --글자색: #ccc;
+  --보더색: rgb(35, 35, 35);
+  --호버이펙트: rgba(255, 255, 255, 0.118);
+  --호버이펙트_역: rgba(0, 0, 0, 0.118);
+
+  --스크롤바색: rgb(170, 170, 170);
+  --스크롤바색_호버: rgb(113, 113, 113);
+
+  --채팅_후원랭킹: #727200;
+  --채팅_패치노트: #538522;
+  --채팅_시스템: rgb(56, 56, 56);
+  --채팅_접속: #3f6a5d;
+  --채팅_떠남: #4c2a2a;
+  --채팅_나: #d77a7a;
+  --채팅_배경_나: rgb(24, 24, 24);
+  --채팅_남: #97c5ff;
+  --채팅_배경_남: rgb(24, 24, 24);
+  --채팅_스크롤러_배경색: rgba(0, 0, 0, 0.75);
+  --채팅_스크롤러_보더: 1px gray solid;
+  --채팅_헬프_배경색: rgb(56, 56, 56);
+
+  --채팅_입력창_배경색: rgb(24, 24, 24);
+  --채팅_입력창_글자색: white;
+  --채팅_입력창_보더색: rgb(102, 102, 102);
+  --채팅_입력창_보더색_포커스: rgb(63, 148, 228);
+  --채팅_입력창_보더_위: 0px;
+  --채팅_입력창_보더_오른쪽: 0px;
+  --채팅_입력창_보더_왼쪽: 0px;
+  --채팅_입력창_아웃라인: none;
+  --채팅_입력창_전송버튼_배경색: transparent;
+  --채팅_입력창_전송버튼_보더: 0px;
+
+  --채팅_카테고리_배경색: rgb(222, 222, 222);
+  --채팅_카테고리_필터: invert(1);
+  --채팅_카테고리_선택: rgb(222, 222, 222);
+  --채팅_카테고리_선택_보더: 3px rgb(85, 85, 85) solid;
+  --채팅_카테고리_호버: rgb(85, 85, 85);
+  --채팅_카테고리_챗알림_배경색: rgb(18, 235, 194);
+  --채팅_카테고리_챗알림_글자색: 0000ff;
+  --채팅_카테고리_챗알림_폰트옵션: bold;
+
+  --현재_재생목록_박스_배경색: rgb(70, 70, 70);
+  --영상주소복사_글자색: cornflowerblue;
+
+  --플레이리스트_배경색: rgb(33, 33, 33);
+  --플레이리스트_좌측_배경색_짝수: rgb(33, 33, 33);
+  --플레이리스트_좌측_배경색_홀수: rgb(33, 33, 33);
+  --플레이리스트_좌측_배경색_선택: rgb(130, 130, 130);
+  --플레이리스트_헤더_배경색: rgb(24, 24, 24);
+  --플레이리스트_헤더_배경색_선택됨: linear-gradient(90deg, rgba(80, 80, 80, 0.5), rgba(0, 0, 0, 0.0));
+  --플레이리스트_헤더_보더_왼쪽: 0px;
+  --플레이리스트_헤더_보더_아래: 0px;
+  --플레이리스트_헤더_버튼_영상추가_필터: invert(1);
+  --플레이리스트_헤더_버튼_영상삭제_필터: invert(1);
+  --플레이리스트_헤더_버튼_이름변경_필터: invert(1);
+  --플레이리스트_헤더_버튼_셔플_필터: invert(1);
+  --플레이리스트_헤더_버튼_선택됨: rgb(76, 76, 76);
+  --플레이리스트_영상_배경색: rgb(15, 15, 15);
+  --플레이리스트_영상_보더_왼쪽: 0px;
+  --플레이리스트_영상_배경색_짝수: rgb(15, 15, 15);
+  --플레이리스트_영상_배경색_홀수: rgb(15, 15, 15);
+
+  --UI_툴팁_보더: 1px solid gray;
+
+  --롤백_배경색: var(--배경색);
+  --롤백_보더색: var(--보더색);
+  --롤백_호버색: var(--보더색);
 
   color: var(--글자색);
 }
@@ -798,7 +875,7 @@ div.recent_list_video {
 #image_expander {
   position: fixed;
   display: none;
-  z-index: 20;
+  z-index: 30;
   border: 1px solid gray;
   pointer-events: none;
   border-color: var(--보더색);
@@ -1364,7 +1441,250 @@ div.recent_list_video {
   white-space: pre-line;
   position: fixed;
   display: none;
-  z-index: 21;
+  z-index: 31;
   pointer-events: none;
   border: var(--UI_툴팁_보더);
+}
+
+/* =========================== 롤백 ================================ */
+
+#lol_panel {
+  display: none;
+  position: fixed;
+  left: 0px;
+  top: 0px;
+  z-index: 20;
+  background-color: var(--롤백_배경색);
+  border: solid 1px;
+  box-sizing: border-box;
+  border-top: 0;
+  border-left: 0;
+  border-color: var(--보더색);
+}
+
+#lol_lpanel {
+  left: 0px;
+  top: 0px;
+  width: 485px;
+  height: 100%;
+  border-right: 1px solid var(--보더색);
+  box-sizing: border-box;
+  overflow-y: auto;
+  overflow-x: clip;
+  flex-shrink: 0;
+}
+
+#lol_rpanel {
+  flex-grow: 1;
+}
+
+#lol_lpanel_account {
+  padding: 5px;
+  border-bottom: 1px solid var(--롤백_보더색);
+}
+
+#lol_lpanel_board {
+  
+}
+
+#lol_lpanel_board_list {
+  margin: 0px;
+  padding: 0px;
+  height: 100%;
+}
+
+.lol_article_list_item {
+  height: 60px;
+  width: 100%;
+  margin: 0;
+  border-bottom: 1px solid var(--롤백_보더색);
+  box-sizing: border-box;
+  position: relative;
+  display: flex;
+  align-items: center;
+  align-content: stretch;
+}
+
+.lol_article_list_item > img[icon] {
+  width: 45px;
+  height: 45px;
+  margin-left: 5px;
+  flex-grow: 0;
+}
+
+.lol_article_list_item > [article_info] {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+  flex-grow: 1;
+}
+
+.lol_article_list_item [title_container] {
+  display: flex;
+  max-width: 378px;
+}
+
+.lol_article_list_item [title] {
+  margin-left: 5px;
+  margin-bottom: 6px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  word-break: break-all;
+  white-space: nowrap;
+}
+
+.lol_article_list_item [reply_cnt] {
+  color: rgb(216, 74, 74);
+  font-weight: bold;
+  margin-left: 3px;
+}
+  
+.lol_article_list_item [spec] {
+  font-weight: bold;
+  color: rgb(163, 163, 163);
+  margin-left: 5px;
+  font-size: small;
+}
+
+.lol_article_list_item [type] {
+  width: 30px;
+  height: 30px;
+  margin-left: 5px;
+  flex-grow: 0;
+}
+
+.lol_article_list_item:hover {
+  background-color: var(--롤백_호버색);
+}
+
+#lol_rpanel_header {
+  display: flex;
+  margin: 15px;
+}
+
+#lol_rpanel_header_icon {
+  margin-top: 6px;
+  width: 60px;
+  height: 60px;
+}
+
+#lol_rpanel_header > [detail_info] {
+  margin-left: 10px;
+}
+
+#lol_rpanel_header > [detail_info] > [spec_info] {
+  display: flex;
+}
+
+#lol_rpanel_header_title {
+  font-size: large;
+  padding-bottom: 3px;
+  margin-bottom: 3px;
+  border-bottom: 1px solid var(--롤백_보더색);
+}
+
+#lol_rpanel_header_nick {
+  margin-bottom: 6px;
+  font-size: large;
+  font-weight: bold;
+  color: rgb(190,190,190);
+}
+
+#lol_rpanel_header_spec {
+  font-size: large;
+  margin-left: 6px;
+}
+
+#lol_rpanel_header_button {
+  color: red;
+  font-weight: bold;
+}
+
+#lol_rpanel_body {
+  margin: 15px;
+  margin-top: 20px;
+  margin-right: 0px;
+  display: flex;
+  flex-direction: column;
+  overflow-x: clip;
+  overflow-y: auto;
+}
+
+#lol_rpanel_body_youtube_container {
+  height: calc(100% / 16 * 9);
+  margin-bottom: 40px;
+  display: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+#lol_rpanel_body_instant_queue {
+  font-size: larger;
+  font-weight: bold;
+  cursor: pointer;
+  text-align: center;
+}
+
+#lol_rpanel_body_date {
+  font-weight: bold;
+  text-align: right;
+  color: rgb(197,197,197);
+  margin-right: 10px;
+}
+
+#lol_rpanel_body_img1 {
+  width: calc(100% - 20px);
+}
+#lol_rpanel_body_img2 {
+  width: calc(100% - 20px);
+}
+#lol_rpanel_body_img3 {
+  width: calc(100% - 20px);
+}
+#lol_rpanel_body_img4 {
+  width: calc(100% - 20px);
+}
+
+#lol_rpanel_reply {
+  /* border-top: 1px solid var(--롤백_보더색); */
+  margin-top: 20px;
+}
+
+#lol_rpanel_reply_board_list {
+  padding: 0px;
+}
+
+.lol_reply_list_item {
+  display: flex;
+  border-top: 1px solid var(--롤백_보더색);
+  padding-top: 5px;
+  margin-bottom: 5px;
+}
+
+.lol_reply_list_item [icon] {
+  width: 50px;
+  height: 50px;
+}
+
+.lol_reply_list_item [reply_body] {
+  display: flex;
+  flex-direction: column;
+  margin-left: 8px;
+}
+
+.lol_reply_list_item [nick] {
+  font-weight: bold;
+}
+
+.lol_reply_list_item [nick_container] {
+  display: flex;
+  margin-bottom: 7px;
+  margin-top: 3px;
+}
+
+.lol_reply_list_item [before] {
+  margin-left: 10px;
+  border-left: 2px solid var(--롤백_보더색);
+  padding-left: 10px;
 }

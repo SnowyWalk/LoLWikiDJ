@@ -1,4 +1,4 @@
-<html>
+<html theme="default">
 <title>LoLWiki.DJ</title>
 
 <head>
@@ -290,6 +290,48 @@
 
   <!-- UI 툴팁 -->
   <div id="ui_tooltip">[툴팁]</div>
+
+  <!-- 롤백 패널 -->
+  <div id="lol_panel" class="nanum">
+    <div id="lol_lpanel" class="no-drag">
+      <div id="lol_lpanel_account">로그인 해주세요.</div>
+      <div id="lol_lpanel_board">
+        <ul id="lol_lpanel_board_list"></ul>
+      </div>
+    </div>
+
+    <div id="lol_rpanel">
+      <div id="lol_rpanel_header">
+        <img id="lol_rpanel_header_icon">
+        <div detail_info>
+          <div id="lol_rpanel_header_title">글이 존재하지 않습니다.</div>
+          <div spec_info>
+            <div id="lol_rpanel_header_nick">사용자</div>
+            <div id="lol_rpanel_header_spec">조회</div>
+          </div>
+          <div id="lol_rpanel_header_button">[차단하기]</div>
+        </div>
+      </div>
+      <div id="lol_rpanel_body">
+        <div id="lol_rpanel_body_youtube_container">
+          <iframe id="lol_rpanel_body_youtube_player" width="100%" height="100%" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+          <div id="lol_rpanel_body_instant_queue" class="no-drag">[이 영상을 대기열에 바로 추가하기]</div>
+        </div>
+        <img id="lol_rpanel_body_img1"></img>
+        <img id="lol_rpanel_body_img2"></img>
+        <img id="lol_rpanel_body_img3"></img>
+        <img id="lol_rpanel_body_img4"></img>
+        <div id="lol_rpanel_body_body"></div>
+        <div id="lol_rpanel_body_date">시간</div>
+        <div id="lol_rpanel_body_like" style="display:none;"><div id="lol_rpanel_body_like_count">0</div></div>
+        <div id="lol_rpanel_reply">
+          <div id="lol_rpanel_reply_board">
+            <ul id="lol_rpanel_reply_board_list"></ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <script src="$_localhost/static/index.js?ver=$_version"></script>
   <script src="$_localhost/static/index_socket.js?ver=$_version"></script>

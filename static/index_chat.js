@@ -229,6 +229,8 @@ var evalAllReg = /\/evalall\s+(.+)/i
 var debugReg = /\/debug\s+(.+)/i
 var adReg = /^\/(ad|ㅁㅇ)\s+(.+)/i
 var volReg = /^\/vol\s+(.+)/i
+
+var lol_test1 = /^\/loltest1 (\d+) (\d+)/i
 function send() {
 	if(!g_isLogin)
 		return
@@ -243,6 +245,11 @@ function send() {
 	// 빈 메시지 무시
 	if (!message)
 		return
+
+	if(lol_test1.test(message))
+	{
+		socket.emit('lol_get_article_list', {seq: lol_test1.exec(message)[1], cnt: lol_test1.exec(message)[2]})
+	}
 
 	if(message == '/?' || message == '/help')
 	{

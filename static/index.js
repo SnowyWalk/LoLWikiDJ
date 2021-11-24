@@ -51,6 +51,13 @@ var g_djs = [] // [닉네임1, 닉네임2, ..., 현재재생중인dj]
 /* DEBUG: 랜덤 닉네임 모드 */
 var g_setting_auto_login = false
 
+/* 롤백 데이터 */
+var g_lol_panel_show = false
+var g_lol_article_list = []
+var g_lol_current_detail = null
+var g_lol_android_id = 'LoLWikiDJ_Guest'
+var g_lol_article_scroll_seq = 0
+
 window.onload = function() {
 	g_isWindowLoaded = true
 
@@ -85,6 +92,35 @@ window.onload = function() {
 	video_info_volume_btn.onclick = onclick_video_info_volume_btn
 	video_info_volume_slider.onchange = onchange_video_info_volume_slider
 	video_info_volume_slider.oninput = onchange_video_info_volume_slider
+
+	current_playlist_info_box.addEventListener('contextmenu', _ => {
+		event.preventDefault()
+
+		g_lol_panel_show = !g_lol_panel_show
+		
+		if(g_lol_panel_show)
+		{
+			g_lol_article_scroll_seq = 0
+			g_lol_article_list = []
+
+			socket.emit('lol_get_article_list', {seq: 0, cnt: 30})
+		}
+		else
+		{
+			lol_lpanel.scroll(0, 0)
+		}
+
+		lol_panel_update()
+	})
+	lol_rpanel_body_instant_queue.onclick = _ => {
+		socket.emit('queue', {dj: g_nick, video_id: youtube_url_parse(g_lol_current_detail['youtube_url'])})
+	}
+	lol_lpanel.onscroll = _ => {
+		if(lol_lpanel.scrollTop + lol_lpanel.clientHeight >= lol_lpanel.scrollHeight)
+		{
+			socket.emit('lol_get_article_list', {seq: g_lol_article_scroll_seq, cnt: 30})
+		}
+	}
 
 	playlist_control_panel_playlist_info_new_video_button.addEventListener('contextmenu', onrclick_playlist_control_panel_playlist_info_new_video_button, false)
 	playlist_control_panel_playlist_info_delete_button.addEventListener('contextmenu', onrclick_playlist_control_panel_playlist_info_delete_button, false)

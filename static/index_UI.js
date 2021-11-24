@@ -160,6 +160,10 @@ function resize() {
 
 	/* 라이브챗 */
 	livechat_window_clamp()
+
+	/* 롤백 패널 */
+	if(g_lol_panel_show)
+		lol_panel_resize()
 }
 
 /* UI 리사이즈 - 컨트롤 패널만 */
@@ -1287,141 +1291,143 @@ function set_theme(theme_name)
 	localStorage.setItem(g_storage_theme_key, current_theme)
 	document.querySelector(format('[name=theme][value={0}]', current_theme)).checked = true
 
-	var root_style = document.querySelector(':root').style
-	if(current_theme == 'default')
-	{
-		root_style.setProperty('--배경색', 'lightblue')
-		root_style.setProperty('--글자색', 'black')
-		root_style.setProperty('--보더색', 'black')
-		root_style.setProperty('--호버이펙트', 'rgba(0, 0, 0, 0.118)')
-		root_style.setProperty('--호버이펙트_역', 'rgba(0, 0, 0, 0.118)')
+	document.querySelector(':root').setAttribute('theme', current_theme)
 
-		root_style.setProperty('--스크롤바색', 'rgb(96, 96, 96)')
-		root_style.setProperty('--스크롤바색_호버', 'rgb(144, 144, 144)')
-	  
-		root_style.setProperty('--채팅_후원랭킹', 'yellow')
-		root_style.setProperty('--채팅_패치노트', 'chartreuse')
-		root_style.setProperty('--채팅_시스템', 'rgb(160, 224, 57)')
-		root_style.setProperty('--채팅_접속', 'aquamarine')
-		root_style.setProperty('--채팅_떠남', 'indianred')
-		root_style.setProperty('--채팅_나', 'crimson')
-		root_style.setProperty('--채팅_배경_나', 'lemonchiffon')
-		root_style.setProperty('--채팅_남', 'mediumslateblue')
-		root_style.setProperty('--채팅_배경_남', 'white')
-		root_style.setProperty('--채팅_스크롤러_배경색', '#000000a6')
-		root_style.setProperty('--채팅_스크롤러_보더', '0px')
-		root_style.setProperty('--채팅_헬프_배경색', 'white')
+	// var root_style = document.querySelector(':root').style
+	// if(current_theme == 'default')
+	// {
+	// 	root_style.setProperty('--배경색', 'lightblue')
+	// 	root_style.setProperty('--글자색', 'black')
+	// 	root_style.setProperty('--보더색', 'black')
+	// 	root_style.setProperty('--호버이펙트', 'rgba(0, 0, 0, 0.118)')
+	// 	root_style.setProperty('--호버이펙트_역', 'rgba(0, 0, 0, 0.118)')
 
-		root_style.setProperty('--채팅_입력창_배경색', 'white')
-		root_style.setProperty('--채팅_입력창_글자색', 'black')
-		root_style.setProperty('--채팅_입력창_보더색', 'rgb(118, 118, 118)')
-		root_style.setProperty('--채팅_입력창_보더색_포커스', 'rgb(118, 118, 118)')
-		root_style.setProperty('--채팅_입력창_보더_위', 'fuck')
-		root_style.setProperty('--채팅_입력창_보더_오른쪽', 'fuck')
-		root_style.setProperty('--채팅_입력창_보더_왼쪽', 'fuck')
-		root_style.setProperty('--채팅_입력창_아웃라인', 'fuck')
-		root_style.setProperty('--채팅_입력창_전송버튼_배경색', 'fuck')
-		root_style.setProperty('--채팅_입력창_전송버튼_보더', 'fuck')
+	// 	root_style.setProperty('--스크롤바색', 'rgb(96, 96, 96)')
+	// 	root_style.setProperty('--스크롤바색_호버', 'rgb(144, 144, 144)')
 	  
-		root_style.setProperty('--채팅_카테고리_배경색', 'lightskyblue')
-		root_style.setProperty('--채팅_카테고리_필터', 'none')
-		root_style.setProperty('--채팅_카테고리_선택', 'lightblue')
-		root_style.setProperty('--채팅_카테고리_선택_보더', 'none')
-		root_style.setProperty('--채팅_카테고리_호버', '#6192b1')
-		root_style.setProperty('--채팅_카테고리_챗알림_배경색', 'crimson')
-		root_style.setProperty('--채팅_카테고리_챗알림_글자색', 'yellow')
-		root_style.setProperty('--채팅_카테고리_챗알림_폰트옵션', 'normal')
-	  
-		root_style.setProperty('--현재_재생목록_박스_배경색', 'rgb(160, 224, 57)')
-		root_style.setProperty('--영상주소복사_글자색', '-webkit-link')
-	  
-		root_style.setProperty('--플레이리스트_배경색', 'lightskyblue')
-		root_style.setProperty('--플레이리스트_좌측_배경색_짝수', 'rgb(137, 209, 232)')
-		root_style.setProperty('--플레이리스트_좌측_배경색_홀수', 'rgb(96, 197, 230)')
-		root_style.setProperty('--플레이리스트_좌측_배경색_선택', 'rgb(160, 224, 57)')
-		root_style.setProperty('--플레이리스트_헤더_배경색', 'lightskyblue')
-		root_style.setProperty('--플레이리스트_헤더_배경색_선택됨', 'linear-gradient(0deg, rgba(160, 224, 57, 0.23), rgba(160, 224, 57, 0.12))')
-		root_style.setProperty('--플레이리스트_헤더_보더_왼쪽', '1px solid cadetblue')
-		root_style.setProperty('--플레이리스트_헤더_보더_아래', '4px solid cadetblue')
-		root_style.setProperty('--플레이리스트_헤더_버튼_영상추가_필터', 'none')
-		root_style.setProperty('--플레이리스트_헤더_버튼_영상삭제_필터', 'none')
-		root_style.setProperty('--플레이리스트_헤더_버튼_이름변경_필터', 'none')
-		root_style.setProperty('--플레이리스트_헤더_버튼_셔플_필터', 'none')
-		root_style.setProperty('--플레이리스트_헤더_버튼_선택됨', 'rgb(160, 224, 57)')
-		root_style.setProperty('--플레이리스트_영상_배경색', 'lightskyblue')
-		root_style.setProperty('--플레이리스트_영상_보더_왼쪽', '1px solid cadetblue')
-		root_style.setProperty('--플레이리스트_영상_배경색_짝수', 'rgb(137, 209, 232)')
-		root_style.setProperty('--플레이리스트_영상_배경색_홀수', 'rgb(96, 197, 230)')
-	  
-		root_style.setProperty('--UI_툴팁_보더', '0px')
-	}
-	else if(current_theme == 'dark')
-	{
-		root_style.setProperty('--배경색', 'rgb(24, 24, 24)')
-		root_style.setProperty('--글자색', '#ccc')
-		root_style.setProperty('--보더색', 'rgb(35, 35, 35)')
-		root_style.setProperty('--호버이펙트', 'rgba(255, 255, 255, 0.118)')
-		root_style.setProperty('--호버이펙트_역', 'rgba(0, 0, 0, 0.118)')
+	// 	root_style.setProperty('--채팅_후원랭킹', 'yellow')
+	// 	root_style.setProperty('--채팅_패치노트', 'chartreuse')
+	// 	root_style.setProperty('--채팅_시스템', 'rgb(160, 224, 57)')
+	// 	root_style.setProperty('--채팅_접속', 'aquamarine')
+	// 	root_style.setProperty('--채팅_떠남', 'indianred')
+	// 	root_style.setProperty('--채팅_나', 'crimson')
+	// 	root_style.setProperty('--채팅_배경_나', 'lemonchiffon')
+	// 	root_style.setProperty('--채팅_남', 'mediumslateblue')
+	// 	root_style.setProperty('--채팅_배경_남', 'white')
+	// 	root_style.setProperty('--채팅_스크롤러_배경색', '#000000a6')
+	// 	root_style.setProperty('--채팅_스크롤러_보더', '0px')
+	// 	root_style.setProperty('--채팅_헬프_배경색', 'white')
 
-		root_style.setProperty('--스크롤바색', 'rgb(170, 170, 170)')
-		root_style.setProperty('--스크롤바색_호버', 'rgb(113, 113, 113)')
+	// 	root_style.setProperty('--채팅_입력창_배경색', 'white')
+	// 	root_style.setProperty('--채팅_입력창_글자색', 'black')
+	// 	root_style.setProperty('--채팅_입력창_보더색', 'rgb(118, 118, 118)')
+	// 	root_style.setProperty('--채팅_입력창_보더색_포커스', 'rgb(118, 118, 118)')
+	// 	root_style.setProperty('--채팅_입력창_보더_위', 'fuck')
+	// 	root_style.setProperty('--채팅_입력창_보더_오른쪽', 'fuck')
+	// 	root_style.setProperty('--채팅_입력창_보더_왼쪽', 'fuck')
+	// 	root_style.setProperty('--채팅_입력창_아웃라인', 'fuck')
+	// 	root_style.setProperty('--채팅_입력창_전송버튼_배경색', 'fuck')
+	// 	root_style.setProperty('--채팅_입력창_전송버튼_보더', 'fuck')
 	  
-		root_style.setProperty('--채팅_후원랭킹', '#727200')
-		root_style.setProperty('--채팅_패치노트', '#538522')
-		root_style.setProperty('--채팅_시스템', 'rgb(56, 56, 56)')
-		root_style.setProperty('--채팅_접속', '#3f6a5d')
-		root_style.setProperty('--채팅_떠남', '#4c2a2a')
-		root_style.setProperty('--채팅_나', '#d77a7a')
-		root_style.setProperty('--채팅_배경_나', 'rgb(24, 24, 24)')
-		root_style.setProperty('--채팅_남', '#97c5ff')
-		root_style.setProperty('--채팅_배경_남', 'rgb(24, 24, 24)')
-		root_style.setProperty('--채팅_스크롤러_배경색', 'rgba(0, 0, 0, 0.75)')
-		root_style.setProperty('--채팅_스크롤러_보더', '1px gray solid')
-		root_style.setProperty('--채팅_헬프_배경색', 'rgb(56, 56, 56)')
+	// 	root_style.setProperty('--채팅_카테고리_배경색', 'lightskyblue')
+	// 	root_style.setProperty('--채팅_카테고리_필터', 'none')
+	// 	root_style.setProperty('--채팅_카테고리_선택', 'lightblue')
+	// 	root_style.setProperty('--채팅_카테고리_선택_보더', 'none')
+	// 	root_style.setProperty('--채팅_카테고리_호버', '#6192b1')
+	// 	root_style.setProperty('--채팅_카테고리_챗알림_배경색', 'crimson')
+	// 	root_style.setProperty('--채팅_카테고리_챗알림_글자색', 'yellow')
+	// 	root_style.setProperty('--채팅_카테고리_챗알림_폰트옵션', 'normal')
 	  
-		root_style.setProperty('--채팅_입력창_배경색', 'rgb(24, 24, 24)')
-		root_style.setProperty('--채팅_입력창_글자색', 'white')
-		root_style.setProperty('--채팅_입력창_보더색', 'rgb(102, 102, 102)')
-		root_style.setProperty('--채팅_입력창_보더색_포커스', 'rgb(63, 148, 228)')
-		root_style.setProperty('--채팅_입력창_보더_위', '0px')
-		root_style.setProperty('--채팅_입력창_보더_오른쪽', '0px')
-		root_style.setProperty('--채팅_입력창_보더_왼쪽', '0px')
-		root_style.setProperty('--채팅_입력창_아웃라인', 'none')
-		root_style.setProperty('--채팅_입력창_전송버튼_배경색', 'transparent')
-		root_style.setProperty('--채팅_입력창_전송버튼_보더', '0px')
+	// 	root_style.setProperty('--현재_재생목록_박스_배경색', 'rgb(160, 224, 57)')
+	// 	root_style.setProperty('--영상주소복사_글자색', '-webkit-link')
 	  
-		root_style.setProperty('--채팅_카테고리_배경색', 'rgb(222, 222, 222)')
-		root_style.setProperty('--채팅_카테고리_필터', 'invert(1)')
-		root_style.setProperty('--채팅_카테고리_선택', 'rgb(222, 222, 222)')
-		root_style.setProperty('--채팅_카테고리_선택_보더', '3px rgb(85, 85, 85) solid')
-		root_style.setProperty('--채팅_카테고리_호버', 'rgb(85, 85, 85)')
-		root_style.setProperty('--채팅_카테고리_챗알림_배경색', 'rgb(18, 235, 194)')
-		root_style.setProperty('--채팅_카테고리_챗알림_글자색', '0000ff')
-		root_style.setProperty('--채팅_카테고리_챗알림_폰트옵션', 'bold')
+	// 	root_style.setProperty('--플레이리스트_배경색', 'lightskyblue')
+	// 	root_style.setProperty('--플레이리스트_좌측_배경색_짝수', 'rgb(137, 209, 232)')
+	// 	root_style.setProperty('--플레이리스트_좌측_배경색_홀수', 'rgb(96, 197, 230)')
+	// 	root_style.setProperty('--플레이리스트_좌측_배경색_선택', 'rgb(160, 224, 57)')
+	// 	root_style.setProperty('--플레이리스트_헤더_배경색', 'lightskyblue')
+	// 	root_style.setProperty('--플레이리스트_헤더_배경색_선택됨', 'linear-gradient(0deg, rgba(160, 224, 57, 0.23), rgba(160, 224, 57, 0.12))')
+	// 	root_style.setProperty('--플레이리스트_헤더_보더_왼쪽', '1px solid cadetblue')
+	// 	root_style.setProperty('--플레이리스트_헤더_보더_아래', '4px solid cadetblue')
+	// 	root_style.setProperty('--플레이리스트_헤더_버튼_영상추가_필터', 'none')
+	// 	root_style.setProperty('--플레이리스트_헤더_버튼_영상삭제_필터', 'none')
+	// 	root_style.setProperty('--플레이리스트_헤더_버튼_이름변경_필터', 'none')
+	// 	root_style.setProperty('--플레이리스트_헤더_버튼_셔플_필터', 'none')
+	// 	root_style.setProperty('--플레이리스트_헤더_버튼_선택됨', 'rgb(160, 224, 57)')
+	// 	root_style.setProperty('--플레이리스트_영상_배경색', 'lightskyblue')
+	// 	root_style.setProperty('--플레이리스트_영상_보더_왼쪽', '1px solid cadetblue')
+	// 	root_style.setProperty('--플레이리스트_영상_배경색_짝수', 'rgb(137, 209, 232)')
+	// 	root_style.setProperty('--플레이리스트_영상_배경색_홀수', 'rgb(96, 197, 230)')
 	  
-		root_style.setProperty('--현재_재생목록_박스_배경색', 'rgb(70, 70, 70)')
-		root_style.setProperty('--영상주소복사_글자색', 'cornflowerblue')
+	// 	root_style.setProperty('--UI_툴팁_보더', '0px')
+	// }
+	// else if(current_theme == 'dark')
+	// {
+	// 	root_style.setProperty('--배경색', 'rgb(24, 24, 24)')
+	// 	root_style.setProperty('--글자색', '#ccc')
+	// 	root_style.setProperty('--보더색', 'rgb(35, 35, 35)')
+	// 	root_style.setProperty('--호버이펙트', 'rgba(255, 255, 255, 0.118)')
+	// 	root_style.setProperty('--호버이펙트_역', 'rgba(0, 0, 0, 0.118)')
+
+	// 	root_style.setProperty('--스크롤바색', 'rgb(170, 170, 170)')
+	// 	root_style.setProperty('--스크롤바색_호버', 'rgb(113, 113, 113)')
 	  
-		root_style.setProperty('--플레이리스트_배경색', 'rgb(33, 33, 33)')
-		root_style.setProperty('--플레이리스트_좌측_배경색_짝수', 'rgb(33, 33, 33)')
-		root_style.setProperty('--플레이리스트_좌측_배경색_홀수', 'rgb(33, 33, 33)')
-		root_style.setProperty('--플레이리스트_좌측_배경색_선택', 'rgb(130, 130, 130)')
-		root_style.setProperty('--플레이리스트_헤더_배경색', 'rgb(24, 24, 24)')
-		root_style.setProperty('--플레이리스트_헤더_배경색_선택됨', 'linear-gradient(90deg, rgba(80, 80, 80, 0.5), rgba(0, 0, 0, 0.0))')
-		root_style.setProperty('--플레이리스트_헤더_보더_왼쪽', '0px')
-		root_style.setProperty('--플레이리스트_헤더_보더_아래', '0px')
-		root_style.setProperty('--플레이리스트_헤더_버튼_영상추가_필터', 'invert(1)')
-		root_style.setProperty('--플레이리스트_헤더_버튼_영상삭제_필터', 'invert(1)')
-		root_style.setProperty('--플레이리스트_헤더_버튼_이름변경_필터', 'invert(1)')
-		root_style.setProperty('--플레이리스트_헤더_버튼_셔플_필터', 'invert(1)')
-		root_style.setProperty('--플레이리스트_헤더_버튼_선택됨', 'rgb(76, 76, 76)')
-		root_style.setProperty('--플레이리스트_영상_배경색', 'rgb(15, 15, 15)')
-		root_style.setProperty('--플레이리스트_영상_보더_왼쪽', '0px')
-		root_style.setProperty('--플레이리스트_영상_배경색_짝수', 'rgb(15, 15, 15)')
-		root_style.setProperty('--플레이리스트_영상_배경색_홀수', 'rgb(15, 15, 15)')
+	// 	root_style.setProperty('--채팅_후원랭킹', '#727200')
+	// 	root_style.setProperty('--채팅_패치노트', '#538522')
+	// 	root_style.setProperty('--채팅_시스템', 'rgb(56, 56, 56)')
+	// 	root_style.setProperty('--채팅_접속', '#3f6a5d')
+	// 	root_style.setProperty('--채팅_떠남', '#4c2a2a')
+	// 	root_style.setProperty('--채팅_나', '#d77a7a')
+	// 	root_style.setProperty('--채팅_배경_나', 'rgb(24, 24, 24)')
+	// 	root_style.setProperty('--채팅_남', '#97c5ff')
+	// 	root_style.setProperty('--채팅_배경_남', 'rgb(24, 24, 24)')
+	// 	root_style.setProperty('--채팅_스크롤러_배경색', 'rgba(0, 0, 0, 0.75)')
+	// 	root_style.setProperty('--채팅_스크롤러_보더', '1px gray solid')
+	// 	root_style.setProperty('--채팅_헬프_배경색', 'rgb(56, 56, 56)')
 	  
-		root_style.setProperty('--UI_툴팁_보더', '1px solid gray')
-	}
+	// 	root_style.setProperty('--채팅_입력창_배경색', 'rgb(24, 24, 24)')
+	// 	root_style.setProperty('--채팅_입력창_글자색', 'white')
+	// 	root_style.setProperty('--채팅_입력창_보더색', 'rgb(102, 102, 102)')
+	// 	root_style.setProperty('--채팅_입력창_보더색_포커스', 'rgb(63, 148, 228)')
+	// 	root_style.setProperty('--채팅_입력창_보더_위', '0px')
+	// 	root_style.setProperty('--채팅_입력창_보더_오른쪽', '0px')
+	// 	root_style.setProperty('--채팅_입력창_보더_왼쪽', '0px')
+	// 	root_style.setProperty('--채팅_입력창_아웃라인', 'none')
+	// 	root_style.setProperty('--채팅_입력창_전송버튼_배경색', 'transparent')
+	// 	root_style.setProperty('--채팅_입력창_전송버튼_보더', '0px')
+	  
+	// 	root_style.setProperty('--채팅_카테고리_배경색', 'rgb(222, 222, 222)')
+	// 	root_style.setProperty('--채팅_카테고리_필터', 'invert(1)')
+	// 	root_style.setProperty('--채팅_카테고리_선택', 'rgb(222, 222, 222)')
+	// 	root_style.setProperty('--채팅_카테고리_선택_보더', '3px rgb(85, 85, 85) solid')
+	// 	root_style.setProperty('--채팅_카테고리_호버', 'rgb(85, 85, 85)')
+	// 	root_style.setProperty('--채팅_카테고리_챗알림_배경색', 'rgb(18, 235, 194)')
+	// 	root_style.setProperty('--채팅_카테고리_챗알림_글자색', '0000ff')
+	// 	root_style.setProperty('--채팅_카테고리_챗알림_폰트옵션', 'bold')
+	  
+	// 	root_style.setProperty('--현재_재생목록_박스_배경색', 'rgb(70, 70, 70)')
+	// 	root_style.setProperty('--영상주소복사_글자색', 'cornflowerblue')
+	  
+	// 	root_style.setProperty('--플레이리스트_배경색', 'rgb(33, 33, 33)')
+	// 	root_style.setProperty('--플레이리스트_좌측_배경색_짝수', 'rgb(33, 33, 33)')
+	// 	root_style.setProperty('--플레이리스트_좌측_배경색_홀수', 'rgb(33, 33, 33)')
+	// 	root_style.setProperty('--플레이리스트_좌측_배경색_선택', 'rgb(130, 130, 130)')
+	// 	root_style.setProperty('--플레이리스트_헤더_배경색', 'rgb(24, 24, 24)')
+	// 	root_style.setProperty('--플레이리스트_헤더_배경색_선택됨', 'linear-gradient(90deg, rgba(80, 80, 80, 0.5), rgba(0, 0, 0, 0.0))')
+	// 	root_style.setProperty('--플레이리스트_헤더_보더_왼쪽', '0px')
+	// 	root_style.setProperty('--플레이리스트_헤더_보더_아래', '0px')
+	// 	root_style.setProperty('--플레이리스트_헤더_버튼_영상추가_필터', 'invert(1)')
+	// 	root_style.setProperty('--플레이리스트_헤더_버튼_영상삭제_필터', 'invert(1)')
+	// 	root_style.setProperty('--플레이리스트_헤더_버튼_이름변경_필터', 'invert(1)')
+	// 	root_style.setProperty('--플레이리스트_헤더_버튼_셔플_필터', 'invert(1)')
+	// 	root_style.setProperty('--플레이리스트_헤더_버튼_선택됨', 'rgb(76, 76, 76)')
+	// 	root_style.setProperty('--플레이리스트_영상_배경색', 'rgb(15, 15, 15)')
+	// 	root_style.setProperty('--플레이리스트_영상_보더_왼쪽', '0px')
+	// 	root_style.setProperty('--플레이리스트_영상_배경색_짝수', 'rgb(15, 15, 15)')
+	// 	root_style.setProperty('--플레이리스트_영상_배경색_홀수', 'rgb(15, 15, 15)')
+	  
+	// 	root_style.setProperty('--UI_툴팁_보더', '1px solid gray')
+	// }
 
 
 	if(current_theme == 'default')
@@ -1442,4 +1448,258 @@ function set_theme(theme_name)
 		chat_send.style.backgroundColor = 'var(--채팅_입력창_전송버튼_배경색)'
 		chat_send.style.border = 'var(--채팅_입력창_전송버튼_보더)'
 	}
+}
+
+/* ====================================== 롤백 ============================================= */
+
+/* 글 목록 업뎃 */
+function lol_lpanel_update()
+{
+	// 모든 자식 노드 삭제
+	while ( lol_lpanel_board_list.hasChildNodes() ) 
+		lol_lpanel_board_list.removeChild( lol_lpanel_board_list.firstChild )
+
+	for(var e of g_lol_article_list)
+	{
+		var div = document.createElement('div')
+		div.classList.add('lol_article_list_item')
+		div.setAttribute('seq', e['post_seq'])
+		
+		// 아이콘
+		var img = document.createElement('img')
+		img.toggleAttribute('icon', true)
+		img.src = lol_get_icon_url(e['icon_img'], e['badge_use'])
+		div.appendChild(img)
+
+		var center_div = document.createElement('div')
+		center_div.toggleAttribute('article_info')
+		// 제목
+
+		var title_container = document.createElement('div')
+		title_container.toggleAttribute('title_container', true)
+
+		var title = document.createElement('div')
+		title.toggleAttribute('title', true)
+		title.appendChild(document.createTextNode(e['post_title']))
+		title_container.appendChild(title)
+
+		if(e['reply_cnt'] > 0)
+		{
+			var reply_cnt = document.createElement('div')
+			reply_cnt.toggleAttribute('reply_cnt', true)
+			reply_cnt.innerHTML = format('[{0}]', e['reply_cnt'])
+			title_container.appendChild(reply_cnt)
+	}
+		center_div.appendChild(title_container)
+
+		// 하단
+		var spec = document.createElement('div')
+		spec.toggleAttribute('spec', true)
+		spec.innerHTML = format('{0} | {1} | 조회 {2} | 추천 {3}{4}', e['before'].replace('size=1', ''), e['nickname'], e['views'], e['likes'], e['alarm'] > 0 ? format('| 신고 {0}', e['alarm']) : '')
+		center_div.appendChild(spec)
+		div.appendChild(center_div)
+
+		// 텍스트 / 짤 / 유튭 / 두들러
+		var img2 = document.createElement('img')
+		img2.toggleAttribute('type', true)
+		if(e['youtube_url'].length)
+			img2.src = 'static/icon_youtube.png'
+		else if(e['doodlr'] > 0)
+			img2.src = 'static/icon_doodlr.png'
+		else if(e['pic_new'].length || e['pic_multi'].length)
+			img2.src = 'static/icon_img.png'
+		else 
+			img2.src = 'static/icon_text.png'
+		div.appendChild(img2)
+
+		div.onclick = lol_onclick_article
+
+		lol_lpanel_board_list.appendChild(div)
+	}
+}
+
+/* 글 클릭 -> 해당 글 정보 요청 */
+function lol_onclick_article()
+{
+	var seq = event.currentTarget.getAttribute('seq')
+	if(!seq)
+	{
+		console.log('seq가 없다?!', seq)
+		return
+	}
+	socket.emit('lol_get_article_detail', seq)
+}
+
+/* 글 내용 패널 업데이트 */
+function lol_rpanel_update()
+{
+	var is_invalid = (!g_lol_current_detail || !g_lol_current_detail['post_seq'].length)
+	if(is_invalid)
+	{
+		g_lol_current_detail['post_title'] = '글이 존재하지 않습니다.'
+		g_lol_current_detail['post_text'] = '사용자'
+		g_lol_current_detail['likes'] = '0'
+		g_lol_current_detail['views'] = '0'
+		g_lol_current_detail['post_date'] = '시간'
+	}
+
+	// 헤더
+	lol_rpanel_header_icon.src = lol_get_icon_url(g_lol_current_detail['icon_img'], g_lol_current_detail['badge_use'])
+
+	lol_rpanel_header_title.firstChild.nodeValue = g_lol_current_detail['post_title']
+	lol_rpanel_header_nick.firstChild.nodeValue = g_lol_current_detail['nickname']
+	lol_rpanel_header_spec.innerHTML = format('{0} 조회 <b>{1}</b>', g_lol_current_detail['stack'], g_lol_current_detail['views'])
+
+	// 영상
+	if(g_lol_current_detail['youtube_url'].length > 0)
+	{
+		lol_rpanel_body_youtube_container.style.display = 'block'
+		lol_rpanel_body_youtube_player.src = format('https://www.youtube.com/embed/{0}', youtube_url_parse(g_lol_current_detail['youtube_url']))
+	}
+	else
+	{
+		lol_rpanel_body_youtube_container.style.display = 'none'
+		lol_rpanel_body_youtube_player.src = ''
+	}
+
+	// 사진
+	var zzals = []
+	if(g_lol_current_detail['pic_multi'].length)
+	{
+		zzals = g_lol_current_detail['pic_multi'].split('/').filter(e => e.length).map(e => format('http://lolwiki.kr/freeboard/uploads/files/{0}/{1}', lol_get_date_from_filename(e), e))
+	}
+	else if(g_lol_current_detail['pic_new'].length)
+	{
+		zzals = [format('http://lolwiki.kr/freeboard/uploads/files/{0}/{1}', lol_get_date_from_filename(g_lol_current_detail['pic_new']), g_lol_current_detail['pic_new'])]
+	}
+	else if(g_lol_current_detail['doodlr'] > 0)
+	{
+		var filename = g_lol_current_detail['doodlrurls'].substr(0, g_lol_current_detail['doodlrurls'].length - 1)
+		zzals = [format('http://lolwiki.kr/freeboard/uploads/doodlr/{0}/{1}', lol_get_date_from_filename(filename), filename)]
+	}
+	else if(g_lol_current_detail['fixedpic'].length)
+	{
+		zzals = [format('http://lolwiki.kr/freeboard/uploads/fixed_img/files/{0}/{1}', lol_get_date_from_filename(g_lol_current_detail['fixedpic']), g_lol_current_detail['fixedpic'])]
+	}
+
+	if(zzals.length > 0)
+	{
+		lol_rpanel_body_img1.style.display = 'block'
+		lol_rpanel_body_img1.src = zzals[0]
+	}
+	else
+		lol_rpanel_body_img1.style.display = 'none'
+
+	if(zzals.length > 1)
+	{
+		lol_rpanel_body_img2.style.display = 'block'
+		lol_rpanel_body_img2.src = zzals[1]
+	}
+	else
+		lol_rpanel_body_img2.style.display = 'none'
+
+	if(zzals.length > 2)
+	{
+		lol_rpanel_body_img3.style.display = 'block'
+		lol_rpanel_body_img3.src = zzals[2]
+	}
+	else
+		lol_rpanel_body_img3.style.display = 'none'
+
+	if(zzals.length > 3)
+	{
+		lol_rpanel_body_img4.style.display = 'block'
+		lol_rpanel_body_img4.src = zzals[3]
+	}
+	else
+		lol_rpanel_body_img4.style.display = 'none'
+	
+	lol_rpanel_body_body.innerHTML = g_lol_current_detail['post_text'].replace('size=1', '').replace(/\r\n/g, '<br>')
+	lol_rpanel_body_date.firstChild.nodeValue = g_lol_current_detail['post_date']
+	lol_rpanel_body_like_count.firstChild.nodeValue = g_lol_current_detail['likes']
+
+	// 댓글
+	// 모든 자식 노드 삭제
+	while ( lol_rpanel_reply_board_list.hasChildNodes() ) 
+	lol_rpanel_reply_board_list.removeChild( lol_rpanel_reply_board_list.firstChild )
+
+	for(var e of g_lol_current_detail['replys'])
+	{
+		var div = document.createElement('div')
+		div.classList.add('lol_reply_list_item')
+		div.setAttribute('seq', e['reply_seq'])
+		
+		// 아이콘
+		var img = document.createElement('img')
+		img.toggleAttribute('icon', true)
+		img.src = lol_get_icon_url(e['icon_img'], e['badge_use'])
+		div.appendChild(img)
+
+		var reply_body = document.createElement('div')
+		reply_body.toggleAttribute('reply_body')
+		// 제목
+
+		var nick_container = document.createElement('div')
+		nick_container.toggleAttribute('nick_container', true)
+
+		var nick = document.createElement('div')
+		nick.toggleAttribute('nick', true)
+		nick.appendChild(document.createTextNode(e['nickname']))
+		nick_container.appendChild(nick)
+
+		var before = document.createElement('div')
+		before.toggleAttribute('before', true)
+		before.innerHTML = e['reply_date']
+							.replace(' size=1', '')
+							.replace(/&lt;/g, '<')
+							.replace(/&gt;/g, '>')
+							.replace('</font>', '</b></font>')
+		nick_container.appendChild(before)
+
+		reply_body.appendChild(nick_container)
+
+		if(e['icon_img'].length > 0)
+		{
+			var img = document.createElement('img')
+			img.toggleAttribute('img', true)
+			reply_body.appendChild(img)
+		}
+
+		var text = document.createElement('div')
+		text.toggleAttribute('text', true)
+		text.appendChild(document.createTextNode(e['reply_title']))
+		reply_body.appendChild(text)
+
+		div.appendChild(reply_body)
+
+		lol_rpanel_reply_board_list.appendChild(div)
+	}
+}
+
+/* UI 업뎃 */
+function lol_panel_update()
+{
+	if(g_lol_panel_show)
+	{
+		lol_panel.style.display = 'flex'
+		lol_panel_resize()
+	}
+	else
+	{
+		lol_panel.style.display = 'none'
+	}
+
+}
+
+function lol_panel_resize()
+{
+	var window_width = window.innerWidth
+	var window_height = window.innerHeight
+	var bottom_height = 86 // 하단 박스 높이
+
+	// 패널 판크기 조절
+	lol_panel.style.width = (window_width - mainchat_width)
+	lol_panel.style.height = (window_height - bottom_height)
+
+	lol_rpanel_body.style.height = (window_height - bottom_height - 74 - 35 - 4) // 헤더
 }

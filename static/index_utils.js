@@ -110,3 +110,23 @@ function GetDate() // YYYYMMDD HHMMSS
 	var reg_ret = dateReg.exec(cur_date)
 	return format('{0}{1}{2} {3}{4}{5}', reg_ret.groups['year'], reg_ret.groups['month'], reg_ret.groups['day'], reg_ret.groups['hour'], reg_ret.groups['minute'], reg_ret.groups['second'] )
 }
+
+function lol_get_icon_url(icon_img, badge_use = 0)
+{
+	if(icon_img.length)
+		return format('http://lolwiki.kr/freeboard/uploads/icon_img/files/{0}/{1}', lol_get_date_from_filename(icon_img), icon_img)
+	return format('http://lol100.co.kr/badge/{0}.jpg', badge_use)
+}
+
+/* 'img_-2419110_20210708232707.jpg' -> '2021_07_08' */
+function lol_get_date_from_filename(filename)
+{
+	var reg = /.*_(\d{4})(\d{2})(\d{2})/
+	if(!reg.test(filename))
+	{
+		console.log('파일명에서 날짜를 찾지 못함.', filename)
+		return ''
+	}
+	var ret = reg.exec(filename)
+	return format('{0}_{1}_{2}', ret[1], ret[2], ret[3])
+}

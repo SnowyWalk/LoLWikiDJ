@@ -249,6 +249,7 @@ socket.on('ping', function () {
 
 socket.on('data', function(data) {
 	g_data = data
+	console.log(g_data)
 })
 
 socket.on('throw_data', function(exception) {
@@ -291,3 +292,19 @@ function destroy_self()
 {
 	delete this
 }
+
+
+/* ========================== 롤백 ======================================== */
+
+socket.on('lol_article_list', function(data) {
+	g_lol_article_scroll_seq += data.length
+	g_lol_article_list = g_lol_article_list.concat(data)
+	
+	lol_lpanel_update()
+})
+
+socket.on('lol_article_detail', function(data) {
+	g_lol_current_detail = data
+
+	lol_rpanel_update()
+})
