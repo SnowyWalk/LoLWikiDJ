@@ -120,7 +120,10 @@ function add_message(data)
 
 	message.classList.add(className)
 	message.classList.add('chat')
-	message.appendChild(document.createTextNode(text))
+	var temporary_element = document.createElement('temp')
+	temporary_element.appendChild(document.createTextNode(text))
+	message.appendChild(temporary_element)
+	// message.appendChild(document.createTextNode(text))
 	if(img != null)
 		message.appendChild(img)
 	chat.appendChild(message)
@@ -229,8 +232,6 @@ var evalAllReg = /\/evalall\s+(.+)/i
 var debugReg = /\/debug\s+(.+)/i
 var adReg = /^\/(ad|ㅁㅇ)\s+(.+)/i
 var volReg = /^\/vol\s+(.+)/i
-
-var lol_test1 = /^\/loltest1 (\d+) (\d+)/i
 function send() {
 	if(!g_isLogin)
 		return
@@ -245,11 +246,6 @@ function send() {
 	// 빈 메시지 무시
 	if (!message)
 		return
-
-	if(lol_test1.test(message))
-	{
-		socket.emit('lol_get_article_list', {seq: lol_test1.exec(message)[1], cnt: lol_test1.exec(message)[2]})
-	}
 
 	if(message == '/?' || message == '/help')
 	{
