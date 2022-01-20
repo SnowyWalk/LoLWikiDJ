@@ -252,8 +252,15 @@
   <div id="playlist_control_panel">
 
     <!-- 재생목록 리스트 헤더 -->
-    <div id="playlist_control_panel_playlist_header"></div> 
-
+    <div id="playlist_control_panel_playlist_container">
+      <!-- 재생목록 검색 기능 -->
+      <div id="playlist_control_panel_playlist_search">
+        <div search-icon></div>
+        <input type="text" id="playlist_control_panel_playlist_search_input" placeholder="영상 제목으로 검색">
+        <div id="playlist_control_panel_playlist_search_close_button"></div>
+      </div> 
+      <div id="playlist_control_panel_playlist_header"></div> 
+    </div> 
     <!-- 영상목록 상단부 / 재생목록 이름변경, 삭제, 활성화 등 -->
     <div id="playlist_control_panel_playlist_info">
       <div id="playlist_control_panel_playlist_info_name" class="nanum bold">-</div>
