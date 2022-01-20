@@ -5,7 +5,7 @@ var ping_time = 0
 var cached_chat_call_audio = null
 
 /* 채팅창에 메시지 추가 함수 */
-var imgReg = /\/img (\S+)/i
+var imgReg = /\/(img|ㅑㅡㅎ) (\S+)/i
 var byteReg = /[\da-zA-Z-_=\|\/\*-\+\.`~'\/,\!@#\$%\^\&\(\)\[\] "]/i
 var callReg = /@(\S+)/g
 var callRegPre = /@(\S+)/
@@ -105,7 +105,7 @@ function add_message(data)
 	var img = null
 	if(imgReg.test(text))
 	{
-		var img_url = imgReg.exec(text)[1]
+		var img_url = imgReg.exec(text)[2]
 		var img = document.createElement('img')
 		img.classList.add('chat_img')
 		img.src = img_url
