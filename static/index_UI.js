@@ -620,31 +620,20 @@ function onrclick_playlist_control_panel_playlist_info_delete_button()
 
 /* 컨트롤패널 - 영상목록 - 삭제 버튼 onclick */
 function onclick_video_delete_button()
-{
-	var index = event.target.parentElement.getAttribute('ItemIndex')
-	
-	var thisPlaylist = null
-	for(var e of g_playlist_info_list)
-	{
-		if(e.Id == g_playlist_control_panel_current_playlist_id)
-		{
-			thisPlaylist = e
-			break
-		}
-	}
-
+{	
+	var thisPlaylist = g_playlist_info_list.find(e => e.Id == g_playlist_control_panel_current_playlist_id)
 	if(!thisPlaylist)
 	{
 		console.log('error on onclick_video_delete_button')
 		return
 	}
 
-	var video_index = thisPlaylist.VideoList[index]
+	var video_index = eval(event.target.parentElement.getAttribute('videoIndex'))
 	var yes = confirm(format('[{0}] 영상을 삭제합니다.', g_video_info_dic[video_index].Name))
 	if(!yes)
 		return
 
-	socket.emit('delete_video', {playlist_id: thisPlaylist.Id, index: index, video_id: video_index})
+	socket.emit('delete_video', {playlist_id: thisPlaylist.Id, video_id: video_index})
 }
 
 /* 컨트롤패널 - 영상목록 - 영상 삭제버튼 onrclick */
