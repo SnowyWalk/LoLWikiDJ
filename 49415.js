@@ -1944,6 +1944,7 @@ function parse_youtube_video_data(query_result)
 		tags : item.snippet.tags,
 	}
 	video_data.title = video_data.title.replace(/(\"|\')/g, '＂')
+	video_data.author = video_data.author.replace(/(\"|\')/g, '＂')
 
 	return video_data
 }
