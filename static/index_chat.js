@@ -542,14 +542,15 @@ function chat_onpaste() {
 	if(!blob)
 		return
 	if(__is_icon)
-			chat_input.value = ''
+		chat_input.value = ''
 	var reader = new FileReader()
 	reader.onload = function(ev) { 
 		var ret = ev.target.result
 		if(__is_icon)
 			socket.emit('icon_register', ret)
 		else
-			socket.emit('chat_message', { type: 'message', message: format('/img {0}', ret) })
+			socket.emit('image_blob', ret)
+			// socket.emit('chat_message', { type: 'message', message: format('/img {0}', ret) })
 		scrollDown()
 	}
 	reader.readAsDataURL(blob)

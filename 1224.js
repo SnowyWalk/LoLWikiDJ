@@ -1247,6 +1247,42 @@ io.sockets.on('connection', function(socket)
 		io.sockets.emit('ad', { message: message, hRate: hRate })
 	})
 
+	socket.on('image_blob', async function(blob) {
+		if(!socket.name)
+			return
+
+		if(!g_users_dic[socket.name])
+		{
+			log_exception('image_blob', null, g_users_dic[socket.name])
+			return
+		}
+
+		try
+		{
+			image_data = blob.replace(/^data:image\/png;base64,/, "")
+			const writeFile = util.promisify(fs.writeFile)
+			var filename = format('{0}_{1}.png', GetDateForFilename(), Math.round(Math.random() * 10000000))
+			await writeFile(format('static/images/{0}', filename), image_data, 'base64')
+			
+			var data = {
+				type: 'message',
+				message: format('/img static/images/{0}', filename),
+				name: socket.name,
+				time: GetTime(),
+				icon_id: g_users_dic[socket.name].icon_id,
+				icon_ver: g_users_dic[socket.name].icon_ver
+			}
+
+			log('INFO', 'image_blob', format('{0}({1}) makes image -> {2}', socket.name, g_users_dic[socket.name].ip, filename))
+
+			io.sockets.emit('chat_update', data)
+		}
+		catch (exception)
+		{
+			log_exception('image_blob', blob, blob.substr(0, 10))
+		}
+	})
+
 
 	/* ============================== 롤백 on =================================== */
 
