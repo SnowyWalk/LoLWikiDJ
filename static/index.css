@@ -2052,3 +2052,18 @@ div.recent_list_video {
   color: red;
   font-weight: bold;
 }
+
+.fa-snowflake {
+	animation: fall 5s linear forwards;
+	color: #fff;
+	position: absolute;
+  z-index: 999;
+}
+
+.fa-snowflake:before{content:"\f2dc"}
+ 
+@keyframes fall {
+	to {
+		transform: translateY(90vh);
+	}
+}

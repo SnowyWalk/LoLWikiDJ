@@ -514,6 +514,20 @@ function send() {
 		return
 	}
 
+	if(message == '/snow')
+	{
+		if(g_snow_interval_id == 0)
+		{
+			g_snow_interval_id = setInterval(createSnow, 100)
+		}
+		else
+		{
+			clearInterval(g_snow_interval_id)
+			g_snow_interval_id = 0
+		}
+		return
+	}
+
 	// 서버로 message 이벤트 전달 + 데이터와 함께
 	socket.emit('chat_message', { type: 'message', message: message, tts_hash: tts_hash })
 	scrollDown()

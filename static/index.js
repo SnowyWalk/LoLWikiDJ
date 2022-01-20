@@ -50,6 +50,7 @@ var g_djs = [] // [닉네임1, 닉네임2, ..., 현재재생중인dj]
 
 /* DEBUG: 랜덤 닉네임 모드 */
 var g_setting_auto_login = false
+var g_snow_interval_id = 0 // snow기능
 
 /* 롤백 데이터 */
 const g_lol_guest_id = 'LoLWikiDJ_Guest'
@@ -298,3 +299,19 @@ window.onload = function() {
 	register_ui_tooltip_event(playlist_control_panel_playlist_info_delete_button, '이 재생목록 지우기')
 	register_ui_tooltip_event(playlist_control_panel_playlist_info_new_video_button, '새 유튜브 영상 추가\n우클릭: 유튜브 재생목록 째로 추가하기')
 }
+
+function createSnow() {
+	const snow = document.createElement('i');
+	snow.classList.add('fas');
+	snow.classList.add('fa-snowflake');
+	snow.style.left = Math.random() * window.innerWidth + 'px';
+	snow.style.animationDirection = Math.random() * 3 + 2 + 's';
+	snow.style.opacity = Math.random();
+	snow.style.fontSize = Math.random() * 10 + 10 + 'px';
+  
+	document.body.appendChild(snow);
+  
+	setTimeout(() => {
+	   snow.remove();
+	}, 6000);
+ }
