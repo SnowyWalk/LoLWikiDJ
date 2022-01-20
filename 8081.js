@@ -1224,7 +1224,9 @@ io.sockets.on('connection', function(socket)
 	/* TEST: 영상 정보 요청 */
 	socket.on('request_video_info', async function(video_id) {
 		try {
-			var response_data = await request_youtube_video(video_id).then(parse_youtube_video_data)
+			var response_data = await request_youtube_video(video_id)
+			.then(JSON.stringify)
+			//.then(parse_youtube_video_data)
 			log('INFO', 'request_video_info', response_data)
 		}
 		catch (exception)
