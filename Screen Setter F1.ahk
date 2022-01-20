@@ -4,7 +4,7 @@ SendMode Input  ; Recommended for new scripts due to its superior speed and reli
 SetWorkingDir %A_ScriptDir%  ; Ensures a consistent starting directory.
 
 
-jsList := [8080, 8081, 8082, 1557, 1224, 49415, 3939]
+jsList := [8080, 8081, 8082, 1557, 1224, 49415, 3939, 1004, 1111]
 
 f1::
 for i, e in jsList
