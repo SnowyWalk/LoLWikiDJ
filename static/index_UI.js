@@ -92,7 +92,10 @@ function resize() {
 
 
 	/* 채팅 */
-	mainchat.style.marginLeft = (window_width - mainchat_width) // 350
+	if(g_is_chat_mode)
+		mainchat.style.marginLeft = 0
+	else
+		mainchat.style.marginLeft = (window_width - mainchat_width) // 350
 	mainchat.style.height = window_height // 350
 
 	chat.style.height = (window_height - 50 - 50)

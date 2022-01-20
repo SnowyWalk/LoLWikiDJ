@@ -619,6 +619,11 @@ body {
   z-index: 1;
 }
 
+#mainchat[chat_mode] {
+  z-index: 30;
+  width: 100%;
+}
+
 /* 우측 카테고리 헤더 */
 #mainchat_header {
   height: 50px;

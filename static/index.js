@@ -70,6 +70,9 @@ var g_lol_search_mine = false
 var g_lol_same_article_prev = false
 var g_lol_write_image_data = ''
 
+/* 채팅 모드 */
+var g_is_chat_mode = false
+
 window.onload = function() {
 	g_isWindowLoaded = true
 

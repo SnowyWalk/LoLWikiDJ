@@ -528,6 +528,15 @@ function send() {
 		return
 	}
 
+	if(message == '/chat' || message == '/챗' || message == '/CHAT' || message == '/촘ㅅ' || message == '/촘ㅆ' || message == '/cot' || message == '/COT')
+	{
+		g_is_chat_mode = !g_is_chat_mode
+		mainchat.toggleAttribute('chat_mode', g_is_chat_mode)
+		mainchat.style.width = g_is_chat_mode ? '100%' : mainchat_width
+		resize()
+		return
+	}
+
 	// 서버로 message 이벤트 전달 + 데이터와 함께
 	socket.emit('chat_message', { type: 'message', message: message, tts_hash: tts_hash })
 	scrollDown()
