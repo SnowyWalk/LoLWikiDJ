@@ -1289,10 +1289,14 @@ io.sockets.on('connection', function(socket)
 	socket.on('lol_get_article_list', async function(data) {
 		var seq = data.seq
 		var cnt = data.cnt
+		var body = data.body
+		var nick = data.nick
+		var vote = data.vote
+		var android_id = data.android_id
+		var mine = data.mine
 
-		var ret = await lol_get_article_list(seq, cnt)
+		var ret = await lol_get_article_list(android_id, seq, cnt, body, nick, vote, mine)
 		socket.emit('data', ret)
-
 
 		/*
 			아이콘	icon_img
@@ -1311,8 +1315,13 @@ io.sockets.on('connection', function(socket)
 		socket.emit('lol_article_list', ret)
 	})
 
-	socket.on('lol_get_article_detail', async function(seq) {
-		var ret = await lol_get_article_detail(seq)
+	socket.on('lol_get_article_detail', async function(data) {
+		var post_seq = data.post_seq
+		var android_id = data.android_id
+		var ret = await lol_get_article_detail(android_id, post_seq)
+		var replys = await lol_get_article_replys(android_id, post_seq)
+		ret['replys'] = replys
+
 		socket.emit('data', ret)
 
 		socket.emit('lol_article_detail', ret)
@@ -1330,20 +1339,25 @@ io.sockets.on('connection', function(socket)
 		if(socket.name in g_lol_auth_dic)
 		{
 			var lulu_comment = await lol_get_lulu_comment(this_android_id)
-			log('INFO', 'lol_auth_request', format('인증번호: {0}, 룰루: {1}', g_lol_auth_dic[socket.name], lulu_comment))
-			if(lulu_comment == g_lol_auth_dic[socket.name])
+			log('INFO', 'lol_auth_request', format('인증번호: [{0}], 룰루: [{1}], [{2}]', g_lol_auth_dic[socket.name], lulu_comment, String(g_lol_auth_dic[socket.name]).length))
+			if(lulu_comment == g_lol_auth_dic[socket.name] && String(g_lol_auth_dic[socket.name]).length > 0)
 			{
+				console.log('fuck?!')
 				g_lol_auth_dic[socket.name] = ''
 				var user_info = await lol_get_user_info(this_android_id)
 				socket.emit('lol_login', [this_android_id, user_info]) // 인증성공
+
+				await db_update('Secures', format("android_id = '{0}'", this_android_id), format('IP = "{0}"', g_users_dic[socket.name].ip))
 				return
 			}
 		}
 
-		var random_code_6 = Math.round(Math.random() * 1000000)
-		g_lol_auth_dic[socket.name] = random_code_6
-		log('INFO', 'lol_auth_request', format('{0}에게 인증번호 {1} 발급', socket.name, random_code_6))
-		socket.emit('lol_auth_request', random_code_6) // 인증코드 건네줌
+		var random_code_4 = Math.round(Math.random() * 10000)
+		while(random_code_4 < 1000)
+			random_code_4 = Math.round(Math.random() * 10000)
+		g_lol_auth_dic[socket.name] = random_code_4
+		log('INFO', 'lol_auth_request', format('{0}에게 인증번호 {1} 발급', socket.name, random_code_4))
+		socket.emit('lol_auth_request', random_code_4) // 인증코드 건네줌
 	})
 
 	/* 내 정보 */
@@ -1364,9 +1378,75 @@ io.sockets.on('connection', function(socket)
 
 		await lol_write_reply(post_seq, android_id, body)
 
-		var ret = await lol_get_article_detail(post_seq)
+		var ret = await lol_get_article_detail(android_id, post_seq)
+		var replys = await lol_get_article_replys(android_id, post_seq)
+		ret['replys'] = replys
+
 		socket.emit('lol_write_reply', ret)
 	})
+
+	/* 추천 버튼 */
+	socket.on('lol_like', async function(data) {
+		var android_id = data.android_id
+		var post_seq = data.post_seq
+
+		log('INFO', 'lol_like', format('{0}가 {1} 계정으로 추천 누름 -> 글번호 {2}', socket.name, android_id, post_seq))
+
+		var isSuccess = await lol_like(post_seq, android_id)
+		socket.emit('lol_like', isSuccess)
+	})
+
+	/* 댓글 삭제 버튼 */
+	socket.on('lol_delete_reply', async function(data) {
+		var android_id = data.android_id
+		var post_seq = data.post_seq
+		var reply_seq = data.reply_seq
+
+		log('INFO', 'lol_delete_reply', format('{0}가 {1} 계정으로 댓글 삭제 -> 글번호 {2}, 댓글번호 {3}', socket.name, android_id, post_seq, reply_seq))
+		await lol_delete_reply(android_id, post_seq, reply_seq)
+
+		var ret = await lol_get_article_detail(android_id, post_seq)
+		var replys = await lol_get_article_replys(android_id, post_seq)
+		ret['replys'] = replys
+
+		socket.emit('lol_delete_reply', ret)
+	})
+
+	/* 글 쓰기 */
+	socket.on('lol_write', async function(data) {
+		var android_id = data.android_id
+		var subject = data.subject
+		var body = data.body
+		var youtube_url = data.youtube_url
+		var image = data.image
+		
+		log('INFO', 'lol_write', format('{0}가 {1} 계정으로 글 작성 -> 제목: {2}, 내용: {3}, 유튜브주소: {4} {5}', socket.name, android_id, subject.replace('\n', '\\n'), body.replace('\n', '\\n'), youtube_url, (image ? '(짤 첨부)' : '')))
+
+		await lol_write(android_id, subject, body, youtube_url, image)
+
+		socket.emit('lol_write')
+	})
+
+	/* 글 삭제 */
+	socket.on('lol_delete', async function(data) {
+		var android_id = data.android_id
+		var post_seq = data.post_seq
+
+		log('INFO', 'lol_delete', format('{0}가 {1} 계정으로 글 삭제 -> 글번호 {2}', socket.name, android_id, post_seq))
+
+		await lol_delete(android_id, post_seq)
+
+		socket.emit('lol_delete')
+	})
+
+	// /* 해당 유저의 작성 글 보기 */
+	// socket.on('lol_user_article', async function(data) {
+	// 	var android_id = data.android_id
+	// 	var post_seq = data.post_seq
+
+	// 	await lol_get_android_id_from_article(post_seq)
+	// })
+
 }) 
 
 function update_users()
@@ -1454,6 +1534,10 @@ function GetTime()
 function GetDate() 
 {
 	return new Date().addHours(9).toFormat('YYYY-MM-DD HH24:MI:SS')
+}
+function GetDateForFilename() 
+{
+	return new Date().addHours(9).toFormat('YYYY-MM-DD_HH24.MI.SS')
 }
 
 
@@ -1819,6 +1903,14 @@ function shuffle(array) {
 	}
   }
 
+function get_random_code(len)
+{
+	var ret = ''
+	for(var i=0; i<len; ++i)
+		ret += Math.floor(Math.random() * 10)
+	return ret
+}
+
 /* ================================== QUERY =========================================*/
 
 /* 유튜브 영상 정보 조회 쿼리(Promise) */
@@ -1976,15 +2068,29 @@ async function make_tts(text, tts_hash, target_nick, voice_name)
 
 /* ========================================== 롤백 =============================================================== */
 
-async function lol_get_article_list(seq = 0, cnt = 30)
+/* 글 목록 검색 */
+async function lol_get_article_list(android_id, seq = 0, cnt = 30, search_body = '', search_nick = '', search_vote = false, search_mine = false)
 {
 	var articles = await lol_POST('http://lolwiki.kr/freeboard/get_post.php', 
-		{ boardid: 'freeboard', android_id: android_id, seq: seq, search: '', cnt: cnt, isvote: false, iszzal: false, ismine: false, nickSearch: '' } )
+		{ boardid: 'freeboard', android_id: android_id, seq: seq, search: search_body, cnt: cnt, isvote: search_vote, iszzal: false, ismine: search_mine, nickSearch: search_nick } )
 		.catch(err => console.log('lol_get_article_list error', err))
 		.then(res => res.replace(/\r/g, ''))
 		.then(res => res.replace(/\n/g, '\\r\\n'))
+		.then(res => res.replace(/\},\]/g, '}]'))
+
+	const writeFile = util.promisify(fs.writeFile)
+	await writeFile('asd.txt', articles)
+		
+	articles = await lol_POST('http://lolwiki.kr/freeboard/get_post.php', 
+		{ boardid: 'freeboard', android_id: android_id, seq: seq, search: search_body, cnt: cnt, isvote: search_vote, iszzal: false, ismine: search_mine, nickSearch: search_nick } )
+		.catch(err => console.log('lol_get_article_list error', err))
+		.then(res => res.replace(/\r/g, ''))
+		.then(res => res.replace(/\n/g, '\\r\\n'))
+		.then(res => res.replace(/\},\]/g, '}]'))
 		.then(JSON.parse)
 		.catch(err => console.log('lol_get_article_list JSON parse error', err))
+
+
 
 	return articles['results'].map(e => ({ icon_img: e['icon_img'], 
 											post_title: e['post_title'], 
@@ -2004,9 +2110,9 @@ async function lol_get_article_list(seq = 0, cnt = 30)
 }
 
 /* 글 내용 받아오기 */
-async function lol_get_article_detail(seq)
+async function lol_get_article_detail(android_id, seq)
 {
-	var detail = await lol_GET('http://lolwiki.kr/freeboard/get_post_detail_2020.php', { boardid: 'freeboard', post_seq: seq} )
+	var detail = await lol_GET('http://lolwiki.kr/freeboard/get_post_detail_2020.php', { boardid: 'freeboard', post_seq: seq, android_id: android_id } )
 		.then(res => res.trim())
 		.then(res => res.replace(newlineHTMLReg, '\\r\\n'))
 		.then(res => res.replace(/\n/g, '\\r\\n'))
@@ -2015,20 +2121,14 @@ async function lol_get_article_detail(seq)
 		.then(res => res.replace(/&gt;/g, '>'))
 		.then(JSON.parse)
 		.then(e => e['results'][0])
-
-	var reply = await lol_GET('http://lolwiki.kr/freeboard/get_reply_2020.php', 
-		{ boardid: 'freeboard', post_seq: seq, android_id: android_id} )
-		.then(res => res.replace(/\n/g, '\\r\\n'))
-		.then(res => res.replace(/'/g, '"'))
-		.then(JSON.parse)
-
+	
 	return { post_title: detail['post_title'],
 		post_text: detail['post_text'],
 		post_seq: detail['post_seq'],
 		post_date: detail['post_date'],
 		likes: detail['likes'],
 		pic_new: detail['pic_new'],
-		pic_multi: detail['pic_multi'],
+		pic_multi: detail['pic_multi'].length > 0 ? detail['pic_multi'] : detail['pic_multi_fix'],
 		youtube_url: detail['youtube_url'],
 		views: detail['views'],
 		stack: detail['stack'],
@@ -2038,9 +2138,22 @@ async function lol_get_article_detail(seq)
 		badge_use: detail['badge_use'],
 		doodlrurls: detail['doodlrurls'],
 		fixedpic: detail['fixedpic'],
+		my_post: detail['my_post']
 	
-		replys: reply['results']
+		// replys: reply['results']
 	}
+}
+
+/* 댓글 내용 받아오기 */
+async function lol_get_article_replys(android_id, post_seq) 
+{
+	var reply = await lol_GET('http://lolwiki.kr/freeboard/get_reply_2020.php', 
+		{ boardid: 'freeboard', post_seq: post_seq, android_id: android_id} )
+		.then(res => res.replace(/\n/g, '\\r\\n'))
+		.then(res => res.replace(/'/g, '"'))
+		.then(JSON.parse)
+
+	return reply['results']
 }
 
 /* 글 post_seq로부터 글작성자의 android_id 얻기 */
@@ -2092,6 +2205,64 @@ async function lol_write_reply(post_seq, android_id, body)
 {
 	await lol_POST('http://lolwiki.kr/freeboard/insert_reply_pic.php', 
 		{ boardid: 'freeboard', post_seq: post_seq, android_id: android_id, text: encodeURI(body) } )
+}
+
+/* 추천 버튼 */
+async function lol_like(post_seq, android_id) 
+{
+	var ret = await lol_POST('http://lolwiki.kr/freeboard/like_post.php',
+		{ boardid: 'freeboard',  post_seq: post_seq, android_id: android_id })
+	
+	if(ret == 'likes')
+		return true
+	return false // 'exist'
+}
+
+/* 댓글 삭제 버튼 */
+async function lol_delete_reply(android_id, post_seq, reply_seq)
+{
+	await lol_POST('http://lolwiki.kr/freeboard/delete_reply.php',
+		{ boardid: 'freeboard', post_seq: post_seq, reply_seq: reply_seq ,android_id: android_id })
+}
+
+/* 글 쓰기 */
+async function lol_write(android_id, subject, body, youtube_url, image='')
+{
+	var image_filename = '' 
+	if(image.length > 0)
+	{
+		image_filename = lol_make_image_filename()
+		var res = await lol_POST('http://lolwiki.kr/freeboard/uploads/php_upload_new.php',
+			{ image: image, 
+				file_name: image_filename,
+				doodlr: 0 })
+	}
+
+	await lol_POST('http://lolwiki.kr/freeboard/insert_post_multi_2020.php',
+		{ boardid: 'freeboard', app: 'DEMACIA', notice: '0', lolmovie: '101',
+			android_id: android_id, 
+			title: decodeURI(decodeURI(subject)), 
+			text: decodeURI(decodeURI(body)),
+			youtube_url: decodeURI(youtube_url),
+			pic_new: image_filename } )
+}
+
+function lol_make_image_filename()
+{
+	// return 'img_-9189942_20220117111041.jpg'
+	// img_1171380_20220116182050.jpg
+	var random_code_7 = get_random_code(7)
+	var now = new Date().toFormat('YYYYMMDDHH24MISS')
+	return format('img_{0}_{1}.jpg', random_code_7, now)
+}
+
+/* 글 삭제 */
+async function lol_delete(android_id, post_seq)
+{
+	await lol_POST('http://lolwiki.kr/freeboard/delete_post.php',
+		{ boardid: 'freeboard',
+		post_seq: post_seq,
+		android_id: android_id })
 }
 
 async function lol_GET(url, body = {}) {

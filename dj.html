@@ -294,9 +294,25 @@
   <!-- 롤백 패널 -->
   <div id="lol_panel" class="nanum">
     <div id="lol_lpanel" class="no-drag">
-      <div id="lol_lpanel_account">로그인 해주세요.</div>
+      <div id="lol_lpanel_header">
+        <div id="lol_lpanel_account">로그인 해주세요.</div>
+        <div id="lol_lpanel_refresh"></div>
+      </div>
       <div id="lol_lpanel_board">
         <ul id="lol_lpanel_board_list"></ul>
+      </div>
+      <div id="lol_lpanel_search_button"></div>
+      <div id="lol_lpanel_write_button"></div>
+      <div id="lol_lpanel_search_menu">
+        <div id="lol_lpanel_search_menu_background">
+          <div id="lol_lpanel_search_menu_inner_background">
+            <div id="lol_lpanel_search_menu_button_all" menu-button>전체글</div>
+            <div id="lol_lpanel_search_menu_button_vote" menu-button>추천순</div>
+            <div id="lol_lpanel_search_menu_button_mine" menu-button>내 글</div>
+            <div id="lol_lpanel_search_menu_button_search" menu-button>글 검색</div>
+            <div id="lol_lpanel_search_menu_button_nick" menu-button>닉네임</div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -311,6 +327,7 @@
           </div>
           <div id="lol_rpanel_header_button" class="no-drag">[차단하기]</div>
         </div>
+        <div id="lol_rpanel_refresh"></div>
       </div>
       <div id="lol_rpanel_body">
         <div id="lol_rpanel_body_youtube_container">
@@ -323,7 +340,12 @@
         <img id="lol_rpanel_body_img4"></img>
         <div id="lol_rpanel_body_body"></div>
         <div id="lol_rpanel_body_date">시간</div>
-        <div id="lol_rpanel_body_like" style="display:none;"><div id="lol_rpanel_body_like_count">0</div></div>
+        <div id="lol_rpanel_body_like" class="no-drag">
+          <div id="lol_rpanel_body_like_count">0</div>
+        </div>
+        <div id="lol_rpanel_body_buttons" class="no-drag">
+          <div id="lol_rpanel_body_delete_button">삭제</div>
+        </div>
         <div id="lol_rpanel_reply">
           <div id="lol_rpanel_reply_board">
             <ul id="lol_rpanel_reply_board_list"></ul>
@@ -335,6 +357,23 @@
         </div>
       </div>
     </div>
+
+    <div id="lol_write">
+      <input type="text" id="lol_write_subject" placeholder="제목 입력">
+      <textarea id="lol_write_body" placeholder="음란물 게재시 이용에 제재를 가할 수 있으며 법적 조치를 취할 수 있습니다."></textarea>
+      <div image-holder>
+        <input type="text" id="lol_write_image_placeholder" placeholder="여기에 붙여넣기(Ctrl+V)로 이미지 첨부" maxlength=0>
+        <img id="lol_write_image">
+        <div id="lol_write_image_guide">이미지 첨부 중... 기다려주셈</div>
+        <canvas id="lol_write_canvas"></canvas>
+      </div>
+      <input type="text" id="lol_write_youtube" placeholder="영상 주소 입력">
+      <div id="lol_write_buttons">
+        <div id="lol_write_cancel">취소</div>
+        <div id="lol_write_confirm">등록</div>
+      </div>
+    </div>
+
   </div>
 
   <script src="$_localhost/static/index.js?ver=$_version"></script>
@@ -343,6 +382,7 @@
   <script src="$_localhost/static/index_chat.js?ver=$_version"></script>
   <script src="$_localhost/static/index_utils.js?ver=$_version"></script>
   <script src="$_localhost/static/index_UI.js?ver=$_version"></script>
+  <script src="$_localhost/static/index_lol.js?ver=$_version"></script>
   <script src="$_localhost/static/index_yt_plugin.js?ver=$_version"></script>
   <script src="$_localhost/static/index_livechat.js?ver=$_version"></script>
   <!-- <link rel="stylesheet" type="text/css" href="$_localhost/node_modules/jquery-contextmenu/dist/jquery.contextMenu.min.css">

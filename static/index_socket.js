@@ -297,26 +297,47 @@ function destroy_self()
 /* ========================== 롤백 ======================================== */
 
 socket.on('lol_article_list', function(data) {
+	console.log('scroll_seq:', g_lol_article_scroll_seq, 'data:', data.length, 'result:', g_lol_article_scroll_seq + data.length)
 	g_lol_article_scroll_seq += data.length
 	g_lol_article_list = g_lol_article_list.concat(data)
 	
 	lol_lpanel_update()
+	lol_lpanel_refresh.style.display = 'block'
+	lol_lpanel_search_menu.style.display = 'none'
+
+	if(g_lol_lpanel_scroll_top_switch)
+	{
+		g_lol_lpanel_scroll_top_switch = false
+		lol_lpanel_board.scroll(0, 0)
+	}
 })
 
 socket.on('lol_article_detail', function(data) {
+	if(data.post_seq.length == 0)
+		return
+
+	if(g_lol_current_detail && g_lol_current_detail['post_seq'] == data.post_seq)
+		g_lol_same_article_prev = true
+	else
+		g_lol_same_article_prev = false
+
 	g_lol_current_detail = data
 
+	lol_write_panel_toggle(false)
+	lol_rpanel_refresh.style.display = 'block'
 	lol_rpanel_update()
 })
 
 socket.on('lol_auth_request', function(code) {
-	lol_rpanel_header_button.innerHTML = format('[룰루에게 <tt><i>{0}</i></tt> 을 교육하고 다시 눌러주세요.]', code)
+	lol_rpanel_header_button.innerHTML = format('[룰루에게 <tt>{0}</tt> 을 교육하고 다시 눌러주세요.]', code)
 })
 
 socket.on('lol_login', function(android_id_and_user_info) {
 	g_lol_android_id = android_id_and_user_info[0]
 	g_lol_user_info = android_id_and_user_info[1]
 	localStorage.setItem(g_storage_lol_key, g_lol_android_id)
+
+	lol_lpanel_write_button.style.display = 'block'
 
 	lol_lpanel_update()
 	lol_rpanel_update()
@@ -330,9 +351,47 @@ socket.on('lol_user_info', function(user_info) {
 })
 
 socket.on('lol_write_reply', function(data) {
+	if(g_lol_current_detail && g_lol_current_detail['post_seq'] == data.post_seq)
+		g_lol_same_article_prev = true
+	else
+		g_lol_same_article_prev = false
+
 	g_lol_current_detail = data
 	lol_rpanel_reply_board_input.value = ''
 
 	lol_rpanel_update()
 	lol_rpanel_body.scroll(0, 99999999)
+})
+
+socket.on('lol_like', function(isSuccess) {
+	if(!isSuccess)
+		return
+
+	g_lol_current_detail['likes'] = eval(g_lol_current_detail['likes']) + 1
+	lol_rpanel_update()
+})
+
+socket.on('lol_delete_reply', function(data) {
+	if(g_lol_current_detail && g_lol_current_detail['post_seq'] == data.post_seq)
+		g_lol_same_article_prev = true
+	else
+		g_lol_same_article_prev = false
+
+	g_lol_current_detail = data
+
+	lol_rpanel_update()
+	// lol_rpanel_body.scroll(0, 99999999)
+})
+
+socket.on('lol_write', function() {
+	lol_write_subject.value = ''
+	lol_write_body.value = ''
+	lol_write_youtube.value = ''
+
+	lol_write_panel_toggle(false)
+	lol_onclick_aritcle_list_refresh()
+})
+
+socket.on('lol_delete', function() {
+	alert('삭제 되었습니다.')
 })

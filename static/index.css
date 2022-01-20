@@ -69,6 +69,7 @@
   --롤백_배경색: white;
   --롤백_보더색: rgb(244,244,244);
   --롤백_호버색: yellow;
+  --롤백_글쓰기_내_버튼_호버색: var(--롤백_배경색);
 
   color: var(--글자색);
 }
@@ -142,6 +143,7 @@
   --롤백_배경색: var(--배경색);
   --롤백_보더색: var(--보더색);
   --롤백_호버색: var(--보더색);
+  --롤백_글쓰기_내_버튼_호버색: var(--배경색);
 
   color: var(--글자색);
 }
@@ -1469,22 +1471,44 @@ div.recent_list_video {
   height: 100%;
   border-right: 1px solid var(--보더색);
   box-sizing: border-box;
-  overflow-y: auto;
-  overflow-x: clip;
   flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 #lol_rpanel {
   flex-grow: 1;
 }
 
-#lol_lpanel_account {
+#lol_lpanel_header {
   padding: 5px;
   border-bottom: 1px solid var(--롤백_보더색);
+  display: flex;
+  align-items: center;
+  margin-left: 10px;
+  height: 50px;
+}
+
+#lol_lpanel_account {
+  flex-grow: 1;
+  flex-shrink: 0;
+}
+
+#lol_lpanel_refresh {
+  flex-grow: 0;
+  flex-shrink: 1;
+  background-image: url('refresh.png');
+  width: 38;
+  height: 38;
+  background-repeat: no-repeat;
+  background-size: contain;
+  cursor: pointer;
 }
 
 #lol_lpanel_board {
-  
+  overflow-y: auto;
+  overflow-x: clip;
+  height: calc(100% - 50px);
 }
 
 #lol_lpanel_board_list {
@@ -1557,6 +1581,86 @@ div.recent_list_video {
   background-color: var(--롤백_호버색);
 }
 
+#lol_lpanel_search_button {
+  width: 60px;
+  height: 60px;
+  background-color: rgb(0, 133, 119);
+  border-radius: 50%;
+  z-index: 31;
+  position: absolute;
+  bottom: 20px;
+  left: 20px;
+  background-image: url('search_button.png');
+  background-size: 60%;
+  background-repeat: no-repeat;
+  background-position: center;
+  cursor: pointer;
+}
+
+#lol_lpanel_write_button {
+  width: 60px;
+  height: 60px;
+  background-color: rgb(0, 133, 119);
+  border-radius: 50%;
+  z-index: 31;
+  position: absolute;
+  bottom: 20px;
+  left: 390px;
+  background-image: url('write_button.png');
+  background-size: 60%;
+  background-repeat: no-repeat;
+  background-position: center;
+  cursor: pointer;
+}
+
+#lol_lpanel_search_menu {
+  position: absolute;
+  display: none;
+  z-index: 32;
+  top: 0px;
+  left: 0px;
+  width: 485px;
+  height: 100%;
+}
+
+#lol_lpanel_search_menu_background {
+  background-color: rgb(0,0,0,0.75);
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+#lol_lpanel_search_menu_inner_background {
+  display: flex;
+  width: 80%;
+  background-color: black;
+  border: 2px solid gray;
+  flex-direction: column;
+  align-items: center;
+  margin-right: 16px;
+  padding-top: 50px;
+  padding-bottom: 50px;
+}
+
+#lol_lpanel_search_menu [menu-button] {
+  border: 1px solid rgb(43,46,52);
+  width: 70%;
+  height: 65px;
+  margin-top: 8px;
+  margin-bottom: 8px;
+  text-align: center;
+  line-height: 65px;
+  font-size: larger;
+  font-weight: bold;
+  background: linear-gradient(to bottom,rgb(82,90,101),rgb(31,38,46));
+  border-radius: 5px;
+  cursor: pointer;
+  color: rgb(204, 204, 204);
+}
+
 #lol_rpanel_header {
   display: flex;
   margin: 15px;
@@ -1570,6 +1674,7 @@ div.recent_list_video {
 
 #lol_rpanel_header > [detail_info] {
   margin-left: 10px;
+  flex-grow: 1;
 }
 
 #lol_rpanel_header > [detail_info] > [spec_info] {
@@ -1601,6 +1706,17 @@ div.recent_list_video {
   cursor: pointer;
 }
 
+#lol_rpanel_refresh {
+  flex-grow: 0;
+  flex-shrink: 1;
+  background-image: url('refresh.png');
+  width: 38;
+  height: 38;
+  background-repeat: no-repeat;
+  background-size: contain;
+  cursor: pointer;
+}
+
 #lol_rpanel_body {
   margin: 15px;
   margin-top: 20px;
@@ -1617,6 +1733,7 @@ div.recent_list_video {
   display: none;
   flex-direction: column;
   align-items: center;
+  flex-shrink: 0;
 }
 
 #lol_rpanel_body_instant_queue {
@@ -1633,17 +1750,90 @@ div.recent_list_video {
   margin-right: 10px;
 }
 
+#lol_rpanel_body_body {
+  margin-top: 5px;
+}
+
 #lol_rpanel_body_img1 {
-  width: calc(100% - 20px);
+  width: 98%;
+  cursor: zoom-out;
 }
 #lol_rpanel_body_img2 {
-  width: calc(100% - 20px);
+  width: 98%;
+  cursor: zoom-out;
 }
 #lol_rpanel_body_img3 {
-  width: calc(100% - 20px);
+  width: 98%;
+  cursor: zoom-out;
 }
 #lol_rpanel_body_img4 {
-  width: calc(100% - 20px);
+  width: 98%;
+  cursor: zoom-out;
+}
+
+#lol_rpanel_body_img1[small] {
+  width: 50%;
+  margin-left: 25%;
+  cursor: zoom-in;
+}
+#lol_rpanel_body_img2[small] {
+  width: 50%;
+  margin-left: 25%;
+  cursor: zoom-in;
+}
+#lol_rpanel_body_img3[small] {
+  width: 50%;
+  margin-left: 25%;
+  cursor: zoom-in;
+}
+#lol_rpanel_body_img4[small] {
+  width: 50%;
+  margin-left: 25%;
+  cursor: zoom-in;
+}
+
+#lol_rpanel_body_like {
+  background-image: url('like_frame.png');
+  background-repeat: no-repeat;
+  flex-shrink: 0;
+  align-self: center;
+  width: 100px;
+  height: 67px;
+  background-size: contain;
+  margin-top: 15px;
+  cursor: pointer;
+}
+
+#lol_rpanel_body_like_count {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  text-align: center;
+  font-weight: bold;
+  top: 40px;
+  color: white;
+}
+
+/* 글삭제버튼, 쪽지버튼 등 컨테이너 */
+#lol_rpanel_body_buttons {
+  display: flex;
+  margin-top: 5px;
+}
+
+
+/* 글 삭제 버튼 */
+#lol_rpanel_body_delete_button {
+  display: none;
+  width: 67px;
+  border: 1px solid gray;
+  background-color: white;
+  text-align: center;
+  color: red;
+  font-weight: bold;
+  height: 35px;
+  line-height: 35px;
+  border-radius: 6px;
+  cursor: pointer;
 }
 
 #lol_rpanel_reply {
@@ -1672,7 +1862,10 @@ div.recent_list_video {
   display: flex;
   flex-direction: column;
   margin-left: 8px;
+  width: 100%;
 }
+
+
 
 .lol_reply_list_item [nick] {
   font-weight: bold;
@@ -1688,14 +1881,24 @@ div.recent_list_video {
   margin-left: 10px;
   border-left: 2px solid var(--롤백_보더색);
   padding-left: 10px;
+  flex-grow: 1;
+}
+
+.lol_reply_list_item [del] {
+  cursor: pointer;
 }
 
 .lol_reply_list_item [reply_body] [img] {
   max-width: 100%;
+  cursor: zoom-out;
+}
+.lol_reply_list_item [reply_body] [img][small]{
+  max-width: 50%;
+  cursor: zoom-in;
 }
 
 #lol_rpanel_reply_board_write_container {
-  display: flex;
+  display: none;
   margin-right: 15px;
   margin-bottom: 5px;
 }
@@ -1720,3 +1923,132 @@ div.recent_list_video {
   color: var(--글자색);
 }
 
+/* 글쓰기 컨테이너 */
+#lol_write {
+  display: none;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-content: stretch;
+  width: 100%;
+  height: 100%;
+  overflow-y: auto;
+}
+
+/* 글쓰기 - 제목 */
+#lol_write_subject {
+  margin: 15px;
+  font-size: large;
+  height: 40px;
+}
+
+/* 글쓰기 - 내용 */
+#lol_write_body {
+  min-height: 300px;
+  font-size: large;
+  margin: 15px;
+  margin-top: 0px;
+  resize: vertical;
+  font-family: 'Nanum Gothic';
+}
+
+/* 글쓰기 - 영상 주소 */
+#lol_write_youtube {
+  margin: 15px;
+  height: 30px;
+}
+
+/* 글쓰기 - 버튼 컨테이너 */
+#lol_write_buttons {
+  display: flex;
+  margin: 15px;
+}
+
+/* 글쓰기 - 취소 버튼 */
+#lol_write_cancel {
+  flex-grow: 1;
+  background: linear-gradient(0deg, rgb(141,141,141), rgb(184,184,184));
+  color: white;
+  font-weight: bold;
+  font-size: large;
+  margin-right: 20px;
+  border-radius: 7px;
+  height: 70px;
+  line-height: 70px;
+  border: 1px solid var(--롤백_글쓰기_내_버튼_호버색);
+  text-align: center;
+  cursor: pointer;
+}
+
+/* 글쓰기 - 등록 버튼 */
+#lol_write_confirm {
+  flex-grow: 1;
+  background: linear-gradient(0deg, rgb(33,50,94), rgb(60,98,196));
+  color: white;
+  font-weight: bold;
+  font-size: large;
+  margin-left: 20px;
+  border-radius: 7px;
+  height: 70px;
+  line-height: 70px;
+  border: 1px solid var(--롤백_글쓰기_내_버튼_호버색);
+  text-align: center;
+  cursor: pointer;
+}
+
+/* 글쓰기 - 이미지 첨부 부모 */
+#lol_write [image-holder] {
+  display: flex;
+  margin: 20px;
+}
+
+/* 글쓰기 - 이미지 첨부 가이드 라벨 (사진 미 첨부) */
+#lol_write_image_placeholder {
+  min-width: 400px;
+  min-height: 200px;
+  text-align: center;
+  border: 1px dashed red;
+  cursor: pointer;
+  background: transparent;
+  caret-color: transparent;
+  font-size: large;
+}
+#lol_write_image_placeholder::placeholder {
+  color: red;
+  font-weight: bold;
+}
+
+#lol_write_image_guide {
+  display: none;
+  color: red;
+  font-weight: bold;
+  align-self: flex-end;
+  margin-left: 10px;
+}
+
+#lol_write_canvas {
+  display: none;
+}
+
+/* 위아래 가운데 정렬을 위함 */
+/* #lol_write_image_placeholder::before { 
+  content: ' ';
+  display: inline-block;
+  height: 100%;
+  vertical-align: middle;
+} */
+
+/* 글쓰기 - 첨부 이미지 미리보기 */
+#lol_write_image {
+  display: none;
+  min-width: 20px;
+  min-height: 20px;
+  max-width: 100%;
+  max-height: 100%;
+  border: 2px solid red;
+  cursor: pointer;
+}
+#lol_write_image {
+  content: '이미지가 첨부되었습니다.';
+  color: red;
+  font-weight: bold;
+}
