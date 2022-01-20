@@ -47,6 +47,7 @@
   --영상주소복사_글자색: -webkit-link; /* cornflowerblue */
 
   --플레이리스트_배경색: lightskyblue; /* rgb(33, 33, 33) */
+  --플레이리스트_검색창_보더: 2px solid cadetblue;
   --플레이리스트_좌측_배경색_짝수: rgb(137, 209, 232); /* rgb(33, 33, 33) */
   --플레이리스트_좌측_배경색_홀수: rgb(96, 197, 230); /* rgb(33, 33, 33) */
   --플레이리스트_좌측_배경색_선택: rgb(160, 224, 57); /* rgb(130, 130, 130) */
@@ -121,6 +122,7 @@
   --영상주소복사_글자색: cornflowerblue;
 
   --플레이리스트_배경색: rgb(33, 33, 33);
+  --플레이리스트_검색창_보더: 2px solid transparent;
   --플레이리스트_좌측_배경색_짝수: rgb(33, 33, 33);
   --플레이리스트_좌측_배경색_홀수: rgb(33, 33, 33);
   --플레이리스트_좌측_배경색_선택: rgb(130, 130, 130);
@@ -1027,9 +1029,63 @@ div.recent_list_video {
   border-color: var(--보더색);
 }
 
+/* 재생목록 리스트 컨테이터 */
+#playlist_control_panel_playlist_container {
+  display: flex;
+  flex-direction: column;
+  align-content: stretch;
+}
+
+/* 재생목록 검색 컨테이너 */
+#playlist_control_panel_playlist_search {
+  display: flex;
+  height: 48px;
+  align-items: center;
+  border-bottom: var(--플레이리스트_검색창_보더);
+  background-color: var(--배경색);
+  flex-shrink: 0;
+}
+
+/* 재생목록 검색 아이콘 */
+#playlist_control_panel_playlist_search [search-icon] {
+  background-image: url('search.png');
+  width: 32px;
+  height: 32px;
+  background-size: 60%;
+  background-position: center;
+  background-repeat: no-repeat;
+  margin-left: 6px;
+}
+
+/* 재생목록 검색 input */
+#playlist_control_panel_playlist_search_input {
+  float: right;
+  outline: none;
+  background-color: transparent;
+  border-top: 0px;
+  border-left: 0px;
+  border-right: 0px;
+  flex-grow: 1;
+  color: var(--글자색);
+}
+
+/* 재생목록 검색 x버튼 */
+#playlist_control_panel_playlist_search_close_button {
+  background-image: url(x_button.png);
+  width: 16px;
+  height: 16px;
+  padding: 5px;
+  background-repeat: no-repeat;
+  background-position: center;
+  cursor: pointer;
+  margin-left: 2px;
+  margin-right: 5px;
+}
+
 /* 재생목록 리스트 */
 #playlist_control_panel_playlist_header {
   overflow-y: auto;
+  flex-grow: 1;
 }
 
 .playlist_button {
@@ -1209,8 +1265,8 @@ div.recent_list_video {
 }
 
 .videolist_button {
+  display: flex;
   height: 80px;
-  clear: both;
 }
 
 .videolist_button.even {
@@ -1222,21 +1278,29 @@ div.recent_list_video {
 }
 
 .videolist_button > img {
-  float: left;
   height: 79px;
   width: 140.438px;
   margin: 5px;
   margin-top: 0px;
   margin-bottom: 1px;
+  flex-shrink: 0;
 }
 
 .videolist_button > .text {
-  float: left;
-  line-height: 70px;
-  margin: 5px;
+  flex-grow: 1;
+  flex-shrink: 1;
+  line-height: 80px;
+  margin-left: 5px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.videolist_button > .playtime {
+  flex-grow: 1000000;
+  flex-shrink: 0;
+  line-height: 80px;
+  padding-left: 6px;
 }
 
 .delete_button {
@@ -1248,6 +1312,7 @@ div.recent_list_video {
   background-repeat: no-repeat;
   background-position: center;
   cursor: pointer;
+  flex-shrink: 0;
 }
 
 .sort_button {
@@ -1259,6 +1324,7 @@ div.recent_list_video {
   background-repeat: no-repeat;
   background-position: center;
   cursor: pointer;
+  flex-shrink: 0;
 }
 
 .sort_button.top {
@@ -1267,7 +1333,6 @@ div.recent_list_video {
 
 .sort_button.down {
   background-image: url('arrow_invert.png');
-  /* transform: scaleY(-1); */
 }
 
 .sort_button.down.top {
@@ -1283,6 +1348,7 @@ div.recent_list_video {
   background-repeat: no-repeat;
   background-position: center;
   cursor: pointer;
+  flex-shrink: 0;
 }
 
 .sort_button:hover:not(.top)::after {

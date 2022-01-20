@@ -123,9 +123,10 @@ window.onload = function() {
 	video_info_volume_slider.onchange = onchange_video_info_volume_slider
 	video_info_volume_slider.oninput = onchange_video_info_volume_slider
 
-	current_playlist_info_box.addEventListener('contextmenu', _ => {
-		event.preventDefault()
+	current_playlist_info_box.addEventListener('contextmenu', onrclick_playlist_info_box)
 
+	playlist_control_panel_playlist_search_input.oninput = oninput_playlist_control_panel_search_input
+	playlist_control_panel_playlist_search_close_button.onclick = onclick_playlist_control_panel_search_close_button
 
 	lol_lpanel_board.onscroll = lol_lpanel_board_onscroll
 	lol_lpanel_refresh.onclick = lol_onclick_aritcle_list_refresh

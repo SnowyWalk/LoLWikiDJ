@@ -1,7 +1,7 @@
 /* 캐싱 */
 var g_progress_bar_width = 0
 var mainchat_width = 350
-var playlist_control_panel_playlist_header_width = 300
+var playlist_control_panel_playlist_container_width = 300
 var playlist_control_panel_videolist_header_top = 100 // playlist_control_panel_playlist_info_height 와 동일
 
 var current_theme = 'default' // [default, dark]
@@ -54,9 +54,9 @@ function initial_resize()
 	etc_box.style.height = bottom_height
 
 	/* 재생목록 컨트롤 패널 */
-	playlist_control_panel_playlist_header.style.width = playlist_control_panel_playlist_header_width
-	playlist_control_panel_videolist_header.style.left = 300 // 위와 같아야 함.
-	playlist_control_panel_playlist_info.style.left = 300 // 위와 같아야 함.
+	playlist_control_panel_playlist_container.style.width = playlist_control_panel_playlist_container_width
+	playlist_control_panel_videolist_header.style.left = playlist_control_panel_playlist_container_width // 위와 같아야 함.
+	playlist_control_panel_playlist_info.style.left = playlist_control_panel_playlist_container_width // 위와 같아야 함.
 	playlist_control_panel_playlist_info.style.height = 100
 
 	resize()
@@ -68,7 +68,6 @@ function initial_resize()
 function resize() {
 	var window_width = window.innerWidth
 	var window_height = window.innerHeight
-
 	var bottom_height = 86 // 하단 박스 높이
 
 	/* 로그인 창 */
@@ -181,13 +180,13 @@ function control_panel_resize()
 	playlist_control_panel.style.height = (window_height - bottom_height)
 
 	// 재생목록 헤더 크기 조절
-	playlist_control_panel_playlist_header.style.height = (window_height - bottom_height - 1)
+	playlist_control_panel_playlist_container.style.height = (window_height - bottom_height - 1)
 
 	// 재생목록 인포 크기 조절
-	playlist_control_panel_playlist_info.style.width = (window_width - playlist_control_panel_playlist_header_width - mainchat_width - 1)
+	playlist_control_panel_playlist_info.style.width = (window_width - playlist_control_panel_playlist_container_width - mainchat_width - 1)
 
 	// 영상 목록 헤더 크기 조절
-	playlist_control_panel_videolist_header.style.width = (window_width - playlist_control_panel_playlist_header_width - mainchat_width - 1)
+	playlist_control_panel_videolist_header.style.width = (window_width - playlist_control_panel_playlist_container_width - mainchat_width - 1)
 	playlist_control_panel_videolist_header.style.height = (window_height - bottom_height - playlist_control_panel_videolist_header_top - 1)
 
 	// 영상 목록 헤더 타이틀 길이 조절
@@ -201,11 +200,11 @@ function control_panel_resize()
 	var w3 = 96
 	var w4 = 96
 	var w5 = 185
-	playlist_control_panel_playlist_info_name.style.width = (window_width - playlist_control_panel_playlist_header_width - mainchat_width - 1) - w1 - w2 - w3 - w4 - w5 - 2 - 30
+	playlist_control_panel_playlist_info_name.style.width = (window_width - playlist_control_panel_playlist_container_width - mainchat_width - 1) - w1 - w2 - w3 - w4 - w5 - 2 - 30
 
-	// 영상 목록의 텍스트 길이 조절
-	for(var e of document.querySelectorAll('.videolist_button > .text'))
-		e.style.width = (window_width - playlist_control_panel_playlist_header_width - mainchat_width - 204 - 120 - 10 - 10 - 1 - 110 * 2)
+	// 영상 목록의 텍스트 길이 조절 -> (2022.01.21 Flex로 바꿨음)
+	// for(var e of document.querySelectorAll('.videolist_button > .text'))
+	// 	e.style.width = (window_width - playlist_control_panel_playlist_container_width - mainchat_width - 204 - 120 - 10 - 10 - 1 - 110 * 2)
 }
 
 /* 플레이리스트 컨트롤패널 열기/닫기 */
@@ -221,6 +220,19 @@ function show_playlist_control_panel(isShow)
 
 // ========================= 컨트롤패널 - 재생목록 =========================
 
+/* 컨트롤패널 검색 event */
+function oninput_playlist_control_panel_search_input()
+{
+	update_playlist(true)
+}
+
+/* 컨트롤패널 검색창 비우기 */
+function onclick_playlist_control_panel_search_close_button()
+{
+	playlist_control_panel_playlist_search_input.value = ''
+	update_playlist(true)
+}
+
 /* 컨트롤패널 - 서버로부터 받은 재생목록 데이터를 기반으로 재생목록 UI 구성 */
 function update_playlist(keep_preview = false)
 {
@@ -228,8 +240,24 @@ function update_playlist(keep_preview = false)
 	while ( playlist_control_panel_playlist_header.hasChildNodes() ) 
 		playlist_control_panel_playlist_header.removeChild( playlist_control_panel_playlist_header.firstChild )
 	
+	var dest_list = g_playlist_info_list
+	if(playlist_control_panel_playlist_search_input.value.length > 0)
+	{
+		dest_list = g_playlist_info_list.filter(x => video_list_contains(x.VideoList, playlist_control_panel_playlist_search_input.value))
+
+		function video_list_contains(l, name) 
+		{
+			for(var e of l)
+			{	
+				if(g_video_info_dic[e].Name.toLowerCase().indexOf(name.toLowerCase()) != -1)
+					return true
+			}
+			return false
+		}
+	}
+
 	// 자식 노드들 추가
-	for(var e of g_playlist_info_list)
+	for(var e of dest_list)
 	{
 		var div = document.createElement('div')
 
@@ -334,7 +362,8 @@ function select_playlist_button(playlist_id)
 	// 리스트 선택 selected 속성 적용
 	for(var e of playlist_control_panel_playlist_header.children)
 		e.toggleAttribute('selected', false)
-	thisElement.toggleAttribute('selected', true)
+	if(thisElement)
+		thisElement.toggleAttribute('selected', true)
 
 	// 상단부 재생목록 인포 이름, 색상 세팅
 	playlist_control_panel_playlist_info_name.innerText = thisPlaylist.Name
@@ -356,9 +385,13 @@ function select_playlist_button(playlist_id)
 	while ( playlist_control_panel_videolist_header.hasChildNodes() ) 
 		playlist_control_panel_videolist_header.removeChild( playlist_control_panel_videolist_header.firstChild )
 
+	var dest_list = thisPlaylist.VideoList
+	if(playlist_control_panel_playlist_search_input.value.length > 0)
+		dest_list = thisPlaylist.VideoList.filter(x => g_video_info_dic[x].Name.toLowerCase().indexOf(playlist_control_panel_playlist_search_input.value.toLowerCase()) != -1)
+
 	// 영상 목록 갱신
 	var i = 0
-	for(var e of thisPlaylist.VideoList)
+	for(var e of dest_list)
 	{
 		var thisData = g_video_info_dic[e]
 		
@@ -375,61 +408,17 @@ function select_playlist_button(playlist_id)
 
 		// 영상 이름 텍스트 생성 후 추가
 		var text = document.createElement('div')
-		text.innerText = format('{0} ({1})', thisData.Name, second_to_string(thisData.Length))
+		text.innerText = thisData.Name
 		text.classList.add('text') // 쿼리를 위해
 		register_ui_tooltip_event(text, format('{0} ({1})', thisData.Name, second_to_string(thisData.Length)))
 		div.appendChild(text)
 
-		// 삭제 버튼 추가
-		var del = document.createElement('div')
-		del.classList.add('delete_button')
-		del.classList.add('hover')
-		del.style.float = 'right'
-		del.onclick = onclick_video_delete_button
-		del.addEventListener('contextmenu', onrclick_video_delete_button, false)
-		register_ui_tooltip_event(del, '영상 삭제')
-		div.appendChild(del)
-
-		// 순서 정렬 버튼 추가
-		var sort_down = document.createElement('div')
-		sort_down.classList.add('sort_button')
-		sort_down.classList.add('down')
-		sort_down.classList.add('hover')
-		sort_down.style.float = 'right'
-		if(i == thisPlaylist.VideoList.length - 1)
-			sort_down.classList.add('top')
-		sort_down.onclick = onclick_video_sort_down_button
-		if(i == thisPlaylist.VideoList.length - 1)
-		{
-			sort_down.addEventListener('contextmenu', event_preventDefault, false)
-			register_ui_tooltip_event(sort_down, '영상 순서 내리기(↓)')
-		}
-		else
-		{
-			sort_down.addEventListener('contextmenu', onrclick_video_sort_down_button, false)
-			register_ui_tooltip_event(sort_down, '영상 순서 내리기(↓)\n우클릭: 맨 아래로 내리기')
-		}
-		div.appendChild(sort_down)
-
-		var sort_up = document.createElement('div')
-		sort_up.classList.add('sort_button')
-		sort_up.classList.add('up')
-		sort_up.classList.add('hover')
-		sort_up.style.float = 'right'
-		if(i == 0)
-			sort_up.classList.add('top')
-		sort_up.onclick = onclick_video_sort_up_button
-		if(i == 0)
-		{
-			sort_up.addEventListener('contextmenu', event_preventDefault, false)
-			register_ui_tooltip_event(sort_up, '영상 순서 올리기(↑)')
-		}
-		else
-		{
-			sort_up.addEventListener('contextmenu', onrclick_video_sort_up_button, false)
-			register_ui_tooltip_event(sort_up, '영상 순서 올리기(↑)\n우클릭: 맨 위로 올리기')
-		}
-		div.appendChild(sort_up)
+		// 플레이타임 텍스트
+		var playtime_text = document.createElement('div')
+		playtime_text.innerText = format(' ({0})', second_to_string(thisData.Length))
+		playtime_text.classList.add('playtime') // 쿼리를 위해
+		register_ui_tooltip_event(playtime_text, format('{0} ({1})', thisData.Name, second_to_string(thisData.Length)))
+		div.appendChild(playtime_text)
 
 		// 바로 재생 버튼 추가
 		var play_now = document.createElement('div')
@@ -441,6 +430,64 @@ function select_playlist_button(playlist_id)
 		register_ui_tooltip_event(play_now, '이 영상을 대기열에 추가')
 		div.appendChild(play_now)
 
+		
+
+		// 순서 정렬 버튼 추가
+		if(playlist_control_panel_playlist_search_input.value.length == 0) // 검색기능 사용중이면 순서변경 못하게 ..
+		{
+			var sort_up = document.createElement('div')
+			sort_up.classList.add('sort_button')
+			sort_up.classList.add('up')
+			sort_up.classList.add('hover')
+			sort_up.style.float = 'right'
+			if(i == 0)
+				sort_up.classList.add('top')
+			sort_up.onclick = onclick_video_sort_up_button
+			if(i == 0)
+			{
+				sort_up.addEventListener('contextmenu', event_preventDefault, false)
+				register_ui_tooltip_event(sort_up, '영상 순서 올리기(↑)')
+			}
+			else
+			{
+				sort_up.addEventListener('contextmenu', onrclick_video_sort_up_button, false)
+				register_ui_tooltip_event(sort_up, '영상 순서 올리기(↑)\n우클릭: 맨 위로 올리기')
+			}
+			div.appendChild(sort_up)
+
+
+			var sort_down = document.createElement('div')
+			sort_down.classList.add('sort_button')
+			sort_down.classList.add('down')
+			sort_down.classList.add('hover')
+			sort_down.style.float = 'right'
+			if(i == thisPlaylist.VideoList.length - 1)
+				sort_down.classList.add('top')
+			sort_down.onclick = onclick_video_sort_down_button
+			if(i == thisPlaylist.VideoList.length - 1)
+			{
+				sort_down.addEventListener('contextmenu', event_preventDefault, false)
+				register_ui_tooltip_event(sort_down, '영상 순서 내리기(↓)')
+			}
+			else
+			{
+				sort_down.addEventListener('contextmenu', onrclick_video_sort_down_button, false)
+				register_ui_tooltip_event(sort_down, '영상 순서 내리기(↓)\n우클릭: 맨 아래로 내리기')
+			}
+			div.appendChild(sort_down)
+		}
+
+		// 삭제 버튼 추가
+		var del = document.createElement('div')
+		del.classList.add('delete_button')
+		del.classList.add('hover')
+		del.style.float = 'right'
+		del.onclick = onclick_video_delete_button
+		del.addEventListener('contextmenu', onrclick_video_delete_button, false)
+		register_ui_tooltip_event(del, '영상 삭제')
+		div.appendChild(del)
+
+		// 마무리
 		div.classList.add('videolist_button')
 		div.classList.add(i % 2 == 0 ? 'even' : 'odd')
 		div.setAttribute('ItemIndex', i)
