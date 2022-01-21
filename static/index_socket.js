@@ -116,14 +116,14 @@ socket.on('login', function(isSuccess) {
 	login_button.style.display = 'none'
 	login_remember_nick_holder.style.display = 'none'
 
-	add_system_message('후원 랭킹 (2021. 09. 23)\n'
+	add_system_message('후원 랭킹 (2022. 01. 21)\n'
 						+ '★ 0. Lily(샤르프로젝트) 님 ★\n' 
 						+ '☆ 0. 우뭇가사리 님 ☆\n' 
 						+ '1. 노통 님\n' 
 						+ '2. 코코로 님\n' 
-						+ '3. 누관검 님\n' 
-						+ '4. 다정이 님\n'
-						+ '5. 콘파고 님\n'
+						+ '3. 콘파고 님\n'
+						+ '4. 누관검 님\n' 
+						+ '5. 다정이 님\n'
 						+ '6. 랠래 님\n'
 						+ '7. 고냥이지 님\n'
 						+ '8. 디아 님\n'
@@ -132,7 +132,8 @@ socket.on('login', function(isSuccess) {
 						+ '11. POIU 님\n'
 						+ '12. 인공사 님\n'
 						+ '13. 스프링 님\n'
-						+ '14. 강령군주 님\n'
+						+ '14. 고졸백수 님\n'
+						+ '15. 강령군주 님\n'
 						+ '후원 계좌 : 기업 539-028793-01-012 박*준', 'var(--채팅_후원랭킹)')
 	add_system_message('명령어 목록은 /? 을 입력해 볼 수 있습니다.')
 	add_system_message('전용 채널 개설 문의는 설보에게... (후원자 전용)')
