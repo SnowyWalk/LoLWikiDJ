@@ -144,6 +144,169 @@ function lol_onclick_article()
 	socket.emit('lol_get_article_detail', { post_seq: seq, android_id: g_lol_android_id })
 }
 
+/* 검색 버튼 클릭 */
+function lol_onclick_search_button()
+{
+	if(g_lol_android_id != g_lol_guest_id)
+		lol_lpanel_search_menu_button_mine.firstChild.nodeValue = '내 글'
+	else
+		lol_lpanel_search_menu_button_mine.firstChild.nodeValue = '내 글 (로그인 필요)'
+
+	lol_lpanel_search_menu.style.display = 'block'
+}
+
+/* 검색메뉴 배경 클릭 */
+function lol_onclick_search_background() 
+{
+	lol_lpanel_search_menu.style.display = 'none'
+}
+
+/* 검색메뉴 내부 클릭 */
+function lol_onclick_search_foreground()
+{
+	event.stopPropagation()
+}
+
+/* 검색 - 전체글 클릭 */
+function lol_onclick_search_all()
+{
+	event.stopPropagation()
+	lol_lpanel_search_menu.style.display = 'none'
+	g_lol_search_body = ''
+	g_lol_search_nick = ''
+	g_lol_search_vote = false
+	g_lol_search_mine = false
+	g_lol_article_scroll_seq = 0
+	g_lol_article_list = []
+	g_lol_lpanel_scroll_top_switch = true
+	lol_get_article_list(0, g_lol_search_vote ? 15 : 30, g_lol_search_body, g_lol_search_nick, g_lol_search_vote, g_lol_search_mine)
+}
+
+/* 검색 - 추천순 클릭 */
+function lol_onclick_search_vote()
+{
+	event.stopPropagation()
+	lol_lpanel_search_menu.style.display = 'none'
+	g_lol_search_body = ''
+	g_lol_search_nick = ''
+	g_lol_search_vote = true
+	g_lol_search_mine = false
+	g_lol_article_scroll_seq = 0
+	g_lol_article_list = []
+	g_lol_lpanel_scroll_top_switch = true
+	lol_get_article_list(0, g_lol_search_vote ? 15 : 30, g_lol_search_body, g_lol_search_nick, g_lol_search_vote, g_lol_search_mine)
+}
+
+/* 검색 - 내 글 클릭 */
+function lol_onclick_search_mine()
+{
+	event.stopPropagation()
+	if(g_lol_android_id == g_lol_guest_id)
+		return
+
+	lol_lpanel_search_menu.style.display = 'none'
+	g_lol_search_body = ''
+	g_lol_search_nick = ''
+	g_lol_search_vote = false
+	g_lol_search_mine = true
+	g_lol_article_scroll_seq = 0
+	g_lol_article_list = []
+	g_lol_lpanel_scroll_top_switch = true
+	lol_get_article_list(0, g_lol_search_vote ? 15 : 30, g_lol_search_body, g_lol_search_nick, g_lol_search_vote, g_lol_search_mine)
+}
+
+/* 검색 - 글검색 클릭 */
+function lol_onclick_search_search()
+{
+	event.stopPropagation()
+	var ans = prompt('글 검색: 검색어를 입력해주세요.')
+	lol_lpanel_search_menu.style.display = 'none'
+
+	if(!ans)
+		return
+
+	g_lol_search_body = ans
+	g_lol_search_nick = ''
+	g_lol_search_vote = false
+	g_lol_search_mine = false
+	g_lol_article_scroll_seq = 0
+	g_lol_article_list = []
+	g_lol_lpanel_scroll_top_switch = true
+	lol_get_article_list(0, g_lol_search_vote ? 15 : 30, g_lol_search_body, g_lol_search_nick, g_lol_search_vote, g_lol_search_mine)
+}
+
+/* 검색 - 닉검색 클릭 */
+function lol_onclick_search_nick()
+{
+	event.stopPropagation()
+	var ans = prompt('닉 검색: 검색어를 입력해주세요.')
+	lol_lpanel_search_menu.style.display = 'none'
+
+	if(!ans)
+		return
+
+	g_lol_search_body = ''
+	g_lol_search_nick = ans
+	g_lol_search_vote = false
+	g_lol_search_mine = false
+	g_lol_article_scroll_seq = 0
+	g_lol_article_list = []
+	g_lol_lpanel_scroll_top_switch = true
+	lol_get_article_list(0, g_lol_search_vote ? 15 : 30, g_lol_search_body, g_lol_search_nick, g_lol_search_vote, g_lol_search_mine)
+}
+
+/* 왼쪽 글쓰기 버튼 클릭 */
+function lol_onclick_write()
+{
+	lol_write_panel_toggle(true)
+}
+
+/* 글 쓰기 - 취소 */
+function lol_onclick_write_cancel() 
+{
+
+	if(lol_write_subject.value.length == 0 && 
+		lol_write_body.value.length == 0 &&
+		lol_write_youtube.value.length == 0)
+	{
+		lol_write_panel_toggle(false)
+		return
+	}
+
+	var ans = confirm('취소 하시겠습니까?')
+	if(!ans)
+		return
+
+	lol_write_subject.value = ''
+	lol_write_body.value = ''
+	lol_write_youtube.value = ''
+
+	g_lol_write_image_data = ''
+	lol_write_image.style.display = 'none'
+	lol_write_image_guide.style.display = 'none'
+	lol_write_image.src = ''
+	lol_write_image_placeholder.style.display = 'block'
+
+	lol_write_panel_toggle(false)
+}
+
+/* 글 쓰기 - 등록 */
+function lol_onclick_write_confirm() 
+{
+	if(lol_write_subject.value.length == 0)
+		return
+
+	if(lol_write_body.value.length == 0)
+		return
+
+	socket.emit('lol_write', { 
+		android_id: g_lol_android_id, 
+		subject: lol_write_subject.value,
+		body: lol_write_body.value,
+		youtube_url: lol_write_youtube.value,
+		image: g_lol_write_image_data })
+}
+
 /* 글 새로고침 버튼 */
 function lol_onclick_aritcle_refresh()
 {

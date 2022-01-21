@@ -119,112 +119,43 @@ window.onload = function() {
 		}
 	}
 
+	/* 하단 볼륨 컨트롤러 */
 	video_info_volume_btn.onclick = onclick_video_info_volume_btn
 	video_info_volume_slider.onchange = onchange_video_info_volume_slider
 	video_info_volume_slider.oninput = onchange_video_info_volume_slider
 
+	/* 롤디자게 숨겨진 버튼 */
 	current_playlist_info_box.addEventListener('contextmenu', onrclick_playlist_info_box)
 
+	/* 플레이리스트 검색 기능 */
 	playlist_control_panel_playlist_search_input.oninput = oninput_playlist_control_panel_search_input
 	playlist_control_panel_playlist_search_close_button.onclick = onclick_playlist_control_panel_search_close_button
 
+	/* 플레이리스트 관련 */
+	playlist_control_panel_playlist_info_new_video_button.addEventListener('contextmenu', onrclick_playlist_control_panel_playlist_info_new_video_button, false)
+	playlist_control_panel_playlist_info_delete_button.addEventListener('contextmenu', onrclick_playlist_control_panel_playlist_info_delete_button, false)
+	playlist_control_panel_playlist_info_rename_button.addEventListener('contextmenu', onrclick_playlist_control_panel_playlist_info_rename_button, false)
+	playlist_control_panel_playlist_info_shuffle.addEventListener('contextmenu', onrclick_playlist_control_panel_playlist_info_shuffle, false)
+	playlist_control_panel_playlist_info_select.addEventListener('contextmenu', onrclick_playlist_control_panel_playlist_info_select, false)
+
+	/* 옵션 - 테마설정 */
+	theme_default.onchange = _ => set_theme(document.querySelector('[name=theme]:checked').value)
+	theme_dark.onchange = _ => set_theme(document.querySelector('[name=theme]:checked').value)
+	
+	/* 롤백 관련 */
 	lol_lpanel_board.onscroll = lol_lpanel_board_onscroll
 	lol_lpanel_refresh.onclick = lol_onclick_aritcle_list_refresh
-	lol_lpanel_search_button.onclick = _ => {
-		if(g_lol_android_id != g_lol_guest_id)
-			lol_lpanel_search_menu_button_mine.firstChild.nodeValue = '내 글'
-		else
-			lol_lpanel_search_menu_button_mine.firstChild.nodeValue = '내 글 (로그인 필요)'
 
-		lol_lpanel_search_menu.style.display = 'block'
-	}
-	lol_lpanel_search_menu_background.onclick = _ => {
-		lol_lpanel_search_menu.style.display = 'none'
-	}
+	lol_lpanel_search_button.onclick = lol_onclick_search_button
+	lol_lpanel_search_menu_background.onclick = lol_onclick_search_background
+	lol_lpanel_search_menu_inner_background.onclick = lol_onclick_search_foreground
+	lol_lpanel_search_menu_button_all.onclick = lol_onclick_search_all
+	lol_lpanel_search_menu_button_vote.onclick = lol_onclick_search_vote
+	lol_lpanel_search_menu_button_mine.onclick = lol_onclick_search_mine
+	lol_lpanel_search_menu_button_search.onclick = lol_onclick_search_search
+	lol_lpanel_search_menu_button_nick.onclick = lol_onclick_search_nick
 
-	lol_lpanel_search_menu_inner_background.onclick = _ => {
-		event.stopPropagation()
-	}
-
-	lol_lpanel_search_menu_button_all.onclick = _ => {
-		event.stopPropagation()
-		lol_lpanel_search_menu.style.display = 'none'
-		g_lol_search_body = ''
-		g_lol_search_nick = ''
-		g_lol_search_vote = false
-		g_lol_search_mine = false
-		g_lol_article_scroll_seq = 0
-		g_lol_article_list = []
-		g_lol_lpanel_scroll_top_switch = true
-		lol_get_article_list(0, g_lol_search_vote ? 15 : 30, g_lol_search_body, g_lol_search_nick, g_lol_search_vote, g_lol_search_mine)
-	}
-
-	lol_lpanel_search_menu_button_vote.onclick = _ => {
-		event.stopPropagation()
-		lol_lpanel_search_menu.style.display = 'none'
-		g_lol_search_body = ''
-		g_lol_search_nick = ''
-		g_lol_search_vote = true
-		g_lol_search_mine = false
-		g_lol_article_scroll_seq = 0
-		g_lol_article_list = []
-		g_lol_lpanel_scroll_top_switch = true
-		lol_get_article_list(0, g_lol_search_vote ? 15 : 30, g_lol_search_body, g_lol_search_nick, g_lol_search_vote, g_lol_search_mine)
-	}
-
-	lol_lpanel_search_menu_button_mine.onclick = _ => {
-		event.stopPropagation()
-		if(g_lol_android_id == g_lol_guest_id)
-			return
-
-		lol_lpanel_search_menu.style.display = 'none'
-		g_lol_search_body = ''
-		g_lol_search_nick = ''
-		g_lol_search_vote = false
-		g_lol_search_mine = true
-		g_lol_article_scroll_seq = 0
-		g_lol_article_list = []
-		g_lol_lpanel_scroll_top_switch = true
-		lol_get_article_list(0, g_lol_search_vote ? 15 : 30, g_lol_search_body, g_lol_search_nick, g_lol_search_vote, g_lol_search_mine)
-	}
-
-	lol_lpanel_search_menu_button_search.onclick = _ => {
-		event.stopPropagation()
-		var ans = prompt('글 검색: 검색어를 입력해주세요.')
-		lol_lpanel_search_menu.style.display = 'none'
-
-		if(!ans)
-			return
-
-		g_lol_search_body = ans
-		g_lol_search_nick = ''
-		g_lol_search_vote = false
-		g_lol_search_mine = false
-		g_lol_article_scroll_seq = 0
-		g_lol_article_list = []
-		g_lol_lpanel_scroll_top_switch = true
-		lol_get_article_list(0, g_lol_search_vote ? 15 : 30, g_lol_search_body, g_lol_search_nick, g_lol_search_vote, g_lol_search_mine)
-	}
-
-	lol_lpanel_search_menu_button_nick.onclick = _ => {
-		event.stopPropagation()
-		var ans = prompt('닉 검색: 검색어를 입력해주세요.')
-		lol_lpanel_search_menu.style.display = 'none'
-
-		if(!ans)
-			return
-
-		g_lol_search_body = ''
-		g_lol_search_nick = ans
-		g_lol_search_vote = false
-		g_lol_search_mine = false
-		g_lol_article_scroll_seq = 0
-		g_lol_article_list = []
-		g_lol_lpanel_scroll_top_switch = true
-		lol_get_article_list(0, g_lol_search_vote ? 15 : 30, g_lol_search_body, g_lol_search_nick, g_lol_search_vote, g_lol_search_mine)
-	}
-
-	lol_lpanel_write_button.onclick = _ => lol_write_panel_toggle(true)
+	lol_lpanel_write_button.onclick = lol_onclick_write
 
 	lol_rpanel_header_button.onclick = lol_onclick_auth_or_block
 	lol_rpanel_header_button.addEventListener('contextmenu', lol_onrclick_auth_or_block, false)
@@ -239,61 +170,13 @@ window.onload = function() {
 	lol_rpanel_reply_board_input.onkeydown = lol_onkeydown_reply
 	lol_rpanel_reply_board_send.onclick = lol_onclick_reply_send
 
-	lol_write_cancel.onclick = _ => {
-
-		if(lol_write_subject.value.length == 0 && 
-			lol_write_body.value.length == 0 &&
-			lol_write_youtube.value.length == 0)
-		{
-			lol_write_panel_toggle(false)
-			return
-		}
-
-		var ans = confirm('취소 하시겠습니까?')
-		if(!ans)
-			return
-
-		lol_write_subject.value = ''
-		lol_write_body.value = ''
-		lol_write_youtube.value = ''
-
-		g_lol_write_image_data = ''
-		lol_write_image.style.display = 'none'
-		lol_write_image_guide.style.display = 'none'
-		lol_write_image.src = ''
-		lol_write_image_placeholder.style.display = 'block'
-
-		lol_write_panel_toggle(false)
-	}
-
-	lol_write_confirm.onclick = _ => {
-		if(lol_write_subject.value.length == 0)
-			return
-
-		if(lol_write_body.value.length == 0)
-			return
-
-		socket.emit('lol_write', { 
-			android_id: g_lol_android_id, 
-			subject: lol_write_subject.value,
-			body: lol_write_body.value,
-			youtube_url: lol_write_youtube.value,
-			image: g_lol_write_image_data })
-	}
+	lol_write_cancel.onclick = lol_onclick_write_cancel
+	lol_write_confirm.onclick = lol_onclick_write_confirm
 	lol_write_image_placeholder.onpaste = lol_write_image_onpaste
 	lol_write_image_placeholder.onchange = lol_write_image_clear_text
 	lol_write_image.onclick = lol_clear_image
 	lol_write_image.onload = lol_write_image_onload
 
-	playlist_control_panel_playlist_info_new_video_button.addEventListener('contextmenu', onrclick_playlist_control_panel_playlist_info_new_video_button, false)
-	playlist_control_panel_playlist_info_delete_button.addEventListener('contextmenu', onrclick_playlist_control_panel_playlist_info_delete_button, false)
-	playlist_control_panel_playlist_info_rename_button.addEventListener('contextmenu', onrclick_playlist_control_panel_playlist_info_rename_button, false)
-	playlist_control_panel_playlist_info_shuffle.addEventListener('contextmenu', onrclick_playlist_control_panel_playlist_info_shuffle, false)
-	playlist_control_panel_playlist_info_select.addEventListener('contextmenu', onrclick_playlist_control_panel_playlist_info_select, false)
-
-	theme_default.onchange = _ => set_theme(document.querySelector('[name=theme]:checked').value)
-	theme_dark.onchange = _ => set_theme(document.querySelector('[name=theme]:checked').value)
-	
 	register_ui_tooltip_event(video_link, '클릭하면 유튜브 주소가 복사됩니다.')
 	register_ui_tooltip_event(video_info_name, '재생 중인 영상이 없습니다.')
 	register_ui_tooltip_event(etc_bad_button, '싫어요 5표 이상 누적 시 영상이 스킵됩니다.')
