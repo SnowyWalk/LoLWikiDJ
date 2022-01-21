@@ -706,6 +706,7 @@ body {
   width: 100%;
   overflow-y: auto;
   display: none;
+  font-weight: bold;
 }
 
 #djlist_users_header {
@@ -721,7 +722,7 @@ ul#djlist_users {
 }
 
 .djlist_user {
-  line-height: 39px;
+  line-height: 45px;
   padding-top: 5px;
   padding-bottom: 5px;
   list-style-type: none;
@@ -758,7 +759,7 @@ ul#djlist_djs {
 }
 
 .djlist_dj {
-  line-height: 39px;
+  line-height: 45px;
   padding-top: 5px;
   padding-bottom: 5px;
   list-style-type: none;
@@ -926,6 +927,23 @@ div.recent_list_video {
   text-align: left;
 }
 
+.nick {
+  font-size: 14px;
+  font-weight: bold;
+  margin-bottom: 4px;
+  display: inline-block;
+  margin-top: 3px;
+}
+
+.nick[emoji] {
+  margin-bottom: 0px;
+}
+
+temp[emoji] {
+  display: block;
+  font-size: 100px;
+}
+
 .me .nick {
   color: var(--채팅_나);
 }
@@ -968,14 +986,23 @@ div.recent_list_video {
   padding-right: 7px;
 }
 
+.chat_time {
+  font-size: 12px;
+  color: gray;
+  vertical-align: top;
+  margin-top: 4px;
+  display: inline-block;
+  margin-left: 3px;
+}
+
 .chat_img {
   width: 100%;
 }
 
 .chat_profile {
-  height: 39px;
-  width: 39px;
-  margin-right: 5px;
+  height: 45px;
+  width: 45px;
+  margin-right: 6px;
   padding-top: 0px;
   float: left;
   border-radius: 30%;
@@ -1972,6 +1999,50 @@ div.recent_list_video {
   display: none;
   margin-right: 15px;
   margin-bottom: 5px;
+  flex-direction: column;
+}
+
+#lol_rpanel_reply_board_write_container [container] {
+  display: flex;
+  /* align-items: center; */
+}
+
+#lol_rpanel_reply_board_write_image {
+  display: none;
+  min-width: 20px;
+  min-height: 20px;
+  max-width: 30%;
+  /* max-height: 30%; */
+  border: 2px solid red;
+  cursor: pointer;
+  margin-bottom: 5px;
+}
+
+#lol_rpanel_reply_board_write_image_guide {
+  display: none;
+  color: red;
+  font-weight: bold;
+  align-self: flex-end;
+  margin-left: 10px;
+  margin-bottom: 5px;
+}
+
+#lol_rpanel_reply_board_write_canvas {
+  display: none;
+}
+
+#lol_rpanel_reply_board_write_image_placeholder {
+  width: 40px;
+  height: 40px;
+  text-align: center;
+  border: 0;
+  cursor: pointer;
+  caret-color: transparent;
+  flex-grow: 0;
+  margin-right: 7px;
+  background: url(image_reply_btn.png);
+  background-size: 100%;
+  margin-left: 2px;
 }
 
 #lol_rpanel_reply_board_input {

@@ -68,7 +68,8 @@ var g_lol_search_nick = ''
 var g_lol_search_vote = false
 var g_lol_search_mine = false
 var g_lol_same_article_prev = false
-var g_lol_write_image_data = ''
+var g_lol_write_image_data = '' // 글 첨부 이미지
+var g_lol_write_reply_image_data = '' // 댓글 첨부 이미지
 
 /* 채팅 모드 */
 var g_is_chat_mode = false
@@ -169,6 +170,10 @@ window.onload = function() {
 	lol_rpanel_body_delete_button.onclick = lol_onclick_delete
 	lol_rpanel_reply_board_input.onkeydown = lol_onkeydown_reply
 	lol_rpanel_reply_board_send.onclick = lol_onclick_reply_send
+	lol_rpanel_reply_board_write_image_placeholder.onpaste = lol_rpanel_reply_board_write_image_onpaste
+	lol_rpanel_reply_board_write_image_placeholder.onchange = lol_rpanel_reply_board_write_image_clear_text
+	lol_rpanel_reply_board_write_image.onclick = lol_clear_reply_image
+	lol_rpanel_reply_board_write_image.onload = lol_rpanel_reply_board_write_image_onload
 
 	lol_write_cancel.onclick = lol_onclick_write_cancel
 	lol_write_confirm.onclick = lol_onclick_write_confirm
@@ -176,6 +181,8 @@ window.onload = function() {
 	lol_write_image_placeholder.onchange = lol_write_image_clear_text
 	lol_write_image.onclick = lol_clear_image
 	lol_write_image.onload = lol_write_image_onload
+
+	register_ui_tooltip_event(lol_rpanel_reply_board_write_image_placeholder, '여기에 붙여넣기(Ctrl+V)로 이미지 첨부')
 
 	register_ui_tooltip_event(video_link, '클릭하면 유튜브 주소가 복사됩니다.')
 	register_ui_tooltip_event(video_info_name, '재생 중인 영상이 없습니다.')

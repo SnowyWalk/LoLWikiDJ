@@ -9,6 +9,8 @@ var imgReg = /\/(img|ㅑㅡㅎ) (\S+)/i
 var byteReg = /[\da-zA-Z-_=\|\/\*-\+\.`~'\/,\!@#\$%\^\&\(\)\[\] "]/i
 var callReg = /@(\S+)/g
 var callRegPre = /@(\S+)/
+var emojiReg = /\p{Extended_Pictographic}/u
+var ttttt = ''
 function add_message(data) 
 {
 	if(g_nick == 'OBS' && data.type != 'message')
@@ -28,48 +30,20 @@ function add_message(data)
 	var nick = ''
 	var className = ''
 
+	var emoji_mode = (data.message.length == 2 && emojiReg.test(data.message))
+
 	// 타입에 따라 적용할 클래스를 다르게 지정
 	switch (data.type) 
 	{
 		case 'message':
 			message.classList.add('chat_balloon')
-			
-			// 시간 넣기
-			var timeSmall = document.createElement('small')
-			var timeFont = document.createElement('font')
-			timeFont.classList.add('chat_time')
-			timeFont.color = 'gray'
-			timeFont.appendChild(document.createTextNode('  ' + data.time))
-			timeSmall.appendChild(timeFont)
 
 			nick = data.name + '  '
-			text = '\n' + data.message
 
-			var small = document.createElement('small')
-			var b = document.createElement('b')
-			var nick_img = document.createElement('img')
-			nick_img.classList.add('chat_profile')
-			nick_img.src = format('icon/{0}.png?ver={1}', data.icon_id, data.icon_ver)
-			nick_img.onmouseenter = image_onmouseenter
-			nick_img.onmouseout = image_onmouseout
-			nick_img.onmousemove = image_onmousemove
-			var font = document.createElement('font')
-			if(g_nick == 'OBS')
-			{
-				font.style.fontSize = '18px'
-				message.style.fontSize = '18px'
-			}
-			
-			if(data.name == g_nick)
-				className = 'me'
+			if(emoji_mode)
+				text = data.message
 			else
-				className = 'other'
-
-			font.classList.add('nick')
-			if(byteReg.test(data.name[0]))
-				font.style.paddingLeft = '2px'
-			// if(data.message.length == 0 || byteReg.test(data.message[0]))
-			// 	message.style.paddingLeft = '2px'
+				text = '\n' + data.message
 
 			// TTS 아이콘
 			if(data.tts_hash)
@@ -79,17 +53,41 @@ function add_message(data)
 				tts_icon.classList.add('chat_tts_icon')
 				tts_icon.setAttribute('tts_hash', data.tts_hash)
 				tts_icon.onclick = play_tts_audio_this
-				small.appendChild(tts_icon)
+				message.appendChild(tts_icon)
 			}
 
-			small.appendChild(b)
-			b.appendChild(nick_img)
-			b.appendChild(font)
-			small.appendChild(timeSmall)
+			var nick_img = document.createElement('img')
+			nick_img.classList.add('chat_profile')
+			nick_img.src = format('icon/{0}.png?ver={1}', data.icon_id, data.icon_ver)
+			nick_img.onmouseenter = image_onmouseenter
+			nick_img.onmouseout = image_onmouseout
+			nick_img.onmousemove = image_onmousemove
+			message.appendChild(nick_img)
 
-			font.appendChild(document.createTextNode(nick))
-
-			message.appendChild(small)
+			var nick_font = document.createElement('font')
+			nick_font.appendChild(document.createTextNode(nick))
+			if(g_nick == 'OBS')
+			{
+				nick_font.style.fontSize = '18px'
+				message.style.fontSize = '18px'
+			}
+			nick_font.classList.add('nick')
+			nick_font.classList.add('nanum')
+			if(byteReg.test(data.name[0]))
+				nick_font.style.paddingLeft = '2px'
+			nick_font.toggleAttribute('emoji', emoji_mode)
+			message.appendChild(nick_font)
+			
+			// 시간 넣기
+			var timeFont = document.createElement('font')
+			timeFont.classList.add('chat_time')
+			timeFont.appendChild(document.createTextNode('  ' + data.time))
+			message.appendChild(timeFont)
+			
+			if(data.name == g_nick)
+				className = 'me'
+			else
+				className = 'other'
 		break
 
 		case 'connect':
@@ -122,6 +120,7 @@ function add_message(data)
 	message.classList.add('chat')
 	var temporary_element = document.createElement('temp')
 	temporary_element.appendChild(document.createTextNode(text))
+	temporary_element.toggleAttribute('emoji', emoji_mode)
 	message.appendChild(temporary_element)
 	// message.appendChild(document.createTextNode(text))
 	if(img != null)

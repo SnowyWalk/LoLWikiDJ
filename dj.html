@@ -90,7 +90,7 @@
     </div>
 
     <!-- 카테고리 : DJ/참여자 -->
-    <div id="djlist">
+    <div id="djlist" class="nanum">
       <div id="djlist_users_header">
         <ul id="djlist_users"></ul>
       </div>
@@ -357,8 +357,16 @@
           <div id="lol_rpanel_reply_board">
             <ul id="lol_rpanel_reply_board_list"></ul>
             <div id="lol_rpanel_reply_board_write_container">
-              <input type="text" id="lol_rpanel_reply_board_input" placeholder="댓글을 입력하세요 ..">
-              <button id="lol_rpanel_reply_board_send">등록</button>
+              <div container>
+                <img id="lol_rpanel_reply_board_write_image"></img>
+                <div id="lol_rpanel_reply_board_write_image_guide">이미지 첨부 중... 기다려주셈</div>
+                <canvas id="lol_rpanel_reply_board_write_canvas"></canvas>
+              </div>
+              <div container>
+                <input type="text" id="lol_rpanel_reply_board_write_image_placeholder" maxlength=0>
+                <input type="text" id="lol_rpanel_reply_board_input" placeholder="댓글을 입력하세요 ..">
+                <button id="lol_rpanel_reply_board_send">등록</button>
+              </div>
             </div>
           </div>
         </div>

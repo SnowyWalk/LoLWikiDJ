@@ -824,15 +824,12 @@ io.sockets.on('connection', function(socket)
 		/*
 			{
 				playlist_id: 대상 재생목록 id, 
-				index: 대상 VideoList의 순서index, 
-				video_id: 검증용 VideoId(DB에서의 순서index -> `Videos.Id`)
+				video_id: VideoId(DB에서의 순서index -> `Videos.Id`)
 			}
 		*/
 
 		// 1. 해당 플레이리스트의 비디오 목록 가져오기
-		// 2. 해당 플레이리스트에 삭제 대상 비디오가 하나만 있는지 체크
-		//	하나만 있다 -> 검증없이 video_id 찾아서 제거
-		//	여러개 있다 -> 해당 index의 숫자가 video_id와 같은지 검증 후 제거 (검증 실패 시, alert 보내기)
+		// 2. 해당 플레이리스트에 대상 영상을 삭제
 		// 3. 성공 했을 때만 재생목록 업뎃
 		// 4. 디제잉 중이었던 유저고, 해당 재생목록이 비게 되었으면 dj목록에서 제거한 후 알려준다.
 
@@ -840,29 +837,23 @@ io.sockets.on('connection', function(socket)
 		{
 			await db_beginTransaction()
 
+			// 재생목록을 가져오고 해당 영상이 있는지 체크
 			var video_list = await db_select('VideoList', 'Playlists', format('Id = {0}', data.playlist_id)).then(ret => ret[0].VideoList).then(JSON.parse)
 			var dest_count = video_list.filter(x => x == data.video_id).length
 			if(dest_count == 0)
 				throw {message: format('플레이리스트에 해당 영상이 없음. {0} not in {1}', data.video_id, JSON.stringify(video_list))}
 
-			// 여러개 있는지 체크 -> 있으면 검증필요
-			if(dest_count > 1) 
-			{
-				if(video_list[data.index] != data.video_id)
-					throw {message: format('검증 실패. {0} not at {1}[{2}]', data.video_id, JSON.stringify(video_list), data.index)}
-
-				video_list.splice(data.index, 1)
-			}
-			else
-			{
-				video_list.splice(video_list.indexOf(data.video_id), 1)
-			}
-
+			// 해당 영상 삭제
+			video_list.splice(video_list.indexOf(data.video_id), 1)
+			
+			// 재생목록에 재반영
 			await db_update('Playlists', format('VideoList = "{0}"', JSON.stringify(video_list)), format('Id = {0}', data.playlist_id))
 
 			await db_commit()
 			
 			log('INFO', 'delete_video', format('{0} 이(가) {1}번 재생목록에서 Id: {2} 영상을 삭제', socket.name, data.playlist_id, data.video_id))
+			
+			// 클라에게 재생목록 업뎃
 			update_playlist(socket)
 
 			// 디제잉 중이었던 유저고, 해당 재생목록이 비게 되었으면 dj목록에서 제거한 후 알려준다.
@@ -1373,10 +1364,11 @@ io.sockets.on('connection', function(socket)
 		var android_id = data.android_id
 		var post_seq = data.post_seq
 		var body = data.body
+		var image = data.image
 
-		log('INFO', 'lol_write_reply', format('{0}가 {1} 계정으로 댓글 남김 -> {2} : {3}', socket.name, android_id, post_seq, body))
+		log('INFO', 'lol_write_reply', format('{0}가 {1} 계정으로 댓글 남김 -> {2} : {3}{4}', socket.name, android_id, post_seq, body, (image ? ' (짤 첨부)' : '')))
 
-		await lol_write_reply(post_seq, android_id, body)
+		await lol_write_reply(post_seq, android_id, body, image)
 
 		var ret = await lol_get_article_detail(android_id, post_seq)
 		var replys = await lol_get_article_replys(android_id, post_seq)
@@ -2202,10 +2194,20 @@ async function lol_get_user_info(android_id)
 }
 
 /* 댓글 작성 */
-async function lol_write_reply(post_seq, android_id, body) 
+async function lol_write_reply(post_seq, android_id, body, image='') 
 {
+	var image_filename = '' 
+	if(image.length > 0)
+	{
+		image_filename = lol_make_image_filename()
+		var res = await lol_POST('http://lolwiki.kr/freeboard/uploads/php_upload_new.php',
+			{ image: image, 
+				file_name: image_filename,
+				doodlr: 0 })
+	}
+
 	await lol_POST('http://lolwiki.kr/freeboard/insert_reply_pic.php', 
-		{ boardid: 'freeboard', post_seq: post_seq, android_id: android_id, text: encodeURI(body) } )
+		{ boardid: 'freeboard', post_seq: post_seq, android_id: android_id, text: (body), file_name: image_filename } )
 }
 
 /* 추천 버튼 */
@@ -2242,9 +2244,12 @@ async function lol_write(android_id, subject, body, youtube_url, image='')
 	await lol_POST('http://lolwiki.kr/freeboard/insert_post_multi_2020.php',
 		{ boardid: 'freeboard', app: 'DEMACIA', notice: '0', lolmovie: '101',
 			android_id: android_id, 
-			title: decodeURI(decodeURI(subject)), 
-			text: decodeURI(decodeURI(body)),
-			youtube_url: decodeURI(youtube_url),
+			title: ((subject)), 
+			text: ((body)),
+			youtube_url: (youtube_url),
+			// title: decodeURI(decodeURI(subject)), 
+			// text: decodeURI(decodeURI(body)),
+			// youtube_url: decodeURI(youtube_url),
 			pic_new: image_filename } )
 }
 

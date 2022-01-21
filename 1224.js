@@ -1364,10 +1364,11 @@ io.sockets.on('connection', function(socket)
 		var android_id = data.android_id
 		var post_seq = data.post_seq
 		var body = data.body
+		var image = data.image
 
-		log('INFO', 'lol_write_reply', format('{0}가 {1} 계정으로 댓글 남김 -> {2} : {3}', socket.name, android_id, post_seq, body))
+		log('INFO', 'lol_write_reply', format('{0}가 {1} 계정으로 댓글 남김 -> {2} : {3}{4}', socket.name, android_id, post_seq, body, (image ? ' (짤 첨부)' : '')))
 
-		await lol_write_reply(post_seq, android_id, body)
+		await lol_write_reply(post_seq, android_id, body, image)
 
 		var ret = await lol_get_article_detail(android_id, post_seq)
 		var replys = await lol_get_article_replys(android_id, post_seq)
@@ -2193,10 +2194,20 @@ async function lol_get_user_info(android_id)
 }
 
 /* 댓글 작성 */
-async function lol_write_reply(post_seq, android_id, body) 
+async function lol_write_reply(post_seq, android_id, body, image='') 
 {
+	var image_filename = '' 
+	if(image.length > 0)
+	{
+		image_filename = lol_make_image_filename()
+		var res = await lol_POST('http://lolwiki.kr/freeboard/uploads/php_upload_new.php',
+			{ image: image, 
+				file_name: image_filename,
+				doodlr: 0 })
+	}
+
 	await lol_POST('http://lolwiki.kr/freeboard/insert_reply_pic.php', 
-		{ boardid: 'freeboard', post_seq: post_seq, android_id: android_id, text: encodeURI(body) } )
+		{ boardid: 'freeboard', post_seq: post_seq, android_id: android_id, text: (body), file_name: image_filename } )
 }
 
 /* 추천 버튼 */

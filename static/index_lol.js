@@ -628,6 +628,54 @@ function lol_onclick_reply_send()
 	lol_write_reply()
 }
 
+/* 댓글 쓰기 - 클립보드로부터 이미지 첨부 */
+function lol_rpanel_reply_board_write_image_onpaste()
+{
+	var pasteObj = (event.clipboardData || window.clipboardData); 
+	var blob = pasteObj.files[0]
+	if(!blob)
+	{
+		console.log('이미지 첨부 실패: 클립보드 내용이 이미지가 아니다..')
+		return
+	}
+	var reader = new FileReader()
+	reader.onload = function(ev) { 
+		var ret = ev.target.result
+		lol_rpanel_reply_board_write_image_placeholder.style.display = 'none'
+		lol_rpanel_reply_board_write_image.src = ret
+		lol_rpanel_reply_board_write_image.style.display = 'block'
+		lol_rpanel_reply_board_write_image_guide.innerHTML = '이미지 첨부 중... 기다려주셈'
+		lol_rpanel_reply_board_write_image_guide.style.display = 'block'
+	}
+	reader.readAsDataURL(blob)
+}
+
+/* 댓글 쓰기 - 이미지 첨부란 불필요한 문자 입력 시 제거 처리 */
+function lol_rpanel_reply_board_write_image_clear_text()
+{
+	lol_rpanel_reply_board_write_image_placeholder.value = ''
+}
+
+/* 댓글 쓰기 - 이미지 첨부 제거 */
+function lol_clear_reply_image()
+{
+	g_lol_write_reply_image_data = ''
+	lol_rpanel_reply_board_write_image.style.display = 'none'
+	lol_rpanel_reply_board_write_image_guide.style.display = 'none'
+	lol_rpanel_reply_board_write_image.src = ''
+	lol_rpanel_reply_board_write_image_placeholder.style.display = 'block'
+}
+
+/* 댓글 쓰기 - 이미지 로딩 완료 이벤트 */
+function lol_rpanel_reply_board_write_image_onload()
+{
+	lol_rpanel_reply_board_write_canvas.width = lol_rpanel_reply_board_write_image.naturalWidth
+	lol_rpanel_reply_board_write_canvas.height = lol_rpanel_reply_board_write_image.naturalHeight
+	lol_rpanel_reply_board_write_canvas.getContext('2d').drawImage(lol_rpanel_reply_board_write_image, 0,0)
+	g_lol_write_reply_image_data = (lol_rpanel_reply_board_write_canvas.toDataURL("image/jpeg").substr(23))
+	lol_rpanel_reply_board_write_image_guide.innerHTML = '이미지가 첨부 되었습니다.'
+}
+
 /* 댓글 삭제 버튼 이벤트 */
 function lol_onclick_delete_reply()
 {
@@ -648,7 +696,8 @@ function lol_write_reply()
 	if(g_lol_android_id == g_lol_guest_id)
 		return
 
-	socket.emit('lol_write_reply', { android_id: g_lol_android_id, post_seq: g_lol_current_detail['post_seq'], body: lol_rpanel_reply_board_input.value })
+	socket.emit('lol_write_reply', { android_id: g_lol_android_id, post_seq: g_lol_current_detail['post_seq'], body: lol_rpanel_reply_board_input.value, image: g_lol_write_reply_image_data })
+	lol_clear_reply_image()
 }
 
 /* UI 업뎃 */
@@ -697,7 +746,7 @@ function lol_write_panel_toggle(isShow)
 	}
 }
 
-/* 글 쓰기 - 불필요한 문자 입력 시 제거 처리 */
+/* 글 쓰기 - 이미지 첨부란 불필요한 문자 입력 시 제거 처리 */
 async function lol_write_image_clear_text()
 {
 	lol_write_image_placeholder.value = ''
@@ -760,5 +809,5 @@ async function lol_write_image_onload()
 	g_lol_write_image_data = (lol_write_canvas.toDataURL("image/jpeg").substr(23))
 	lol_write_image_guide.innerHTML = '이미지가 첨부 되었습니다.'
 	
-	console.log(g_lol_write_image_data)
+	// console.log(g_lol_write_image_data)
 }
