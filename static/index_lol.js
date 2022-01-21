@@ -516,7 +516,8 @@ function lol_rpanel_update()
 
 		var text = document.createElement('div')
 		text.toggleAttribute('text', true)
-		text.appendChild(document.createTextNode(e['reply_title']))
+		text.innerHTML = e['reply_title']
+		// text.appendChild(document.createTextNode(e['reply_title']))
 		reply_body.appendChild(text)
 
 		div.appendChild(reply_body)

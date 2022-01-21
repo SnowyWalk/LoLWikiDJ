@@ -2233,9 +2233,12 @@ async function lol_write(android_id, subject, body, youtube_url, image='')
 	await lol_POST('http://lolwiki.kr/freeboard/insert_post_multi_2020.php',
 		{ boardid: 'freeboard', app: 'DEMACIA', notice: '0', lolmovie: '101',
 			android_id: android_id, 
-			title: decodeURI(decodeURI(subject)), 
-			text: decodeURI(decodeURI(body)),
-			youtube_url: decodeURI(youtube_url),
+			title: ((subject)), 
+			text: ((body)),
+			youtube_url: (youtube_url),
+			// title: decodeURI(decodeURI(subject)), 
+			// text: decodeURI(decodeURI(body)),
+			// youtube_url: decodeURI(youtube_url),
 			pic_new: image_filename } )
 }
 
