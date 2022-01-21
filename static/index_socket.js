@@ -401,3 +401,15 @@ socket.on('lol_write', function() {
 socket.on('lol_delete', function() {
 	alert('삭제 되었습니다.')
 })
+
+socket.on('lol_get_article_list_others', function(android_id) {
+	g_lol_search_body = ''
+	g_lol_search_nick = ''
+	g_lol_search_vote = false
+	g_lol_search_mine = true
+	g_lol_article_scroll_seq = 0
+	g_lol_article_list = []
+	g_lol_lpanel_scroll_top_switch = true
+	g_lol_spec_android_id = android_id
+	lol_get_article_list(0, g_lol_search_vote ? 15 : 30, g_lol_search_body, g_lol_search_nick, g_lol_search_vote, g_lol_search_mine)
+})

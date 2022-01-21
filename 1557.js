@@ -1439,6 +1439,14 @@ io.sockets.on('connection', function(socket)
 	// 	await lol_get_android_id_from_article(post_seq)
 	// })
 
+	socket.on('lol_get_article_list_others', async function(post_seq) {
+		var android_id = await lol_get_android_id_from_article(post_seq)
+
+		log('INFO', 'lol_get_article_list_others', format('{0}가 {1}번글 ({2})의 작성글 보기 시도', socket.name, post_seq, android_id))
+
+		socket.emit('lol_get_article_list_others', android_id)
+	})
+
 }) 
 
 function update_users()

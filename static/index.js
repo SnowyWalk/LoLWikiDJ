@@ -70,6 +70,7 @@ var g_lol_search_mine = false
 var g_lol_same_article_prev = false
 var g_lol_write_image_data = '' // 글 첨부 이미지
 var g_lol_write_reply_image_data = '' // 댓글 첨부 이미지
+var g_lol_spec_android_id = g_lol_spec_android_id
 
 /* 채팅 모드 */
 var g_is_chat_mode = false
@@ -157,7 +158,8 @@ window.onload = function() {
 	lol_lpanel_search_menu_button_nick.onclick = lol_onclick_search_nick
 
 	lol_lpanel_write_button.onclick = lol_onclick_write
-
+	
+	lol_rpanel_header_nick.addEventListener('contextmenu', lol_onrclick_article_writer, false)
 	lol_rpanel_header_button.onclick = lol_onclick_auth_or_block
 	lol_rpanel_header_button.addEventListener('contextmenu', lol_onrclick_auth_or_block, false)
 	lol_rpanel_refresh.onclick = lol_onclick_aritcle_refresh

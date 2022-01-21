@@ -19,6 +19,7 @@ function onrclick_playlist_info_box()
 		g_lol_search_nick = ''
 		g_lol_search_vote = false
 		g_lol_search_mine = false
+		g_lol_spec_android_id = g_lol_android_id
 		lol_get_article_list(0, g_lol_search_vote ? 15 : 30, g_lol_search_body, g_lol_search_nick, g_lol_search_vote, g_lol_search_mine)
 	}
 	else
@@ -32,8 +33,8 @@ function onrclick_playlist_info_box()
 /* 롤백 글 목록 조회 쿼리 */
 function lol_get_article_list(seq = 0, cnt = 30, body = '', nick = '', vote = false, mine = false)
 {
-	console.log('query', {android_id: g_lol_android_id, seq: seq, cnt: cnt, body: body, nick: nick, vote: vote, mine: mine})
-	socket.emit('lol_get_article_list', {android_id: g_lol_android_id, seq: seq, cnt: cnt, body: body, nick: nick, vote: vote, mine: mine})
+	console.log('query', {android_id: g_lol_spec_android_id, seq: seq, cnt: cnt, body: body, nick: nick, vote: vote, mine: mine})
+	socket.emit('lol_get_article_list', {android_id: g_lol_spec_android_id, seq: seq, cnt: cnt, body: body, nick: nick, vote: vote, mine: mine})
 }
 
 
@@ -179,6 +180,7 @@ function lol_onclick_search_all()
 	g_lol_article_scroll_seq = 0
 	g_lol_article_list = []
 	g_lol_lpanel_scroll_top_switch = true
+	g_lol_spec_android_id = g_lol_android_id
 	lol_get_article_list(0, g_lol_search_vote ? 15 : 30, g_lol_search_body, g_lol_search_nick, g_lol_search_vote, g_lol_search_mine)
 }
 
@@ -194,6 +196,7 @@ function lol_onclick_search_vote()
 	g_lol_article_scroll_seq = 0
 	g_lol_article_list = []
 	g_lol_lpanel_scroll_top_switch = true
+	g_lol_spec_android_id = g_lol_android_id
 	lol_get_article_list(0, g_lol_search_vote ? 15 : 30, g_lol_search_body, g_lol_search_nick, g_lol_search_vote, g_lol_search_mine)
 }
 
@@ -212,6 +215,7 @@ function lol_onclick_search_mine()
 	g_lol_article_scroll_seq = 0
 	g_lol_article_list = []
 	g_lol_lpanel_scroll_top_switch = true
+	g_lol_spec_android_id = g_lol_android_id
 	lol_get_article_list(0, g_lol_search_vote ? 15 : 30, g_lol_search_body, g_lol_search_nick, g_lol_search_vote, g_lol_search_mine)
 }
 
@@ -232,6 +236,7 @@ function lol_onclick_search_search()
 	g_lol_article_scroll_seq = 0
 	g_lol_article_list = []
 	g_lol_lpanel_scroll_top_switch = true
+	g_lol_spec_android_id = g_lol_android_id
 	lol_get_article_list(0, g_lol_search_vote ? 15 : 30, g_lol_search_body, g_lol_search_nick, g_lol_search_vote, g_lol_search_mine)
 }
 
@@ -252,6 +257,7 @@ function lol_onclick_search_nick()
 	g_lol_article_scroll_seq = 0
 	g_lol_article_list = []
 	g_lol_lpanel_scroll_top_switch = true
+	g_lol_spec_android_id = g_lol_android_id
 	lol_get_article_list(0, g_lol_search_vote ? 15 : 30, g_lol_search_body, g_lol_search_nick, g_lol_search_vote, g_lol_search_mine)
 }
 
@@ -563,6 +569,14 @@ function lol_onclick_img()
 {
 	var element = event.currentTarget
 	element.toggleAttribute('small')
+}
+
+/* 작성자의 작성글 보기 */
+function lol_onrclick_article_writer()
+{
+	event.preventDefault()
+
+	socket.emit('lol_get_article_list_others', g_lol_current_detail.post_seq)
 }
 
 /* 이 계정에 로그인하기 버튼 또는 차단버튼 */
