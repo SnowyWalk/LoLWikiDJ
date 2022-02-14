@@ -106,7 +106,18 @@ const iconv = require('iconv-lite')
 const headers = { 'Content-Type': 'application/x-www-form-urlencoded' }
 const newlineHTMLReg = /&lt;br \/&gt;\n/g
 const android_id = 'LoLWikiDJ'
+const client_guest_android_id = 'LoLWikiDJ_Guest'
 var g_lol_auth_dic = {} // '설보': '135489'
+
+/* 렛시 TTS용 */
+var toonation_session_id = 'PONHmLSVrl0H4p5vyrtS6iNapX0xbvU_ZXyNY6YbneeF2ACIiDuuMaQlkMmQ4mUXGCWUCNKpGFxmIRb0YZ4LgA'
+var tts_dic = {
+	lessy: { locale: 'JJ1RUFRBTK', provider: 'lovo' },
+	maoruya: { locale: 'KJVCBQ0PX2Q', provider: 'lovo' },
+	changu: { locale: 'typecast-actor-12', provider: 'special' },
+	beube: { locale: 'L4VZE11Y2U', provider: 'lovo' },
+	somnyang: { locale: 'AYQVIQBLJHA', provider: 'lovo' },
+}
 
 // app.get('/static/fonts/*', function(request, response, next) {
 // 	response.header( "Access-Control-Allow-Origin", "*")
@@ -1286,7 +1297,7 @@ io.sockets.on('connection', function(socket)
 		var android_id = data.android_id
 		var mine = data.mine
 
-		var ret = await lol_get_article_list(android_id, seq, cnt, body, nick, vote, mine)
+		var ret = await lol_get_article_list(socket, android_id, seq, cnt, body, nick, vote, mine)
 		socket.emit('data', ret)
 
 		/*
@@ -2050,27 +2061,69 @@ function db_rollback()
 	})
 }
 
+function utoa(str) 
+{
+	var a = Buffer.from(str, 'utf8')
+	var b = a.toString('base64')
+	var c = b.replace(/\+/g, '-')
+	var d = c.replace(/\//g, '_')
+	var e = d.replace(/=+$/, '') 
+	return e
+}
+
 async function make_tts(text, tts_hash, target_nick, voice_name)
 {
-	const request = {
-	  input: {text: text},
-	  voice: {languageCode: 'ko-KR', ssmlGender: 'FEMALE', name: voice_name},
-	  audioConfig: {audioEncoding: 'MP3'},
+	if(voice_name in tts_dic)
+	{		
+		var query = '{"code":1,"code_ex":100,"conf_idx":1,"key_streamer":"8696cfece632d9b5ac0900db2cf3ee35","amount":100,"acc_donator":"0","name":"' + g_port.toString() + '","rec_link":"","rec_play_length":0,"rec_full_length":0,"tts_enabled":1,"tts_locale":"' + tts_dic[voice_name].locale + '","tts_provider":"' + tts_dic[voice_name].provider + '","tts_mod":0,"hideinfo":0,"image":"","acctype":1,"intercept":0,"restricted":false,"donate_time":637790058976158958,"donator_idx":0,"video_info":null,"video_begin":0,"video_length":0,"title_info":{"type":0,"name":"","color":"","hash":""},"cash_stack":0,"message":"' + text + '","message_ver":2}'
+		var b64query = utoa(query)
+		var cookie_string = '__toonation_session_id__=' + toonation_session_id
+		var body = {p : b64query }
+		var res = await request.post({ 
+			url: 'https://toon.at/streamer/submit/alert/replay', 
+			headers: { Cookie: cookie_string }, 
+			method: 'POST', 
+			form: body, 
+			encoding: null })
+		var res_text = res.toString('utf8')
+		if(res_text != '{}')
+			console.log(res_text)
 	}
-	const [response] = await tts_client.synthesizeSpeech(request)
-	const writeFile = util.promisify(fs.writeFile)
-	const file_name = './tts/' + tts_hash
-	await writeFile(file_name, response.audioContent, 'binary')
+	else
+	{
+		const request = {
+		input: {text: text},
+		voice: {languageCode: 'ko-KR', ssmlGender: 'FEMALE', name: voice_name},
+		audioConfig: {audioEncoding: 'MP3'},
+		}
+		const [response] = await tts_client.synthesizeSpeech(request)
+		const writeFile = util.promisify(fs.writeFile)
+		const file_name = './tts/' + tts_hash
+		await writeFile(file_name, response.audioContent, 'binary')
 
-	for(var e in g_users_dic)
-		g_users_dic[e].socket.emit('tts', {file_name: file_name, target_nick: target_nick})
+		for(var e in g_users_dic)
+			g_users_dic[e].socket.emit('tts', {file_name: file_name, target_nick: target_nick})
+	}
 }
 
 
 /* ========================================== 롤백 =============================================================== */
 
+/* 쪽지 왔는지 확인 */
+async function lol_get_new_memo(socket, android_id) 
+{
+	var res = await lol_POST('http://lolwiki.kr/freeboard/get_new_memo.php',
+		{ boardid: 'freeboard', 'android_id': android_id })
+		.catch(err => console.log('lol_get_article_list error', err))
+		.then(JSON.parse)
+
+		// {"status":"OK","num_results":"1","results":[{"new_memo":"0"}]}
+	if(res && eval(res.num_results) == 1 && eval(res.results[0].new_memo) != 0)
+		socket.emit('lol_get_new_memo')
+}
+
 /* 글 목록 검색 */
-async function lol_get_article_list(android_id, seq = 0, cnt = 30, search_body = '', search_nick = '', search_vote = false, search_mine = false)
+async function lol_get_article_list(socket, android_id, seq = 0, cnt = 30, search_body = '', search_nick = '', search_vote = false, search_mine = false)
 {
 	var articles = await lol_POST('http://lolwiki.kr/freeboard/get_post.php', 
 		{ boardid: 'freeboard', android_id: android_id, seq: seq, search: search_body, cnt: cnt, isvote: search_vote, iszzal: false, ismine: search_mine, nickSearch: search_nick } )
@@ -2091,7 +2144,8 @@ async function lol_get_article_list(android_id, seq = 0, cnt = 30, search_body =
 		.then(JSON.parse)
 		.catch(err => console.log('lol_get_article_list JSON parse error', err))
 
-
+	if(android_id != client_guest_android_id && socket) // 회원 전용
+		lol_get_new_memo(socket, android_id) // 글 목록 조회 할 때마다 새 쪽지 왔는지 확인
 
 	return articles['results'].map(e => ({ icon_img: e['icon_img'], 
 											post_title: e['post_title'], 
@@ -2150,7 +2204,9 @@ async function lol_get_article_replys(android_id, post_seq)
 {
 	var reply = await lol_GET('http://lolwiki.kr/freeboard/get_reply_2020.php', 
 		{ boardid: 'freeboard', post_seq: post_seq, android_id: android_id} )
-		.then(res => res.replace(/\n/g, '\\r\\n'))
+		.then(res => res.replace(/\r\n/g, ' '))
+		.then(res => res.replace(/\r/g, ' '))
+		.then(res => res.replace(/\n/g, ' '))
 		.then(res => res.replace(/'/g, '"'))
 		.then(JSON.parse)
 

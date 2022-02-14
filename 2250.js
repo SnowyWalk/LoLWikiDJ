@@ -1,6 +1,6 @@
 /* 공지말 */
-var g_port = 1557
-var g_notice = '여기는 1557 눈물 전용 채널입니당\n(슬픈 영상만 허용)'
+var g_port = 2250
+var g_notice = '서버 개설일자: 2022-02-11\n소유자: 김네모'
 
 /* 설치한 express 모듈 불러오기 */
 const express = require('express')
@@ -106,7 +106,6 @@ const iconv = require('iconv-lite')
 const headers = { 'Content-Type': 'application/x-www-form-urlencoded' }
 const newlineHTMLReg = /&lt;br \/&gt;\n/g
 const android_id = 'LoLWikiDJ'
-const client_guest_android_id = 'LoLWikiDJ_Guest'
 var g_lol_auth_dic = {} // '설보': '135489'
 
 /* 렛시 TTS용 */
@@ -1297,7 +1296,7 @@ io.sockets.on('connection', function(socket)
 		var android_id = data.android_id
 		var mine = data.mine
 
-		var ret = await lol_get_article_list(socket, android_id, seq, cnt, body, nick, vote, mine)
+		var ret = await lol_get_article_list(android_id, seq, cnt, body, nick, vote, mine)
 		socket.emit('data', ret)
 
 		/*
@@ -2109,21 +2108,8 @@ async function make_tts(text, tts_hash, target_nick, voice_name)
 
 /* ========================================== 롤백 =============================================================== */
 
-/* 쪽지 왔는지 확인 */
-async function lol_get_new_memo(socket, android_id) 
-{
-	var res = await lol_POST('http://lolwiki.kr/freeboard/get_new_memo.php',
-		{ boardid: 'freeboard', 'android_id': android_id })
-		.catch(err => console.log('lol_get_article_list error', err))
-		.then(JSON.parse)
-
-		// {"status":"OK","num_results":"1","results":[{"new_memo":"0"}]}
-	if(res && eval(res.num_results) == 1 && eval(res.results[0].new_memo) != 0)
-		socket.emit('lol_get_new_memo')
-}
-
 /* 글 목록 검색 */
-async function lol_get_article_list(socket, android_id, seq = 0, cnt = 30, search_body = '', search_nick = '', search_vote = false, search_mine = false)
+async function lol_get_article_list(android_id, seq = 0, cnt = 30, search_body = '', search_nick = '', search_vote = false, search_mine = false)
 {
 	var articles = await lol_POST('http://lolwiki.kr/freeboard/get_post.php', 
 		{ boardid: 'freeboard', android_id: android_id, seq: seq, search: search_body, cnt: cnt, isvote: search_vote, iszzal: false, ismine: search_mine, nickSearch: search_nick } )
@@ -2144,8 +2130,7 @@ async function lol_get_article_list(socket, android_id, seq = 0, cnt = 30, searc
 		.then(JSON.parse)
 		.catch(err => console.log('lol_get_article_list JSON parse error', err))
 
-	if(android_id != client_guest_android_id && socket) // 회원 전용
-		lol_get_new_memo(socket, android_id) // 글 목록 조회 할 때마다 새 쪽지 왔는지 확인
+
 
 	return articles['results'].map(e => ({ icon_img: e['icon_img'], 
 											post_title: e['post_title'], 

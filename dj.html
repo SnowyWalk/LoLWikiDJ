@@ -118,6 +118,7 @@
       <input type="range" min=0 max=1 value=1 step=0.01 class="no-drag" id="option_slider_tts_volume" style="top: 8px; position: relative;">
       <img src="static/tts.png" id="option_tts_sample" style="cursor: pointer; position: relative; top: 9px; left: 3px;">
 
+      <div class="option_row"><input type="checkbox" id="option_checkbox_tts_key_bind" name="option_checkbox_tts_key_bind" checked/> <label for="option_checkbox_tts_key_bind" class="no-drag">TTS 단축키 사용 (Shift+Enter)</label></div>
 
       <div class="option_row" style="display: none">
         <fieldset style="width: 296px;" class="nanum">
@@ -181,6 +182,28 @@
             <label for="tts_8">AI 남성 B</label>
             <img src="static/tts.png" id="option_tts_8_sample" style="cursor: pointer; position: relative; top: 3px; left: 3px;">
           </div>
+          <!-- 
+          <div style="margin-bottom: 8px;">
+            <input type="radio" id="tts_lessy" name="tts_voice_name" value="lessy"/>
+            <label for="tts_lessy">렛시</label>
+          </div>
+          <div style="margin-bottom: 8px;">
+            <input type="radio" id="tts_maoruya" name="tts_voice_name" value="maoruya"/>
+            <label for="tts_maoruya">마왕루야</label>
+          </div>
+          <div style="margin-bottom: 8px;">
+            <input type="radio" id="tts_changu" name="tts_voice_name" value="changu"/>
+            <label for="tts_changu">찬구</label>
+          </div>
+          <div style="margin-bottom: 8px;">
+            <input type="radio" id="tts_beube" name="tts_voice_name" value="beube"/>
+            <label for="tts_beube">브베</label>
+          </div>
+          <div style="margin-bottom: 5px;">
+            <input type="radio" id="tts_somnyang" name="tts_voice_name" value="somnyang"/>
+            <label for="tts_somnyang">솜냥냔냐</label>
+          </div>
+          -->
         </fieldset>
       </div>
 
@@ -298,6 +321,14 @@
   <!-- UI 툴팁 -->
   <div id="ui_tooltip">[툴팁]</div>
 
+  <!-- 트위치 플레이어 패널 -->
+  <!--
+  <div id="twitch_player_panel">
+    <twitch-stream channel="maoruya" chat id="twitch_player"></twitch-stream>
+    <div id="twitch_player2"></div>
+  </div>
+  -->
+
   <!-- 롤백 패널 -->
   <div id="lol_panel" class="nanum">
     <div id="lol_lpanel" class="no-drag">
@@ -334,17 +365,19 @@
           </div>
           <div id="lol_rpanel_header_button" class="no-drag">[차단하기]</div>
         </div>
-        <div id="lol_rpanel_refresh"></div>
+        <div id="lol_rpanel_header_buttons">
+          <div id="lol_rpanel_refresh"></div>
+        </div>
       </div>
       <div id="lol_rpanel_body">
         <div id="lol_rpanel_body_youtube_container">
           <iframe id="lol_rpanel_body_youtube_player" width="100%" height="100%" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
           <div id="lol_rpanel_body_instant_queue" class="no-drag">[이 영상을 대기열에 바로 추가하기]</div>
         </div>
-        <img id="lol_rpanel_body_img1"></img>
-        <img id="lol_rpanel_body_img2"></img>
-        <img id="lol_rpanel_body_img3"></img>
-        <img id="lol_rpanel_body_img4"></img>
+        <div id="lol_rpanel_body_img1"><img id="lol_rpanel_body_img1_img"><div id="lol_rpanel_body_img1_add"></div></div>
+        <div id="lol_rpanel_body_img2"><img id="lol_rpanel_body_img2_img"><div id="lol_rpanel_body_img2_add"></div></div>
+        <div id="lol_rpanel_body_img3"><img id="lol_rpanel_body_img3_img"><div id="lol_rpanel_body_img3_add"></div></div>
+        <div id="lol_rpanel_body_img4"><img id="lol_rpanel_body_img4_img"><div id="lol_rpanel_body_img4_add"></div></div>
         <div id="lol_rpanel_body_body"></div>
         <div id="lol_rpanel_body_date">시간</div>
         <div id="lol_rpanel_body_like" class="no-drag">
@@ -352,6 +385,7 @@
         </div>
         <div id="lol_rpanel_body_buttons" class="no-drag">
           <div id="lol_rpanel_body_delete_button">삭제</div>
+          <div id="lol_rpanel_body_share_button">공유</div>
         </div>
         <div id="lol_rpanel_reply">
           <div id="lol_rpanel_reply_board">
@@ -391,6 +425,10 @@
 
   </div>
 
+  <!-- 투네 패널 -->
+  <!-- <audio id="audio_toonation" /> -->
+    <!-- <iframe src="https://toon.at/widget/alertbox/8696cfece632d9b5ac0900db2cf3ee35" width="100" height="100" /> -->
+
   <script src="$_localhost/static/index.js?ver=$_version"></script>
   <script src="$_localhost/static/index_socket.js?ver=$_version"></script>
   <script src="$_localhost/static/index_login.js?ver=$_version"></script>
@@ -409,6 +447,8 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" integrity="sha512-iBBXm8fW90+nuLcSKlbmrPcLa0OT92xO1BIsZ+ywDWZCvqsWgccV3gFoRBv0z+8dLJgyAHIhR35VZc2oM/gI1w==" crossorigin="anonymous" />
 
   <script src="https://www.youtube.com/iframe_api"></script>
+  <!-- <script src= "https://player.twitch.tv/js/embed/v1.js"></script> -->
+  <!-- <script type="module" src="https://unpkg.com/twitch-stream-embed"></script> -->
 
 </body>
 

@@ -24,6 +24,10 @@ const io = socket(server,
 		transports: ['websocket', 'polling'],
 		maxHttpBufferSize: 2e7, 
 		pingTimeout: 120 * 1000,
+		cors: {
+			origin: "*",
+			methods: ["GET", "POST"]
+		  }
 	})
 /* os */
 const os = require('os')
@@ -40,6 +44,10 @@ var converter = new showdown.Converter()
 const textToSpeech = require('@google-cloud/text-to-speech');
 const util = require('util');
 const tts_client = new textToSpeech.TextToSpeechClient();
+/* 로깅 유틸 */
+// var winston = require('winston')
+// var winston_daily = require('winston-daily-rotate-file')
+// var moment = require('moment')
 /* mysql 서버 */
 const mysql = require('mysql')
 var db_config = JSON.parse(fs.readFileSync('db_config.txt', 'utf-8'))
@@ -48,14 +56,14 @@ async function handleDisconnect() {
 	db = mysql.createConnection(db_config);
 	db.connect(function(err) {
 		if(err) {
-			log('ERROR', 'DB Timeout', GetDate())
+			log('ERROR', 'DB Timeout', GetDateTime())
 			setTimeout(handleDisconnect, 2000); 
 		}
 	})	
 	db.on('error', function(err) {
 		if(err.code === 'PROTOCOL_CONNECTION_LOST' || err.code === 'PROTOCOL_PACKETS_OUT_OF_ORDER')
 		{
-			log('ERROR', 'DB TimeOut', format('DB tried to reconnect. [{0}]', GetDate()))
+			log('ERROR', 'DB TimeOut', format('DB tried to reconnect. [{0}]', GetDateTime()))
 			return handleDisconnect()
 		}
 		else
@@ -73,36 +81,49 @@ app.use('/icon', express.static('./static/icon'))
 app.use('/tts', express.static('./tts'))
 app.use('/patch_note', express.static('./patch_note'))
 
+
+// module.exports = {
+// 	devServer: {
+// 	  proxy: {
+// 		'/socket.io': {
+// 		  target: 'http://localhost:7777',
+// 		  changeOrigin: true,
+// 		//   pathRewrite: { '^/socket.io': '' },
+// 		},
+// 	  }
+// 	}
+//   }
+
 /* CONSTANT */
 const ipReg = /((?:\d+\.){3}\d+)/
 const portReg = /https?:\/\/.*?(?:\/|\:)(\d+)/
 
 /* 유저 목록 */
-var g_users_dic = [] // dic['포트번호']['닉네임'] = { socket: 소켓, icon_id: 아이콘 아이디, icon_ver: 아이콘 버전, ip: 아이피, port: 포트 }
+var g_users_dic = {} // dic['포트번호']['닉네임'] = { socket: 소켓, icon_id: 아이콘 아이디, icon_ver: 아이콘 버전, ip: 아이피, port: 포트 }
 // socket.ip : 아이피, socket.port : 포트
 
-/* 현재 재생중인 비디오 정보 */
-var g_current_dj = ''
-var g_video_id = ''
-var g_video_title = ''
-var g_video_thumbnail = ''
-var g_video_author = ''
-var g_video_duration = 0
-var g_played_time_ms = 0 // ms
-var g_end_timer = null
+/* 현재 재생중인 비디오 정보 */ // [포트번호]
+var g_current_dj = {}
+var g_video_id = {}
+var g_video_title = {}
+var g_video_thumbnail = {}
+var g_video_author = {}
+var g_video_duration = {}
+var g_played_time_ms = {} // ms
+var g_end_timer = {}
 
 /* DJ 순서 목록 */
-var g_djs = []
+var g_djs = {} // g_djs[포트번호] = [{}, ...]
 
 /* 임시: QUEUE */
-var g_queue = []
+var g_queue = {} // [포트번호]
 
 /* 좋아요/싫어요 데이터 */
-var g_good_list = []
-var g_bad_list = []
+var g_good_list = {} // [포트번호]
+var g_bad_list = {} // [포트번호]
 
 /* 최근 재생된 영상 데이터 */
-var g_recent_video_list = [] // [ { video_id, thumbnail, title, dj }, ... ]
+var g_recent_video_list = {} // [포트번호][ { video_id, thumbnail, title, dj }, ... ]
 var g_recent_video_list_limit = 20 // 최대 저장 개수
 
 /* DEBUG 용 */
@@ -200,52 +221,56 @@ function read_file_async(file_name)
 
 io.sockets.on('connection', function(socket) 
 {
+	// 접속자 IP와 포트 얻은 후 Room에 배정.
+	socket.name = ''
 	var is_port_connection = !('x-forwarded-for' in socket.handshake.headers)
-	var socket_ip = ''
-	var socket_port = ''
-	if(is_port_connection)
-	{
-		socket_ip = ipReg.exec(socket.handshake.address)[1]
-		socket_port = portReg.exec(socket.handshake.headers.referer)[1]
-	}
-	else
-	{
-		socket_ip = socket.handshake.headers['x-forwarded-for']
-		socket_port = portReg.exec(socket.handshake.headers.referer)[1]
-	}
-	socket.ip = socket_ip
-	socket.port = socket_port
-
+	socket.ip = is_port_connection ? ipReg.exec(socket.handshake.address)[1] : socket.handshake.headers['x-forwarded-for']
+	socket.port = is_port_connection ? portReg.exec(socket.handshake.headers.referer)[1] : portReg.exec(socket.handshake.headers.referer)[1]
 	socket.join(socket.port)
+
+	// 해당 방이 존재하지 않으면 생성
+	if(socket.port in g_users_dic == false)			g_users_dic[socket.port] = {}
+	if(socket.port in g_current_dj == false)		g_current_dj[socket.port] = ''
+	if(socket.port in g_video_id == false)			g_video_id[socket.port] = ''
+	if(socket.port in g_video_title == false)		g_video_title[socket.port] = ''
+	if(socket.port in g_video_thumbnail == false)	g_video_thumbnail[socket.port] = ''
+	if(socket.port in g_video_author == false)		g_video_author[socket.port] = ''
+	if(socket.port in g_video_duration == false)	g_video_duration[socket.port] = 0
+	if(socket.port in g_played_time_ms == false)	g_played_time_ms[socket.port] = 0
+	if(socket.port in g_end_timer == false)			g_end_timer[socket.port] = null
+	if(socket.port in g_djs == false)				g_djs[socket.port] = []
+	if(socket.port in g_queue == false)				g_queue[socket.port] = []
+	if(socket.port in g_good_list == false)			g_good_list[socket.port] = []
+	if(socket.port in g_bad_list == false)			g_bad_list[socket.port] = []
+	if(socket.port in g_recent_video_list == false)	g_recent_video_list[socket.port] = []
 
 	/* 로그인 */
 	socket.on('login', async function(nick) {
 		// 소켓에 이름 저장해두기 
 		socket.name = nick
-		// log('INFO', 'login', socket.name + ' 로그인 시도.')
 
 		// 빈 이름인 경우 제외
 		if(!nick)
 		{
-			log('THROW', 'login', '빈 닉네임 : ' + nick)
+			log_user(socket, 'login', '빈 닉네임으로 접속 시도')
 			socket.name = ''
 			socket.emit('login', false)
 			return
 		}
 
 		// 중복 로그인 검사 
-		if(socket.name in g_users_dic)
+		if(socket.name in g_users_dic[socket.port])
 		{
-			if(g_users_dic[socket.name].ip == socket_ip) // 동일 아이피에서 로그인 했다면 그냥 기존 연결 끊고 새로 연결
+			if(g_users_dic[socket.port][socket.name].ip == socket.ip) // 동일 아이피에서 로그인 했다면 그냥 기존 연결 끊고 새로 연결
 			{
-				log('INFO', '중복 로그인 교체 연결', socket.name)
-				var dest_socket = g_users_dic[socket.name].socket
+				log_user(socket, 'login', '중복로그인 교체 연결')
+				var dest_socket = g_users_dic[socket.port][socket.name].socket
 				disconnect_process(dest_socket)
 				dest_socket.disconnect(true) // 진짜 연결 해제
 			}
 			else
 			{
-				log('THROW', '중복 로그인 검사', socket.name + ' 중복 로그인 실패.')
+				log_user(socket, 'login', '중복로그인 실패')
 				socket.name = ''
 				socket.emit('login', false)
 				return
@@ -256,13 +281,13 @@ io.sockets.on('connection', function(socket)
 		{
 			await db_beginTransaction()
 
-			var current_date = GetDate()
+			var current_date = GetDateTime()
 			
 			// 아이피 밴 확인
-			var ban_data = await db_select('Reason, Comment', 'Bans', format('IP LIKE "{0}"', socket_ip), 'LIMIT 1')
+			var ban_data = await db_select('Reason, Comment', 'Bans', format('IP LIKE "{0}"', socket.ip), 'LIMIT 1')
 			if(ban_data.length > 0) // 밴 대상이면
 			{
-				log('ERROR_CATCH', '밴 대상 접속 시도', format('접속을 차단했습니다. ({0}) 포트({3}) 사유: {1} | 메모: {2}', socket_ip, ban_data[0].Reason, ban_data[0].Comment, socket_port))
+				log_user(socket, 'login', format('접속을 차단했습니다. 사유: {0} | 메모: {1}', ban_data[0].Reason, ban_data[0].Comment))
 				socket.name = ''
 				socket.emit('ban', ban_data[0].Reason)
 				return
@@ -281,14 +306,14 @@ io.sockets.on('connection', function(socket)
 			}
 
 			// Secure 데이터 등록
-			var secureData = await db_select('ConnectData, Comment', 'Secures', format('IP = "{0}"', socket_ip), 'LIMIT 1') // secure data 가져오기
+			var secureData = await db_select('ConnectData, Comment', 'Secures', format('IP = "{0}"', socket.ip), 'LIMIT 1') // secure data 가져오기
 			var is_exist_secure = (secureData.length > 0)
 			var connectCount = 0
 			var is_exist_secure_data = false
 			var comment = ''
 			if(!is_exist_secure) // 새로 등록
 			{
-				await db_insert('Secures', ['IP', 'ConnectData'], [socket_ip, JSON.stringify([{Name: socket.name, ConnectCount: 1, CreationDate: current_date, LastLoginDate: current_date}])])
+				await db_insert('Secures', ['IP', 'ConnectData'], [socket.ip, JSON.stringify([{Name: socket.name, ConnectCount: 1, CreationDate: current_date, LastLoginDate: current_date}])])
 				connectCount = 1
 			}
 			else // 기존꺼에 추가
@@ -319,7 +344,7 @@ io.sockets.on('connection', function(socket)
 					secureData.push({Name: socket.name, ConnectCount: 1, CreationDate: current_date, LastLoginDate: current_date})
 					connectCount = 1
 				}
-				await db_update('Secures', format("ConnectData = '{0}'", JSON.stringify(secureData)), format('IP = "{0}"', socket_ip))
+				await db_update('Secures', format("ConnectData = '{0}'", JSON.stringify(secureData)), format('IP = "{0}"', socket.ip))
 			}
 
 			// 아이콘 ID 가져오기
@@ -343,15 +368,15 @@ io.sockets.on('connection', function(socket)
 
 			var text1 = (is_exist_user ? '기존' : '신규')
 			var text4 = (is_exist_user && !is_exist_secure_data ? '아이디 도용 가능성 감지' : '')
-			log('INFO', 'login', format('{0} {1}유저 {2}번째 로그인 : ({3}) {4} {5}', socket.name, text1, connectCount, socket_ip, text4, comment))
+			log_user(socket, 'login', format('{0}유저 {1}번째 로그인 : {2} | {3}', text1, connectCount, text4, comment))
 
-			g_users_dic[socket.name] = {socket: socket, icon_id: icon_id, icon_ver: icon_ver, ip: socket_ip}
+			g_users_dic[socket.port][socket.name] = { socket: socket, icon_id: icon_id, icon_ver: icon_ver, ip: socket.ip, port: socket.port }
 			socket.emit('login', true)
-			update_current_video(socket) // 플레이 영상 데이터 보내기
-			update_current_queue(socket) // 플레이 대기열 알림
-			update_current_rating(socket) // 좋/싫 알림
+			update_current_video(socket, socket.port) // 플레이 영상 데이터 보내기
+			update_current_queue(socket, socket.port) // 플레이 대기열 알림
+			update_current_rating(socket, socket.port) // 좋/싫 알림
 			update_playlist(socket) // 플레이리스트 정보 전송
-			update_recent_video_list(socket) // 최근 영상 정보 전송
+			update_recent_video_list(socket, socket.port) // 최근 영상 정보 전송
 
 			if(g_notice)
 				socket.emit('chat_update', {type: 'connect', name: 'SERVER', message: g_notice})
@@ -385,14 +410,18 @@ io.sockets.on('connection', function(socket)
 	/* 새로운 유저가 접속했을 경우 다른 소켓에게도 알려줌 */
 	socket.on('chat_newUser', function() 
 	{
-		log('INFO', 'chat_newUser', format('\'{0}\' 님이 접속하였습니다.', socket.name))		
-		log('INFO', 'users', format('참가자 목록 ({0})\n{1}', Object.keys(g_users_dic).length, Object.keys(g_users_dic).map( x => format('{0} ({1})', x, g_users_dic[x].ip)).join(', ')))
+		log_user(socket, 'chat_newUser', '유저 접속')
+		log_system(socket.port, 
+			format('참가자 목록 ({0})', Object.keys(g_users_dic[socket.port]).length),
+			Object.keys(g_users_dic[socket.port]).map(x => 
+				format('{0} ({1})', x, g_users_dic[socket.port][x].ip))
+				.join(', '))
 
 		// 모든 소켓에게 전송 
-		io.sockets.emit('chat_update', {type: 'connect', name: 'SERVER', message: format('\'{0}\' 님이 접속하였습니다.', socket.name) })
-		update_users()
-		update_djs()
-		socket.emit('chat_update', { type:'system_message', time: GetTime(), message: format('참가자 목록 ({0})\n{1}', Object.keys(g_users_dic).length, Object.keys(g_users_dic).join(', ')) })
+		io.to(socket.port).emit('chat_update', {type: 'connect', name: 'SERVER', message: format('\'{0}\' 님이 접속하였습니다.', socket.name) })
+		update_users(socket.port)
+		update_djs(socket.port)
+		socket.emit('chat_update', { type:'system_message', time: GetTime(), message: format('참가자 목록 ({0})\n{1}', Object.keys(g_users_dic[socket.port]).length, Object.keys(g_users_dic[socket.port]).join(', ')) })
 	})
 
 	/* 전송한 메시지 받기 */
@@ -401,26 +430,25 @@ io.sockets.on('connection', function(socket)
 		if(!socket.name)
 			return
 
-		if(!g_users_dic[socket.name])
+		if(!g_users_dic[socket.port][socket.name])
 		{
-			log_exception('chat_message', null, g_users_dic[socket.name])
+			log_exception('chat_message', null, g_users_dic[socket.port][socket.name])
 			return
 		}
 			
 		/* 받은 데이터에 누가 보냈는지 이름을 추가 */
 		data.name = socket.name
 		data.time = GetTime()
-		data.icon_id = g_users_dic[socket.name].icon_id
-		data.icon_ver = g_users_dic[socket.name].icon_ver
-		var ip = g_users_dic[socket.name].ip
+		data.icon_id = g_users_dic[socket.port][socket.name].icon_id
+		data.icon_ver = g_users_dic[socket.port][socket.name].icon_ver
 
 		log_message = data.message
 		if(log_message.length > 100)
 			log_message = format('{0} ... ({1} bytes)', log_message.substr(0, 100), log_message.length)
-		log('CHAT', format('{0} ({1})', data.name, ip), log_message, true)
+		log_chat(socket, log_message)
 
 		/* 보낸 사람을 제외한 나머지 유저에게 메시지 전송 */
-		io.sockets.emit('chat_update', data);
+		io.to(socket.port).emit('chat_update', data);
 	})
 
 	/* 접속 종료 */
@@ -433,76 +461,78 @@ io.sockets.on('connection', function(socket)
 
 	function disconnect_process(socket)
 	{
-		if(socket.name in g_users_dic == false)
+		if(socket.name in g_users_dic[socket.port] == false)
 			return
 
-		log('INFO', 'disconnect', format('\'{0}\' 님이 나가셨습니다.', socket.name))
+		log_user(socket, 'disconnect', '유저 퇴장')
 
-		delete g_users_dic[socket.name]
-		if(g_djs.indexOf(socket.name) != -1)
+		delete g_users_dic[socket.port][socket.name]
+		if(g_djs[socket.port].indexOf(socket.name) != -1)
 		{
-			g_djs.splice(g_djs.indexOf(socket.name), 1)
-			update_djs()
-
+			g_djs[socket.port].splice(g_djs[socket.port].indexOf(socket.name), 1)
+			update_djs(socket.port)
 		}
 
-		log('INFO', '현 접속자', Object.keys(g_users_dic).join(', '))
+		log_system(socket.port, 
+			format('참가자 목록 ({0})', Object.keys(g_users_dic[socket.port]).length),
+			Object.keys(g_users_dic[socket.port]).map(x => 
+				format('{0} ({1})', x, g_users_dic[socket.port][x].ip))
+				.join(', '))
 
 		// 현재 재생중인 dj라면 재생 종료
-		if(g_current_dj == socket.name)
-			end_of_video()
+		if(g_current_dj[socket.port] == socket.name)
+			end_of_video(socket.port)
 
 		// 나가는 사람을 제외한 나머지 유저에게 메시지 전송
-		socket.broadcast.emit('chat_update', {type: 'disconnect', message: format('\'{0}\' 님이 나가셨습니다.', socket.name)})
-		log('INFO', 'users', format('참가자 목록 ({0})\n{1}', Object.keys(g_users_dic).length, Object.keys(g_users_dic).map( x => format('{0} ({1})', x, g_users_dic[x].ip)).join(', ')))
-		update_users()
+		socket.to(socket.port).emit('chat_update', {type: 'disconnect', message: format('\'{0}\' 님이 나가셨습니다.', socket.name)})
+		update_users(socket.port)
 	}
 
 	socket.on('refresh', function(nick) {
-		log('INFO', 'refresh', format('Refresh 시도 : {0}({1}) -> {2}', socket.name, g_users_dic[socket.name].ip, nick))
-		if(g_users_dic[socket.name].ip != '125.180.24.71')
+		log_user(socket, 'refresh', format('refresh 시도 -> {0}', nick))
+		if(g_users_dic[socket.port][socket.name].ip != '125.180.24.71')
 		{
-			log('ERROR_CATCH', 'refresh', '아이피 인증 실패!')
+			log_system(socket.port, 'refresh', '아이피 인증 실패!')
 			return
 		}
 		
-		if(nick in g_users_dic)
-			g_users_dic[nick].socket.emit('refresh')
+		if(nick in g_users_dic[socket.port])
+			g_users_dic[socket.port][nick].socket.emit('refresh')
 		else
-			log('ERROR_CATCH', 'refresh', format('해당 대상 없음!'))
+			log_system(socket.port, 'refresh', '해당 대상 없음!')
 	})
 
 	socket.on('eval', function(data) {
 		var nick = data.nick
 		var code = data.code
 
-		log('INFO', 'eval', format('Eval 시도 : {0}({1}) -> {2} to {3}', socket.name, g_users_dic[socket.name].ip, nick, code))
-		if(g_users_dic[socket.name].ip != '125.180.24.71')
+		log_user(socket, 'eval', format('Eval 시도 -> {0} to {1}', nick, code))
+		if(g_users_dic[socket.port][socket.name].ip != '125.180.24.71')
 		{
-			log('ERROR_CATCH', 'eval', '아이피 인증 실패!')
+			log_system(socket.port, 'eval', '아이피 인증 실패!')
 			return
 		}
 
-		if(nick in g_users_dic)
-			g_users_dic[nick].socket.emit('eval', code)
+		if(nick in g_users_dic[socket.port])
+			g_users_dic[socket.port][nick].socket.emit('eval', code)
 		else
-			log('ERROR_CATCH', 'eval', format('해당 대상 없음!'))
+			log_system(socket.port, 'eval', '해당 대상 없음!')
 	})
 
 	socket.on('evalall', function(code) {
-		var targets_nick = Object.keys(g_users_dic)
-		log('INFO', 'evalall', format('Eval All 시도 : {0}({1}) -> All({2}) to {3}', socket.name, g_users_dic[socket.name].ip, targets_nick.join(', '), code))
+		var targets_nick = Object.keys(g_users_dic[socket.port])
+		log_user(socket, 'evalall', format('Eval All 시도 -> All({0}) to {1}', targets_nick.join(', '), code))
 
-		if(g_users_dic[socket.name].ip != '125.180.24.71')
+		if(g_users_dic[socket.port][socket.name].ip != '125.180.24.71')
 		{
-			log('ERROR_CATCH', 'evalall', '아이피 인증 실패!')
+			log_system(socket.port, 'evalall', '아이피 인증 실패!')
 			return
 		}
 
 		for(var e of targets_nick)
 		{
-			console.log(e, g_users_dic[e])
-			g_users_dic[e].socket.emit('eval', code)
+			console.log(e, g_users_dic[socket.port][e])
+			g_users_dic[socket.port][e].socket.emit('eval', code)
 
 		}
 	})
@@ -511,26 +541,27 @@ io.sockets.on('connection', function(socket)
 		var target_nick = data.target_nick
 		var message = data.message
 
-		io.sockets.emit('chat_update', { type: 'message', message: message, name: socket.name, time: GetTime(), icon_id: g_users_dic[socket.name].icon_id, icon_ver: g_users_dic[socket.name].icon_ver});
+		io.to(socket.port).emit('chat_update', { type: 'message', message: message, name: socket.name, time: GetTime(), icon_id: g_users_dic[socket.port][socket.name].icon_id, icon_ver: g_users_dic[socket.port][socket.name].icon_ver});
 
-		if(target_nick in g_users_dic)
-			g_users_dic[target_nick].socket.emit('eval', "socket.emit('chat_message', {type: 'message', message:format('음량: {0}% {1}', player.getVolume(), player.isMuted() ? '(음소거)' : ''), tts_hash:''})")
+		if(target_nick in g_users_dic[socket.port])
+			g_users_dic[socket.port][target_nick].socket.emit('eval', "socket.emit('chat_message', {type: 'message', message:format('음량: {0}% {1}', player.getVolume(), player.isMuted() ? '(음소거)' : ''), tts_hash:''})")
 		else
-			log('ERROR_CATCH', 'volcheck', format('해당 대상 없음!'))
+			log_system(socket.port, 'volcheck', '해당 대상 없음!')
 	})
 
 	// 서버 디버그용 eval
 	socket.on('debug', function(code) {
-		log('INFO', 'debug', format('Eval 시도 : {0}({1}) -> {2}', socket.name, g_users_dic[socket.name].ip, code))
-		if(g_users_dic[socket.name].ip != '125.180.24.71')
+		log_user(socket, 'debug', format('Debug 시도 -> {0}', code))
+		if(g_users_dic[socket.port][socket.name].ip != '125.180.24.71')
 		{
-			log('ERROR_CATCH', 'debug', '아이피 인증 실패!')
+			log_system(socket.port, 'evalall', '아이피 인증 실패!')
 			return
 		}
 
 		eval(code)
 	})
 
+	/* 중복 로그인 체크. 로그인 전에 이 부분이 실행된다. */
 	socket.on('check_user', function(nick) {
 		if(nick in g_users_dic[socket.port] == false)
 		{
@@ -538,18 +569,7 @@ io.sockets.on('connection', function(socket)
 			return
 		}
 
-		var is_port_connection = !('x-forwarded-for' in socket.handshake.headers)
-		var socket_ip = ''
-		if(is_port_connection)
-		{
-			socket_ip = ipReg.exec(socket.handshake.address)[1]
-		}
-		else
-		{
-			socket_ip = socket.handshake.headers['x-forwarded-for']
-		}
-
-		if(g_users_dic[nick].ip != socket.handshake.headers['x-forwarded-for'])
+		if(g_users_dic[socket.port][nick].ip != socket.ip)
 		{
 			socket.emit('check_user', false) // 원래는 이미 존재한다고 해야하지만, 용도가 교체 로그인 체크이므로 false 반환.
 			return
@@ -567,7 +587,7 @@ io.sockets.on('connection', function(socket)
 		video_id : 'NvvYPLGN8Ag'
 		*/
 
-		queue_video(data)
+		queue_video(data, socket.port)
 	})
 
 	socket.on('queue_video_index', async function(video_index) {
@@ -575,12 +595,12 @@ io.sockets.on('connection', function(socket)
 			return
 
 		var video_id = await db_select('VideoId', 'Videos', format('Id = {0}', video_index), 'LIMIT 1').then(e => e[0].VideoId)
-		log('INFO', 'queue_video_index', format('{0} 가 즉시 재생 : {1} = {2}', socket.name, video_index, video_id))
+		log_user(socket, 'queue_video_index', format('영상 즉시 재생 -> {0} ({1})', video_index, video_id))
 
-		await queue_video({dj: socket.name, video_id: video_id})
+		await queue_video({dj: socket.name, video_id: video_id}, socket.port)
 	})
 
-	async function queue_video(data)
+	async function queue_video(data, port)
 	{
 		/* data
 		dj : '천아연'
@@ -591,105 +611,53 @@ io.sockets.on('connection', function(socket)
 		{
 			var youtube_data = await request_youtube_video(data.video_id).then(parse_youtube_video_data)
 
-			log('INFO', 'queue', format('{0} 이(가) {1} ({2}) 예약 {3}', socket.name, youtube_data.title, parse_second_to_string(youtube_data.duration), data.video_id))
+			log_user(socket, 'queue', format('{0} ({1}) 예약. video_id: {3}', youtube_data.title, parse_second_to_string(youtube_data.duration), data.video_id))
 			if(!g_video_id)
 			{
-				log('INFO', 'play', youtube_data.title)
-				g_current_dj = data.dj
-				g_video_id = data.video_id
-				g_video_title = youtube_data.title
-				g_video_author = youtube_data.author
-				g_video_thumbnail = youtube_data.thumbnail_url
-				g_video_duration = youtube_data.duration
-				g_played_time_ms = Date.now()
+				log_system(port, 'play', youtube_data.title)
+				g_current_dj[port] = data.dj
+				g_video_id[port] = data.video_id
+				g_video_title[port] = youtube_data.title
+				g_video_author[port] = youtube_data.author
+				g_video_thumbnail[port] = youtube_data.thumbnail_url
+				g_video_duration[port] = youtube_data.duration
+				g_played_time_ms[port] = Date.now()
 	
 				// 영상 종료 타이머 설정
-				if(g_video_duration != 0)
-					set_timeout_end_of_video()
+				if(g_video_duration[port] != 0)
+					set_timeout_end_of_video(port)
 	
 				// 모두에게 영상 갱신
-				update_current_video(io.sockets)
-				add_to_recent_video_list(g_video_id, g_video_title, g_video_thumbnail, g_current_dj, g_video_duration)
-				update_recent_video_list(io.sockets)
+				update_current_video(io.to(port), port)
+				add_to_recent_video_list(g_video_id[port], g_video_title[port], g_video_thumbnail[port], g_current_dj[port], g_video_duration[port])
+				update_recent_video_list(io.to(port), port)
 			}
 			else
 			{
-				g_queue.push( { dj: data.dj, video_id: data.video_id, data: youtube_data } )
+				g_queue[port].push( { dj: data.dj, video_id: data.video_id, data: youtube_data } )
 
 				// 모두에게 플레이 대기열 알림
-				update_current_queue(io.sockets)
+				update_current_queue(io.to(port), port)
 			}
 		}
 		catch (exception)
 		{
-			log_exception('queue', exception)
-			io.sockets.emit('chat_update', {type:'system_message', time: GetTime(), message: '유튜브 영상 조회 에러!'})
+			log_error('queue', exception)
+			io.to(port).emit('chat_update', {type:'system_message', time: GetTime(), message: '유튜브 영상 조회 에러!'})
 		}
 	}
 
 	/* 현재 플레이 대기열 목록 알려주기 */
 	socket.on('queue_list', function() {
-		update_current_queue(socket, true)
-	})
-
-	/* TEST: 특정 비디오 재생 명령 (쓰이지 않음!) */
-	socket.on('play', async function(data) {
-		if(!socket.name)
-			return
-
-		/* data
-		dj : '천아연'
-		video_id : 'NvvYPLGN8Ag'
-		*/
-
-		if(g_end_timer)
-		{
-			clearTimeout(g_end_timer)
-			g_end_timer = null
-		}
-
-		log('INFO', 'play', data)
-
-		var body = ''
-		try
-		{
-			body = await request_youtube_video(data.video_id)
-			var item = body.items[0]
-			if(item == null)
-				throw Error()
-			var response_data = parse_youtube_video_data(body)
-			
-			log('INFO', 'play', response_data.title)
-			g_current_dj = data.dj
-			g_video_id = data.video_id
-			g_video_title = response_data.title
-			g_video_author = response_data.author
-			g_video_thumbnail = response_data.thumbnail_url
-			g_video_duration = response_data.duration
-			g_played_time_ms = Date.now()
-
-			// 영상 종료 타이머 설정
-			if(g_video_duration != 0)
-				set_timeout_end_of_video()
-
-			// 모두에게 영상 갱신
-			update_current_video(io.sockets)
-			add_to_recent_video_list(g_video_id, g_video_title, g_video_thumbnail, g_current_dj, g_video_duration)
-			update_recent_video_list(io.sockets)
-		}
-		catch(exception)
-		{
-			log_exception('play', exception, body)
-			io.sockets.emit('chat_update', {type:'system_message', time: GetTime(), message: '유튜브 영상 조회 에러!'})
-		}
+		update_current_queue(socket, socket.port, true)
 	})
 
 	/* 현재 재생중인 영상 정보 요청 */
 	socket.on('playing', function() {
-		var seekTime = (Date.now() - g_played_time_ms) / 1000
+		var seekTime = (Date.now() - g_played_time_ms[socket.port]) / 1000
 		if(seekTime < 0)
 			seekTime = 0
-		update_current_video(socket)
+		update_current_video(socket, socket.port)
 	})
 
 	/* 되감기 */
@@ -697,38 +665,38 @@ io.sockets.on('connection', function(socket)
 		if(!socket.name)
 			return
 
-		g_played_time_ms += 1000 * data.sec
-		if(Date.now() < g_played_time_ms)
-			g_played_time_ms = Date.now()
+		g_played_time_ms[socket.port] += 1000 * data.sec
+		if(Date.now() < g_played_time_ms[socket.port])
+			g_played_time_ms[socket.port] = Date.now()
 
 		// 챗 알림
-		io.sockets.emit('chat_update', { type: 'message', message: data.message, name: socket.name, time: GetTime(), icon_id: g_users_dic[socket.name].icon_id, icon_ver: g_users_dic[socket.name].icon_ver});
-		io.sockets.emit('chat_update', { type: 'system_message', message: '영상을 ' + data.sec + '초 되감았습니다.', name: socket.name, time: GetTime()});
+		io.to(socket.port).emit('chat_update', { type: 'message', message: data.message, name: socket.name, time: GetTime(), icon_id: g_users_dic[socket.port][socket.name].icon_id, icon_ver: g_users_dic[socket.port][socket.name].icon_ver});
+		io.to(socket.port).emit('chat_update', { type: 'system_message', message: '영상을 ' + data.sec + '초 되감았습니다.', name: socket.name, time: GetTime()});
 
 		// 영상 종료 타이머 설정
-		set_timeout_end_of_video()
+		set_timeout_end_of_video(socket.port)
 
 		// 모두에게 영상 갱신
-		update_current_video(io.sockets)
+		update_current_video(io.to(socket.port), port)
 	})
 
 	socket.on('forward', function(data) {
 		if(!socket.name)
 			return
 
-		g_played_time_ms -= 1000 * data.sec
-		if(Date.now() < g_played_time_ms)
-			g_played_time_ms = Date.now()
+		g_played_time_ms[socket.port] -= 1000 * data.sec
+		if(Date.now() < g_played_time_ms[socket.port])
+			g_played_time_ms[socket.port] = Date.now()
 
 		// 챗 알림
-		io.sockets.emit('chat_update', { type: 'message', message: data.message, name: socket.name, time: GetTime(), icon_id: g_users_dic[socket.name].icon_id, icon_ver: g_users_dic[socket.name].icon_ver});
-		io.sockets.emit('chat_update', { type: 'system_message', message: '영상을 ' + data.sec + '초 넘겼습니다.', name: socket.name, time: GetTime()});
+		io.to(socket.port).emit('chat_update', { type: 'message', message: data.message, name: socket.name, time: GetTime(), icon_id: g_users_dic[socket.port][socket.name].icon_id, icon_ver: g_users_dic[socket.port][socket.name].icon_ver});
+		io.to(socket.port).emit('chat_update', { type: 'system_message', message: '영상을 ' + data.sec + '초 넘겼습니다.', name: socket.name, time: GetTime()});
 
 		// 영상 종료 타이머 설정
-		set_timeout_end_of_video()
+		set_timeout_end_of_video(socket.port)
 
 		// 모두에게 영상 갱신
-		update_current_video(io.sockets)
+		update_current_video(io.to(socket.port), port)
 	})
 
 	/* 현재 영상 스킵 */
@@ -737,21 +705,25 @@ io.sockets.on('connection', function(socket)
 			return
 
 		if(message)
-			io.sockets.emit('chat_update', { type: 'message', message: message, name: socket.name, time: GetTime(), icon_id: g_users_dic[socket.name].icon_id, icon_ver: g_users_dic[socket.name].icon_ver});
-		io.sockets.emit('chat_update', { type: 'system_message', message: '영상이 스킵 되었습니다.', time: GetTime()})
-		log('INFO', 'socket.skip', 'skipped on demand.')
-		end_of_video()
+			io.to(socket.port).emit('chat_update', { type: 'message', message: message, name: socket.name, time: GetTime(), icon_id: g_users_dic[socket.port][socket.name].icon_id, icon_ver: g_users_dic[socket.port][socket.name].icon_ver});
+		io.to(socket.port).emit('chat_update', { type: 'system_message', message: '영상이 스킵 되었습니다.', time: GetTime()})
+		log_user(socket, 'skip', 'skipped on demand.')
+		end_of_video(socket.port)
 	})
 
 	/* deprecated: 참가자 목록 요청 */
 	socket.on('users', function() {
-		log('INFO', 'users', format('참가자 목록 ({0})\n{1}', Object.keys(g_users_dic).length, Object.keys(g_users_dic).map( x => format('{0} ({1})', x, g_users_dic[x].ip)).join(', ')))
-		update_users()
+		log_system(socket.port, 
+			format('참가자 목록 ({0})', Object.keys(g_users_dic[socket.port]).length),
+			Object.keys(g_users_dic[socket.port]).map(x => 
+				format('{0} ({1})', x, g_users_dic[socket.port][x].ip))
+				.join(', '))
+		update_users(socket.port)
 	})
 
 	/* DJ 목록 요청 */
 	socket.on('djs', function() {
-		socket.emit('djs', {data: format('디제잉 목록 ({0})\n{1}', g_djs.length, g_djs.map((x, i) => format('{0}. {1}', i+1, x)).join('\n'))})  
+		socket.emit('djs', {data: format('디제잉 목록 ({0})\n{1}', g_djs[socket.port].length, g_djs[socket.port].map((x, i) => format('{0}. {1}', i+1, x)).join('\n'))})  
 	})
 
 	/* 플레이리스트 요청 */
@@ -780,13 +752,22 @@ io.sockets.on('connection', function(socket)
 			await db_commit()
 
 			// 업데이트
-			update_playlist(socket, new_playlist_id)
+			for(var key in Object.keys(g_users_dic))
+			{
+				if(socket.name in g_users_dic[key])
+				{
+					if(key == socket.port)
+						update_playlist(socket, new_playlist_id)
+					else
+						update_playlist(g_users_dic[key][socket.name].socket)
+				}
+			}
 
-			log('INFO', 'new_playlist', format('{0} 이(가) 새 재생목록을 생성', socket.name))
+			log_user(socket, 'new_playlist', '새 재생목록 생성')
 		}
 		catch (exception)
 		{
-			log_exception('new_playlist', exception)
+			log_error('new_playlist', exception)
 			await db_rollback()
 		}		
 	})
@@ -801,11 +782,13 @@ io.sockets.on('connection', function(socket)
 		{
 			await db_update('Accounts', format('CurrentPlaylist = {0}', playlist_id), format('Name LIKE "{0}"', socket.name))
 
-			update_playlist(socket)
+			for(var key in Object.keys(g_users_dic))
+				if(socket.name in g_users_dic[key])
+					update_playlist(g_users_dic[key][socket.name].socket)
 		}
 		catch (exception)
 		{
-			log_exception('select_playlist', exception)
+			log_error('select_playlist', exception)
 		}
 	})
 
@@ -819,12 +802,14 @@ io.sockets.on('connection', function(socket)
 		{
 			await db_update('Playlists', format('Name = "{0}"', data.name), format('Id = {0}', data.playlist_id))
 
-			update_playlist(socket)
-			log('INFO', 'rename_playlist', format('{0} 이(가) 재생목록명을 변경 -> {1}', socket.name, data.name))
+			for(var key in Object.keys(g_users_dic))
+				if(socket.name in g_users_dic[key])
+					update_playlist(g_users_dic[key][socket.name].socket)
+			log_user(socket, 'rename_playlist', '재생목록명을 변경 -> {0}', data.name)
 		}
 		catch (exception)
 		{
-			log_exception('rename_playlist', exception)
+			log_error('rename_playlist', exception)
 		}
 	})
 
@@ -848,11 +833,14 @@ io.sockets.on('connection', function(socket)
 
 			await db_commit()
 
-			update_playlist(socket)
+			for(var key in Object.keys(g_users_dic))
+				if(socket.name in g_users_dic[key])
+					update_playlist(g_users_dic[key][socket.name].socket)
+			log_user(socket, 'delete_playlist', '재생목록을 삭제 -> {0}', playlist_id)
 		}
 		catch (exception)
 		{
-			log_exception('delete_playlist', exception)
+			log_error('delete_playlist', exception)
 			await db_rollback()
 		}
 	})
@@ -892,22 +880,24 @@ io.sockets.on('connection', function(socket)
 
 			await db_commit()
 			
-			log('INFO', 'delete_video', format('{0} 이(가) {1}번 재생목록에서 Id: {2} 영상을 삭제', socket.name, data.playlist_id, data.video_id))
+			log_user(socket, 'delete_video', format('{0}번 재생목록에서 ID {1} 영상을 삭제', data.playlist_id, data.video_id))
 			
 			// 클라에게 재생목록 업뎃
-			update_playlist(socket)
+			for(var key in Object.keys(g_users_dic))
+				if(socket.name in g_users_dic[key])
+					update_playlist(g_users_dic[key][socket.name].socket)
 
 			// 디제잉 중이었던 유저고, 해당 재생목록이 비게 되었으면 dj목록에서 제거한 후 알려준다.
-			if(g_djs.indexOf(socket.name) != -1 && video_list.length == 0)
+			if(g_djs[socket.port].indexOf(socket.name) != -1 && video_list.length == 0)
 			{
-				g_djs.splice(g_djs.indexOf(socket.name), 1)
+				g_djs[socket.port].splice(g_djs[socket.port].indexOf(socket.name), 1)
 				socket.emit('dj_state', false)
-				update_djs()
+				update_djs(socket.port)
 			}
 		}
 		catch (exception)
 		{
-			log_exception('delete_video', exception, data)
+			log_error('delete_video', exception, data)
 			await db_rollback()
 		}
 	})
@@ -920,11 +910,13 @@ io.sockets.on('connection', function(socket)
 			shuffle(video_list)
 			await db_update('Playlists', format('VideoList = "{0}"', JSON.stringify(video_list)), format('Id = {0}', playlist_id))
 
-			update_playlist(socket)
+			for(var key in Object.keys(g_users_dic))
+				if(socket.name in g_users_dic[key])
+					update_playlist(g_users_dic[key][socket.name].socket)
 		}
 		catch(exception)
 		{
-			log_exception('shuffle', exception)
+			log_error('shuffle', exception)
 		}
 	})
 
@@ -984,12 +976,16 @@ io.sockets.on('connection', function(socket)
 
 			await db_update('Playlists', format('VideoList = "{0}"', JSON.stringify(video_list)), format('Id = {0}', data.playlist_id))
 
-			update_playlist(socket)
+			for(var key in Object.keys(g_users_dic))
+				if(socket.name in g_users_dic[key])
+					update_playlist(g_users_dic[key][socket.name].socket)
 		}
 		catch (exception)
 		{
-			log_exception('change_video_order', exception)
-			update_playlist(socket)
+			log_error('change_video_order', exception)
+			for(var key in Object.keys(g_users_dic))
+				if(socket.name in g_users_dic[key])
+					update_playlist(g_users_dic[key][socket.name].socket)
 		}
 
 	})
@@ -998,7 +994,6 @@ io.sockets.on('connection', function(socket)
 	// 유효한 영상이어야한다. (삭제된 영상이 아니어야한다. Embedding 비허용 영상은 상관 없음.) 
 	socket.on('push_video', function(data) {
 		// data : {video_id: 추가할 비디오 아이디, playlist_id: 추가할 플레이리스트 아이디}
-
 		if(!socket.name)
 			return
 
@@ -1008,9 +1003,9 @@ io.sockets.on('connection', function(socket)
 	/* 특정 재생목록에 재생목록 단위로 video 추가 */
 	socket.on('push_playlist', async function(data) {
 		// data : {youtube_playlist_id: 추가할 재생목록 아이디, playlist_id: 추가할 DB플레이리스트 아이디}
-
 		if(!socket.name)
 			return
+
 		try
 		{
 			var video_list = []
@@ -1028,7 +1023,7 @@ io.sockets.on('connection', function(socket)
 		}
 		catch (exception)
 		{
-			log_exception('push_playlist', exception)
+			log_error('push_playlist', exception)
 			socket.emit('push_video_result', {isSuccess: false, message: '영상을 추가하는 중에 오류가 발생했습니다.\n' + exception.err})
 		}
 	})
@@ -1056,6 +1051,17 @@ io.sockets.on('connection', function(socket)
 			var ret_str = ''
 
 			if(duplicated.length > 0)
+				ret_str += format('중복됨: {0}, ', duplicated.length) 
+			if(blocked.length > 0)
+				ret_str += format('차단됨: {0}, ', blocked.length) 
+			if(failed.length > 0)
+				ret_str += format('조회 실패: {0}, ', failed.length) 
+			if(successed.length > 0)
+				ret_str += format('성공: {0}', successed.length) 
+
+			ret_str += '\n'
+
+			if(duplicated.length > 0)
 				ret_str += duplicated.map(x => format('[중복됨] {0} ({1})', x.Name, parse_second_to_string(x.Length))).join('\n') + '\n'
 			
 			if(blocked.length > 0)
@@ -1067,14 +1073,15 @@ io.sockets.on('connection', function(socket)
 			if(successed.length > 0)
 				ret_str += successed.map(x => format('[등록 성공] {0} ({1})', x.Name, parse_second_to_string(x.Length))).join('\n')
 
-
-			log('INFO', 'push_videos', format('SUCCESS! VideoID. [{0}] ({2}개) -> Playlist. {1}', successed.map(x => x.Id).join(', '), playlist_id, successed.length) )
+			log_user(socket, 'push_videos', format('재생목록째로 추가 성공 ({0}개)', successed.length))
 			socket.emit('push_video_result', {isSuccess: true, message: ret_str})
-			update_playlist(socket)
+			for(var key in Object.keys(g_users_dic))
+				if(socket.name in g_users_dic[key])
+					update_playlist(g_users_dic[key][socket.name].socket)
 		}
 		catch (exception)
 		{
-			log_exception('push_videos', exception)
+			log_error('push_videos', exception)
 			socket.emit('push_video_result', {isSuccess: false, message: '영상을 추가하는 중에 오류가 발생했습니다.\n' + exception.err})
 		}
 	}
@@ -1085,48 +1092,48 @@ io.sockets.on('connection', function(socket)
 			return
 
 		// 비디오 재생중 체크
-		if(!g_video_id)
+		if(!g_video_id[socket.port])
 			return
 
-		var is_in_good = g_good_list.indexOf(socket.name) != -1
-		var is_in_bad = g_bad_list.indexOf(socket.name) != -1
+		var is_in_good = g_good_list[socket.port].indexOf(socket.name) != -1
+		var is_in_bad = g_bad_list[socket.port].indexOf(socket.name) != -1
 		var is_nothing = !is_in_good && !is_in_bad
 
 		// 기존꺼 제거
 		if(!is_nothing)
 		{
 			if(is_in_good)
-				g_good_list.splice(g_good_list.indexOf(socket.name), 1)
+				g_good_list[socket.port].splice(g_good_list[socket.port].indexOf(socket.name), 1)
 			else
-				g_bad_list.splice(g_bad_list.indexOf(socket.name), 1)
+				g_bad_list[socket.port].splice(g_bad_list[socket.port].indexOf(socket.name), 1)
 		}
 
 		// 새로 추가
 		if(isGood)
 		{
 			if(!is_in_good)
-				g_good_list.push(socket.name)
+				g_good_list[socket.port].push(socket.name)
 		}
 		else
 		{
 			if(!is_in_bad)
-				g_bad_list.push(socket.name)
+				g_bad_list[socket.port].push(socket.name)
 		}
 
-		log('INFO', 'rating', format('{0} 가 {1} 클릭 --> good: {2}, bad: {3}', socket.name, isGood ? 'good' : 'bad', JSON.stringify(g_good_list), JSON.stringify(g_bad_list)))
+		log_user(socket, 'rating', format('{0} 클릭 --> good: {1}, bad: {2}', isGood ? 'good' : 'bad', JSON.stringify(g_good_list[socket.port]), JSON.stringify(g_bad_list[socket.port])))
 
 		// 재생목록에 추가
 		if(isGood && !is_in_good)
-			add_to_likeplaylist(socket.name, g_video_id)
+			add_to_likeplaylist(socket.name, g_video_id[socket.port])
 
 		// 모두에게 좋/싫 알림
-		update_current_rating(io.sockets)
+		update_current_rating(io.to(socket.port), socket.port)
 
-		if(g_bad_list.length >= 5)
+		if(g_bad_list[socket.port].length >= 5)
 		{
-			io.sockets.emit('chat_update', {type: 'system_message', time: GetTime(), message: '싫어요 5개 이상 투표를 받아 스킵되었습니다.' })
-			log('INFO', 'socket.rating', 'skipped by bad rating.')
-			end_of_video()
+			io.to(socket.port).emit('chat_update', {type: 'system_message', time: GetTime(), message: '싫어요 5개 이상 투표를 받아 스킵되었습니다.' })
+			log_system(socket.port, 'rating', 'skipped by bad rating.')
+			end_of_video(socket.port)
 		}
 	})
 
@@ -1135,15 +1142,15 @@ io.sockets.on('connection', function(socket)
 		if(!socket.name)
 			return
 
-		if(g_djs.indexOf(socket.name) == -1)
-			g_djs.splice(-1, 0, socket.name)
+		if(g_djs[socket.port].indexOf(socket.name) == -1)
+			g_djs[socket.port].splice(-1, 0, socket.name)
 
-		log('INFO', 'dj_enter', g_djs)
+		log_user(socket, 'dj_enter')
 		socket.emit('dj_state', true)
-		update_djs()
+		update_djs(socket.port)
 
-		if(!g_video_id)
-			end_of_video() // 루프 시작
+		if(!g_video_id[socket.port])
+			end_of_video(socket.port) // 루프 시작
 	})
 
 	/* DJ 나가기 요청 */
@@ -1151,41 +1158,34 @@ io.sockets.on('connection', function(socket)
 		if(!socket.name)
 			return
 
-		if(g_djs.indexOf(socket.name) != -1)
-			g_djs.splice(g_djs.indexOf(socket.name), 1)
+		if(g_djs[socket.port].indexOf(socket.name) != -1)
+			g_djs[socket.port].splice(g_djs[socket.port].indexOf(socket.name), 1)
 
-		log('INFO', 'dj_quit', g_djs)
+		log_user(socket, 'dj_quit')
 
 		socket.emit('dj_state', false)
-		update_djs()
+		update_djs(socket.port)
 	})
 
 	socket.on('ping', function() {
 		socket.emit('ping')
 	})
 
-	/* 맥심 */
-	var imgReg = /window\.open\('\.(\/file\/\S+?)\'/
-	socket.on('maxim', function(no) {
-		io.sockets.emit('chat_update', { type: 'system_message', message: '맥심 막힘. ㅠㅠ' })
-	})
-
 	var zzalReg = /<picture>.*?srcset="(https?\:\/\/(?:cdn|danbooru)\.donmai\.us\/(?:data\/)?(?:sample|original).*?)"/i
 	var zzalUrlReg = /<link rel="canonical" href="(.*?)">/
 	socket.on('zzal', async function(tag) {
-		load_danbooru_zzal(tag)
+		load_danbooru_zzal(socket.port, tag)
 	})
 
-	async function load_danbooru_zzal(tag, retry_count = 0) {
+	async function load_danbooru_zzal(port, tag, retry_count = 0) {
 		try
 		{
 			tag = tag.replace(/ /g, '_')
 			await request(format('https://danbooru.donmai.us/posts/random?tags={0}', tag))
 				.then( ret => {
 					url = zzalUrlReg.exec(ret)[1]
-					console.log('zzal url : ' + url)
 					ret = zzalReg.exec(ret)[1]
-					io.sockets.emit('chat_update', { type: 'system_message', message: format('/img {0} {1}?tags={2}', ret, url, tag) })
+					io.to(port).emit('chat_update', { type: 'system_message', message: format('/img {0} {1}?tags={2}', ret, url, tag) })
 				})
 				.catch( exception => { throw exception } )
 		}
@@ -1193,18 +1193,18 @@ io.sockets.on('connection', function(socket)
 		{
 			if(exception.statusCode == 404)
 			{
-				io.sockets.emit('chat_update', { type: 'system_message', message: format('{0} 짤 검색결과 없음!', tag) })
+				io.to(port).emit('chat_update', { type: 'system_message', message: format('{0} 짤 검색결과 없음!', tag) })
 				return
 			}
-			log_exception('zzal', exception, format('https://danbooru.donmai.us/posts/random?tags={0}', tag))
+			log_error('zzal', exception, format('https://danbooru.donmai.us/posts/random?tags={0}', tag))
 			
 			if(retry_count < 5)
 			{
-				load_danbooru_zzal(tag, retry_count + 1)
+				load_danbooru_zzal(port, tag, retry_count + 1)
 			}
 			else
 			{
-				io.sockets.emit('chat_update', { type: 'system_message', message: format('{0} 짤 불러오기 실패', tag) })
+				io.to(port).emit('chat_update', { type: 'system_message', message: format('{0} 짤 불러오기 실패', tag) })
 			}
 		}
 	}
@@ -1215,41 +1215,31 @@ io.sockets.on('connection', function(socket)
 			if(image_data.startsWith('data:image/'))
 			{
 				image_data = image_data.replace(/^data:image\/png;base64,/, "")
-				fs.writeFileSync(format('static/icon/{0}.png', g_users_dic[socket.name].icon_id), image_data, 'base64')
+				fs.writeFileSync(format('static/icon/{0}.png', g_users_dic[socket.port][socket.name].icon_id), image_data, 'base64')
 			}
 			else
 			{
 				image_data = await request({ url: image_data, encoding: null })
-				fs.writeFileSync(format('static/icon/{0}.png', g_users_dic[socket.name].icon_id), image_data)
+				fs.writeFileSync(format('static/icon/{0}.png', g_users_dic[socket.port][socket.name].icon_id), image_data)
 			}
 			
 			await db_update('Icons', 'Ver = Ver + 1', format('Name LIKE "{0}"', socket.name))
-			g_users_dic[socket.name].icon_ver += 1
+			g_users_dic[socket.port][socket.name].icon_ver += 1
 			socket.emit('chat_update', {type: 'system_message', message: '아이콘이 변경되었습니다.'})
-			update_users()
+			Object.keys(g_users_dic).map( x => socket.name in g_users_dic[x] ? update_users(x) : null )
+			// update_users(socket.port)
 		}
 		catch (exception)
 		{
-			log_exception('icon_register', exception)
+			log_error('icon_register', exception)
 		}
-	})
-
-	socket.on('test_begin', async function() {
-		io.sockets.emit('chat_update', {type: 'system_message', message: 'begin 진입한다'})
-		var ret = await db_query('BEGIN')
-		io.sockets.emit('chat_update', {type: 'system_message', message: 'begin 성공 ' + JSON.stringify(ret)})
-	})
-	socket.on('test_commit', async function() {
-		io.sockets.emit('chat_update', {type: 'system_message', message: 'commit 진입한다'})
-		var ret = await db_query('COMMIT')
-		io.sockets.emit('chat_update', {type: 'system_message', message: 'commit 성공 ' + JSON.stringify(ret)})
 	})
 
 	/* TEST: 인스턴트 쿼리 */
 	socket.on('query', function(query) {
 		db.query(query, (error, result) => { 
 				error ? console.log(error) : console.log(result)
-				io.sockets.emit('chat_update', {type:'system_message', message: result})
+				io.to(socket.port).emit('chat_update', {type:'system_message', message: result})
 		})
 	})
 
@@ -1259,33 +1249,32 @@ io.sockets.on('connection', function(socket)
 			var response_data = await request_youtube_video(video_id)
 			.then(JSON.stringify)
 			//.then(parse_youtube_video_data)
-			log('INFO', 'request_video_info', response_data)
+			log_user(socket, 'request_video_info', response_data)
 		}
 		catch (exception)
 		{
-			log_exception('request_video_info', exception)
+			log_error('request_video_info', exception)
 		}
 	})
 
 	socket.on('tts', async function(data) {
-		log('INFO', 'TTS', format('{0} make tts ({1}, {2}) : {3}', socket.name, data.tts_hash, data.voice_name, data.text))
+		log_user(socket, 'TTS', format('{0}, {1} : {2}', data.tts_hash, data.voice_name, data.text))
 		make_tts(data.text, data.tts_hash, socket.name, data.voice_name)
 	})
 
-
 	socket.on('ad', function(message) {
 		var hRate = Math.random()
-		log('INFO', 'AD', format('{0} make ad : {1}', socket.name, message))
-		io.sockets.emit('ad', { message: message, hRate: hRate })
+		log_user(socket, 'ad', message)
+		io.to(socket.port).emit('ad', { message: message, hRate: hRate })
 	})
 
 	socket.on('image_blob', async function(blob) {
 		if(!socket.name)
 			return
 
-		if(!g_users_dic[socket.name])
+		if(!g_users_dic[socket.port][socket.name])
 		{
-			log_exception('image_blob', null, g_users_dic[socket.name])
+			log_error('image_blob', null, g_users_dic[socket.port][socket.name])
 			return
 		}
 
@@ -1301,17 +1290,17 @@ io.sockets.on('connection', function(socket)
 				message: format('/img static/images/{0}', filename),
 				name: socket.name,
 				time: GetTime(),
-				icon_id: g_users_dic[socket.name].icon_id,
-				icon_ver: g_users_dic[socket.name].icon_ver
+				icon_id: g_users_dic[socket.port][socket.name].icon_id,
+				icon_ver: g_users_dic[socket.port][socket.name].icon_ver
 			}
 
-			log('INFO', 'image_blob', format('{0}({1}) makes image -> {2}', socket.name, g_users_dic[socket.name].ip, filename))
+			log_user(socket, 'image_blob', filename)
 
-			io.sockets.emit('chat_update', data)
+			io.to(socket.port).emit('chat_update', data)
 		}
 		catch (exception)
 		{
-			log_exception('image_blob', blob, blob.substr(0, 10))
+			log_error('image_blob', blob, blob.substr(0, 10))
 		}
 	})
 
@@ -1363,7 +1352,7 @@ io.sockets.on('connection', function(socket)
 	socket.on('lol_auth_request', async function(post_seq) {
 		var this_android_id = await lol_get_android_id_from_article(post_seq)
 
-		log('INFO', 'lol_auth_request', format('{0} 가 계정인증 요청 -> {1}', socket.name, this_android_id))
+		log_user(socket, 'lol_auth_request', format('롤백 계정인증 요청 -> {0}', this_android_id))
 
 		if(!this_android_id)
 			return
@@ -1371,10 +1360,9 @@ io.sockets.on('connection', function(socket)
 		if(socket.name in g_lol_auth_dic)
 		{
 			var lulu_comment = await lol_get_lulu_comment(this_android_id)
-			log('INFO', 'lol_auth_request', format('인증번호: [{0}], 룰루: [{1}], [{2}]', g_lol_auth_dic[socket.name], lulu_comment, String(g_lol_auth_dic[socket.name]).length))
+			log_user(socket, 'lol_auth_request', format('인증번호: [{0}], 룰루: [{1}], [{2}]', g_lol_auth_dic[socket.name], lulu_comment, String(g_lol_auth_dic[socket.name]).length))
 			if(lulu_comment == g_lol_auth_dic[socket.name] && String(g_lol_auth_dic[socket.name]).length > 0)
 			{
-				console.log('fuck?!')
 				g_lol_auth_dic[socket.name] = ''
 				var user_info = await lol_get_user_info(this_android_id)
 				socket.emit('lol_login', [this_android_id, user_info]) // 인증성공
@@ -1388,14 +1376,14 @@ io.sockets.on('connection', function(socket)
 		while(random_code_4 < 1000)
 			random_code_4 = Math.round(Math.random() * 10000)
 		g_lol_auth_dic[socket.name] = random_code_4
-		log('INFO', 'lol_auth_request', format('{0}에게 인증번호 {1} 발급', socket.name, random_code_4))
+		log_user(socket, 'lol_auth_request', format('인증번호 발급 -> {0}', random_code_4))
 		socket.emit('lol_auth_request', random_code_4) // 인증코드 건네줌
 	})
 
 	/* 내 정보 */
 	socket.on('lol_user_info', async function(android_id) {
 		var user_info = await lol_get_user_info(android_id)
-		log('INFO', 'lol_user_info', format('{0} 롤백 유저정보 요청 : {1}({2})', socket.name, user_info['nickname'], android_id))
+		log_user(socket, 'lol_user_info', format('롤백 유저정보 요청 -> {0} ({1})', user_info['nickname'], android_id))
 
 		socket.emit('lol_user_info', user_info)
 	})
@@ -1407,7 +1395,7 @@ io.sockets.on('connection', function(socket)
 		var body = data.body
 		var image = data.image
 
-		log('INFO', 'lol_write_reply', format('{0}가 {1} 계정으로 댓글 남김 -> {2} : {3}{4}', socket.name, android_id, post_seq, body, (image ? ' (짤 첨부)' : '')))
+		log_user(socket, 'lol_write_reply', format('롤백 {0} 계정으로 댓글 남김 -> {1} : {2}{3}', android_id, post_seq, body, (image ? ' (짤 첨부)' : '')))
 
 		await lol_write_reply(post_seq, android_id, body, image)
 
@@ -1423,7 +1411,7 @@ io.sockets.on('connection', function(socket)
 		var android_id = data.android_id
 		var post_seq = data.post_seq
 
-		log('INFO', 'lol_like', format('{0}가 {1} 계정으로 추천 누름 -> 글번호 {2}', socket.name, android_id, post_seq))
+		log_user(socket, 'lol_like', format('{0} 계정으로 추천 누름 -> 글번호 {1}', android_id, post_seq))
 
 		var isSuccess = await lol_like(post_seq, android_id)
 		socket.emit('lol_like', isSuccess)
@@ -1435,7 +1423,7 @@ io.sockets.on('connection', function(socket)
 		var post_seq = data.post_seq
 		var reply_seq = data.reply_seq
 
-		log('INFO', 'lol_delete_reply', format('{0}가 {1} 계정으로 댓글 삭제 -> 글번호 {2}, 댓글번호 {3}', socket.name, android_id, post_seq, reply_seq))
+		log_user(socket, 'lol_delete_reply', format('{0} 계정으로 댓글 삭제 -> 글번호 {1}, 댓글번호 {2}', android_id, post_seq, reply_seq))
 		await lol_delete_reply(android_id, post_seq, reply_seq)
 
 		var ret = await lol_get_article_detail(android_id, post_seq)
@@ -1453,7 +1441,7 @@ io.sockets.on('connection', function(socket)
 		var youtube_url = data.youtube_url
 		var image = data.image
 		
-		log('INFO', 'lol_write', format('{0}가 {1} 계정으로 글 작성 -> 제목: {2}, 내용: {3}, 유튜브주소: {4} {5}', socket.name, android_id, subject.replace('\n', '\\n'), body.replace('\n', '\\n'), youtube_url, (image ? '(짤 첨부)' : '')))
+		log_user(socket, 'lol_write', format('{0} 계정으로 글 작성 -> 제목: {1}, 내용: {2}, 유튭: {3} {4}', android_id, subject.replace('\n', '\\n'), body.replace('\n', '\\n'), youtube_url, (image ? '(짤 첨부)' : '')))
 
 		await lol_write(android_id, subject, body, youtube_url, image)
 
@@ -1465,39 +1453,31 @@ io.sockets.on('connection', function(socket)
 		var android_id = data.android_id
 		var post_seq = data.post_seq
 
-		log('INFO', 'lol_delete', format('{0}가 {1} 계정으로 글 삭제 -> 글번호 {2}', socket.name, android_id, post_seq))
+		log_user(socket, 'lol_delete', format('{0} 계정으로 글 삭제 -> 글번호 {1}', android_id, post_seq))
 
 		await lol_delete(android_id, post_seq)
 
 		socket.emit('lol_delete')
 	})
 
-	// /* 해당 유저의 작성 글 보기 */
-	// socket.on('lol_user_article', async function(data) {
-	// 	var android_id = data.android_id
-	// 	var post_seq = data.post_seq
-
-	// 	await lol_get_android_id_from_article(post_seq)
-	// })
-
 	socket.on('lol_get_article_list_others', async function(post_seq) {
 		var android_id = await lol_get_android_id_from_article(post_seq)
 
-		log('INFO', 'lol_get_article_list_others', format('{0}가 {1}번글 ({2})의 작성글 보기 시도', socket.name, post_seq, android_id))
+		log_user(socket, 'lol_get_article_list_others', format('{0}번글 ({1})의 작성글 보기 시도', post_seq, android_id))
 
 		socket.emit('lol_get_article_list_others', android_id)
 	})
 
 }) 
 
-function update_users()
+function update_users(port)
 {
-	io.sockets.emit('users', Object.keys(g_users_dic).map(x => Object({ nick: x, icon_id: g_users_dic[x].icon_id, icon_ver: g_users_dic[x].icon_ver })))
+	io.sockets.emit('users', Object.keys(g_users_dic[port]).map(x => Object({ nick: x, icon_id: g_users_dic[port][x].icon_id, icon_ver: g_users_dic[port][x].icon_ver })))
 }
 
-function update_djs()
+function update_djs(port)
 {
-	io.sockets.emit('djs', g_djs.map(x => Object({ nick: x, icon_id: g_users_dic[x].icon_id, icon_ver: g_users_dic[x].icon_ver })))
+	io.sockets.emit('djs', g_djs[port].map(x => Object({ nick: x, icon_id: g_users_dic[port][x].icon_id, icon_ver: g_users_dic[port][x].icon_ver })))
 }
 
 /* VideoId의 DB Id를 반환 (없으면 추가) / return : {successed, failed (VideoId만 있음), blocked (Id만 없음)} */
@@ -1565,14 +1545,19 @@ async function get_video_index(video_id_list)
 
 /* 서버를 8080 포트로 listen */
 server.listen(g_port, function() {
-	console.log('\x1b[42m======================== 서버 실행 중.. ============================\x1b[0m')
+	console.log('\x1b[42m======================== 서버 실행 중.. ========================\x1b[0m')
+	fs.appendFile(format('./log/{0}.txt', GetDate()), '======================== 서버 실행 중.. ======================== \n', _ => {})
 })
 
 function GetTime() 
 {
 	return new Date().addHours(9).toFormat('HH24:MI')
 }
-function GetDate() 
+function GetDate()
+{
+	return new Date().addHours(9).toFormat('YYYY-MM-DD')
+}
+function GetDateTime() 
 {
 	return new Date().addHours(9).toFormat('YYYY-MM-DD HH24:MI:SS')
 }
@@ -1581,11 +1566,10 @@ function GetDateForFilename()
 	return new Date().addHours(9).toFormat('YYYY-MM-DD_HH24.MI.SS')
 }
 
-
 function log(type, function_name, message, isChat = false)
 {
 	if(isChat)
-		return console.log(format('\x1b[47m\x1b[30m({0})\x1b[0m\x1b[40m {1} :', GetDate(), function_name), message, '\x1b[0m')
+		return console.log(format('\x1b[47m\x1b[30m({0})\x1b[0m\x1b[40m {1} :', GetDateTime(), function_name), message, '\x1b[0m')
 
 	var color = '\x1b[37m'
 	if(type == 'INFO')
@@ -1593,7 +1577,39 @@ function log(type, function_name, message, isChat = false)
 	else if(type == 'ERROR' || type == 'ERROR_CATCH')
 		color = '\x1b[31m'
 
-	return console.log(format('\x1b[47m\x1b[30m({0})\x1b[0m\x1b[40m [{2}]{1}', GetDate(), color, function_name), message, '\x1b[0m')
+	return console.log(format('\x1b[47m\x1b[30m({0})\x1b[0m\x1b[40m [{2}]{1}', GetDateTime(), color, function_name), message, '\x1b[0m')
+}
+
+function log_chat(socket, message)
+{
+	console.log(format('\x1b[47m\x1b[30m({0})\x1b[0m\x1b[40m [{1}] {2} ({3}) : {4}\x1b[0m', GetDateTime(), socket.port, socket.name, socket.ip, message))
+	fs.appendFile(format('./log/{0}.txt', GetDate()), format('({0}) [{1}] {2} ({3}) : {4}\n',  GetDateTime(), socket.port, socket.name, socket.ip, message), _ => {})
+}
+
+function log_user(socket, function_name, message = '')
+{
+	// (2022-01-26 05:50:12) [8080] [login] 설보 (126.180.24.71) 유저 정보 요청 (asabvsabdsfasd)
+	console.log(format('\x1b[47m\x1b[30m({0})\x1b[0m\x1b[40m [{1}] [{2}] \x1b[32m{3} ({4}) -> {5}\x1b[0m', GetDateTime(), socket.port, function_name, socket.name, socket.ip, message))
+	log_file(socket, function_name, message)
+}
+
+function log_file(socket, function_name, message = '')
+{
+	fs.appendFile(format('./log/{0}.txt', GetDate()), format('({0}) [{1}] [{2}] {3} ({4}) -> {5}\n',  GetDateTime(), socket.port, function_name, socket.name, socket.ip, message), _ => {})
+}
+
+function log_system(port, function_name, message = '')
+{
+	console.log(format('\x1b[47m\x1b[30m({0})\x1b[0m\x1b[40m [{1}] [{2}] \x1b[32m{3}\x1b[0m', GetDateTime(), port, function_name, message))
+	fs.appendFile(format('./log/{0}.txt', GetDate()), format('({0}) [{1}] [{2}] {3}\n',  GetDateTime(), port, function_name, message), _ => {})
+}
+
+function log_error(function_name, exception, message = null)
+{
+	if(typeof(message) == 'object')
+		message = JSON.stringify(message)
+	console.log('[ERROR_CATCH]', function_name, format('\x1b[31m\nName : {0}\nERROR : {1}\nMessage : {2}\nStack : {3}\nComment : {4}\nLast Query : {5}', exception.name, exception.err, exception.message, exception.stack, message, g_last_query))
+	fs.appendFile(format('./log/{0}.txt', GetDate()), format('\nName : {0}\nERROR : {1}\nMessage : {2}\nStack : {3}\nComment : {4}\nLast Query : {5}\n', exception.name, exception.err, exception.message, exception.stack, message, g_last_query))
 }
 
 function log_exception(function_name, exception, message = null)
@@ -1631,55 +1647,55 @@ function parse_duration_to_second(pt_time)
 	return s
 }
 
-async function end_of_video() {
-	if(g_end_timer != null)
-		clearTimeout(g_end_timer)
-	g_end_timer = null
+async function end_of_video(port) {
+	if(g_end_timer[port] != null)
+		clearTimeout(g_end_timer[port])
+	g_end_timer[port] = null
 
-	log('INFO', 'end_of_video', 'end of video')
+	log_system(port, 'end_of_video')
 
 	g_good_list = []
 	g_bad_list = []
 
-	if(g_queue.length > 0)
+	if(g_queue[port].length > 0)
 	{
-		var next_queue_data = g_queue[0]
-		g_queue.splice(0, 1)
+		var next_queue_data = g_queue[port][0]
+		g_queue[port].splice(0, 1)
 
-		g_current_dj = next_queue_data.dj
+		g_current_dj[port] = next_queue_data.dj
 
-		if(g_current_dj in g_users_dic == false)
+		if(g_current_dj[port] in g_users_dic[port] == false)
 		{
-			g_current_dj = ''
-			return end_of_video()
+			g_current_dj[port] = ''
+			return end_of_video(port)
 		}
-		g_video_id = next_queue_data.video_id
-		g_video_thumbnail = next_queue_data.data.thumbnail_url
-		g_video_duration = next_queue_data.data.duration
-		g_video_title = next_queue_data.data.title
-		g_video_author = next_queue_data.data.author
-		g_played_time_ms = Date.now()
+		g_video_id[port] = next_queue_data.video_id
+		g_video_thumbnail[port] = next_queue_data.data.thumbnail_url
+		g_video_duration[port] = next_queue_data.data.duration
+		g_video_title[port] = next_queue_data.data.title
+		g_video_author[port] = next_queue_data.data.author
+		g_played_time_ms[port] = Date.now()
 
 		// 영상 종료 타이머 설정
-		if(g_video_duration != 0)
-			set_timeout_end_of_video()
+		if(g_video_duration[port] != 0)
+			set_timeout_end_of_video(port)
 
-		log('INFO', 'queue_play', next_queue_data)
+		log_system(port, 'queue_play', next_queue_data)
 
 		// 모두에게 영상 갱신
-		update_current_video(io.sockets)
-		add_to_recent_video_list(g_video_id, g_video_title, g_video_thumbnail, g_current_dj, g_video_duration)
-		update_recent_video_list(io.sockets)
+		update_current_video(io.to(port), port)
+		add_to_recent_video_list(g_video_id[port], g_video_title[port], g_video_thumbnail[port], g_current_dj[port], g_video_duration[port])
+		update_recent_video_list(io.to(port), port)
 
 		// 모두에게 플레이 대기열 알림
-		update_current_queue(io.sockets)
+		update_current_queue(io.to(port), port)
 	}
-	else if(g_djs.length > 0)
+	else if(g_djs[port].length > 0)
 	{
 		try 
 		{
-			var this_dj = g_djs.splice(0, 1)[0] // 맨 앞 디제이 뽑음
-			g_djs.push(this_dj) // 맨 뒤에 다시 추가
+			var this_dj = g_djs[port].splice(0, 1)[0] // 맨 앞 디제이 뽑음
+			g_djs[port].push(this_dj) // 맨 뒤에 다시 추가
 
 			var playlist_id = await db_select('CurrentPlaylist', 'Accounts', format('Name LIKE "{0}"', this_dj), 'LIMIT 1').then(ret => ret[0].CurrentPlaylist)
 			var video_list = await db_select('VideoList', 'Playlists', format('Id = {0}', playlist_id), 'LIMIT 1').then(ret => ret[0].VideoList).then(JSON.parse)
@@ -1687,16 +1703,16 @@ async function end_of_video() {
 			// 만약 재생목록이 비어있다면 -> 자동으로 대기열에서 퇴출
 			if(video_list.length == 0)
 			{
-				if(g_djs.indexOf(this_dj) != -1)
-					g_djs.splice(g_djs.indexOf(this_dj), 1)
+				if(g_djs[port].indexOf(this_dj) != -1)
+					g_djs[port].splice(g_djs[port].indexOf(this_dj), 1)
 
-				log('INFO', 'end_of_video - auto dj_quit', this_dj)
+				log_system(port, 'end_of_video - auto dj_quit', this_dj)
 
-				if(this_dj in g_users_dic)
-					g_users_dic[this_dj].socket.emit('dj_state', false)
-				update_djs()
+				if(this_dj in g_users_dic[port])
+					g_users_dic[port][this_dj].socket.emit('dj_state', false)
+				update_djs(port)
 				
-				return end_of_video()
+				return end_of_video(port)
 			}
 			
 			var first_video_id = video_list.splice(0, 1)[0]
@@ -1706,31 +1722,34 @@ async function end_of_video() {
 			// 재생목록의 영상 순서 순환
 			await db_update('Playlists', format('VideoList = "{0}"', JSON.stringify(video_list)), format('Id = {0}', playlist_id))
 
-			g_current_dj = this_dj
-			g_video_id = video_info.VideoId
-			g_video_thumbnail = video_info.Thumbnail
-			g_video_duration = video_info.Length
-			g_video_title = video_info.Name
-			g_video_author = video_info.Author
-			g_played_time_ms = Date.now()
+			g_current_dj[port] = this_dj
+			g_video_id[port] = video_info.VideoId
+			g_video_thumbnail[port] = video_info.Thumbnail
+			g_video_duration[port] = video_info.Length
+			g_video_title[port] = video_info.Name
+			g_video_author[port] = video_info.Author
+			g_played_time_ms[port] = Date.now()
 
 			// 영상 종료 타이머 설정
-			if(g_video_duration != 0)
-				set_timeout_end_of_video()
+			if(g_video_duration[port] != 0)
+				set_timeout_end_of_video(port)
 
-			log('INFO', 'dj_play', format('{0} -> {1} ({2})', g_current_dj, g_video_title, g_video_duration))
+			log_system(port, 'dj_play', format('{0} -> {1} ({2})', g_current_dj[port], g_video_title[port], g_video_duration[port]))
 
 			// 모두에게 영상 갱신
-			update_current_video(io.sockets)
-			add_to_recent_video_list(g_video_id, g_video_title, g_video_thumbnail, g_current_dj, g_video_duration)
-			update_recent_video_list(io.sockets)
+			update_current_video(io.to(port), port)
+			add_to_recent_video_list(g_video_id[port], g_video_title[port], g_video_thumbnail[port], g_current_dj[port], g_video_duration[port])
+			update_recent_video_list(io.to(port), port)
 
 			// 모두에게 플레이 대기열 알림
-			update_current_queue(io.sockets)
+			update_current_queue(io.to(port), port)
 
 			// 이번 DJ에게 재생목록 데이터 변경을 알림
-			log('INFO', 'end_of_video - DJ', format('{0} [{1}]', this_dj, Object.keys(g_users_dic).join(', ')))
-			update_playlist( g_users_dic[this_dj].socket )
+			log_system(port, 'end_of_video - DJ', format('{0} [{1}]', this_dj, Object.keys(g_users_dic[port]).join(', ')))
+
+			for(var key in Object.keys(g_users_dic))
+				if(this_dj in g_users_dic[key])
+					update_playlist(g_users_dic[key][this_dj].socket)
 		}
 		catch (exception)
 		{
@@ -1739,42 +1758,42 @@ async function end_of_video() {
 	}
 	else
 	{
-		g_current_dj = ''
-		g_video_id = ''
-		g_video_thumbnail = ''
-		g_video_duration = 0
-		g_video_title = ''
-		g_video_author = ''
-		io.sockets.emit('update_current_video', null)
+		g_current_dj[port] = ''
+		g_video_id[port] = ''
+		g_video_thumbnail[port] = ''
+		g_video_duration[port] = 0
+		g_video_title[port] = ''
+		g_video_author[port] = ''
+		io.to(port).emit('update_current_video', null)
 	}
 
 	// 모든 소켓들에게 dj 상태 갱신
-	for(var e in g_users_dic)
-		g_users_dic[e].socket.emit('dj_state', g_djs.includes(e))
-	update_djs()
+	for(var e in g_users_dic[port])
+		g_users_dic[port][e].socket.emit('dj_state', g_djs[port].includes(e))
+	update_djs(port)
 
 	// 모두에게 좋/싫 알림
-	update_current_rating(io.sockets)
+	update_current_rating(io.to(port), port)
 }
 
 /* 현재 영상 전송 */
-function update_current_video(dest_socket)
+function update_current_video(dest_socket, port)
 {
 	dest_socket.emit('update_current_video', {
-		dj: g_current_dj,
-		video_id: g_video_id,
-		author: g_video_author,
-		title: g_video_title,
-		duration: g_video_duration,
-		thumbnail: g_video_thumbnail,
-		seek_s: g_video_duration > 0 ? ((Date.now() - g_played_time_ms - 1000) / 1000) : 999999999
+		dj: g_current_dj[port],
+		video_id: g_video_id[port],
+		author: g_video_author[port],
+		title: g_video_title[port],
+		duration: g_video_duration[port],
+		thumbnail: g_video_thumbnail[port],
+		seek_s: g_video_duration[port] > 0 ? ((Date.now() - g_played_time_ms[port] - 1000) / 1000) : 999999999
 	})
 }
 
 /* 플레이 대기열 알림 발사 */
-function update_current_queue(dest_socket, is_on_demand = false)
+function update_current_queue(dest_socket, port, is_on_demand = false)
 {
-	if(g_queue.length == 0)
+	if(g_queue[port].length == 0)
 	{
 		if(is_on_demand)
 			dest_socket.emit('chat_update', {type: 'system_message', time: GetTime(), message: '플레이 대기열 없음', bg: 'var(--채팅_시스템)' })
@@ -1782,15 +1801,15 @@ function update_current_queue(dest_socket, is_on_demand = false)
 	}
 
 	var str = '플레이 대기열\n\n'
-	str += g_queue.map( (x, i) => format('{0}. {1} - {2} ({3})', i+1, x.dj, x.data.title, parse_second_to_string(x.data.duration))).join('\n\n')
+	str += g_queue[port].map( (x, i) => format('{0}. {1} - {2} ({3})', i+1, x.dj, x.data.title, parse_second_to_string(x.data.duration))).join('\n\n')
 
 	dest_socket.emit('chat_update', {type: 'system_message', time: GetTime(), message: str, bg: 'var(--채팅_시스템)'})
 }
 
 /* 좋아요/싫어요 알림 */
-function update_current_rating(dest_socket)
+function update_current_rating(dest_socket, port)
 {
-	dest_socket.emit('rating', {good: g_good_list, bad: g_bad_list})
+	dest_socket.emit('rating', {good: g_good_list[port], bad: g_bad_list[port]})
 }
 
 /* 해당 유저에게 플레이리스트 갱신 */
@@ -1831,7 +1850,7 @@ async function update_playlist(socket, show_playlist_id = 0) // show_playlist_id
 	}
 	catch (exception)
 	{
-		log_exception('playlist', exception)
+		log_error('playlist', exception)
 	}
 }
 
@@ -1880,8 +1899,9 @@ async function add_to_likeplaylist(nick, video_id)
 		await db_commit()
 		
 		// 업데이트
-		if(nick in g_users_dic)
-			update_playlist(g_users_dic[nick].socket)
+		for(var key in Object.keys(g_users_dic))
+				if(nick in g_users_dic[key])
+					update_playlist(g_users_dic[key][nick].socket)
 	}
 	catch (exception)
 	{
@@ -1904,19 +1924,18 @@ function add_to_recent_video_list(video_id, title, thumbnail, dj, duration)
 }
 
 /* 최근 영상 목록 Emit */
-function update_recent_video_list(dest_socket)
+function update_recent_video_list(dest_socket, port)
 {
-	dest_socket.emit('recent_video_list', g_recent_video_list)
+	dest_socket.emit('recent_video_list', g_recent_video_list[port])
 }
 
 /* 영상 종료 타이머 설정  */
-function set_timeout_end_of_video()
+function set_timeout_end_of_video(port)
 {
-	if(g_end_timer != null)
-		clearTimeout(g_end_timer)
-	var seek_time = Date.now() - g_played_time_ms
-	// log('INFO', 'set_timeout_end_of_video', format('duration : {0}s, seek : {1}ms, newTimeout : {2}ms', g_video_duration, seek_time, (g_video_duration + 2) * 1000 - seek_time))
-	g_end_timer = setTimeout(end_of_video, (g_video_duration + 2) * 1000 - seek_time)
+	if(g_end_timer[port] != null)
+		clearTimeout(g_end_timer[port])
+	var seek_time = Date.now() - g_played_time_ms[port]
+	g_end_timer[port] = setTimeout(end_of_video, (g_video_duration[port] + 2) * 1000 - seek_time, port)
 }
 
 function parse_second_to_string(sec) 
@@ -2344,3 +2363,54 @@ async function lol_POST(url, body = {}) {
 	// await writeFile('asd.txt', a)
 	// return a
 }
+
+// function timeStampFormat() {
+//     return moment().format('YYYY-MM-DD HH:mm:ss.SSS ZZ');                            
+// };
+// //logger 설정
+// var logger = new winston.createLogger({
+//     transports: [
+//         new (winston_daily)({
+//             name: 'info-file',
+//             filename: './log/server',
+//             datePattern: '_yyyy-MM-dd.log',
+//             colorize: false,
+//             maxsize: 50000000,
+//             maxFiles: 1000,
+//             level: 'info',
+//             showLevel: true,
+//             json: false,
+//             timestamp: timeStampFormat
+//         }),
+//         // new (winston.transports.Console)({
+//         //     name: 'debug-console',
+//         //     colorize: true,
+//         //     level: 'debug',
+//         //     showLevel: true,
+//         //     json: false,
+//         //     timestamp: timeStampFormat
+//         // })
+//     ],
+//     exceptionHandlers: [
+//         new (winston_daily)({
+//             name: 'exception-file',
+//             filename: './log/exception',
+//             datePattern: '_yyyy-MM-dd.log',
+//             colorize: false,
+//             maxsize: 50000000,
+//             maxFiles: 1000,
+//             level: 'error',
+//             showLevel: true,
+//             json: false,
+//             timestamp: timeStampFormat
+//         }),
+//         new (winston.transports.Console)({
+//             name: 'exception-console',
+//             colorize: true,
+//             level: 'debug',
+//             showLevel: true,
+//             json: false,
+//             timestamp: timeStampFormat
+//         })
+//     ]
+// });

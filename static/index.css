@@ -1013,6 +1013,12 @@ temp[emoji] {
   cursor: pointer;
 }
 
+.chat_tts_icon.big_tts_icon {
+  width: 45px;
+  height: 45px;
+  cursor: default;
+}
+
 .system_message.play_info {
   padding-top: 7px;
   text-align: center;
@@ -1563,6 +1569,7 @@ temp[emoji] {
 }
 
 #lol_lpanel {
+  position: relative;
   left: 0px;
   top: 0px;
   width: 485px;
@@ -1626,6 +1633,14 @@ temp[emoji] {
   align-items: center;
   align-content: stretch;
 }
+.chat_lol_link {
+  cursor: pointer;
+  border: 1px solid gray;
+  box-sizing: border-box;
+  background-color: var(--롤백_배경색);
+  margin-top: 5px;
+  padding-right: 5px;
+}
 
 .lol_article_list_item > img[icon] {
   width: 45px;
@@ -1639,11 +1654,12 @@ temp[emoji] {
   flex-direction: column;
   justify-content: space-around;
   flex-grow: 1;
+  width: 0px; /* Ellipse 옵션을 위해 필요 */
 }
 
 .lol_article_list_item [title_container] {
   display: flex;
-  max-width: 378px;
+  /* max-width: 378px; */
 }
 
 .lol_article_list_item [title] {
@@ -1671,7 +1687,8 @@ temp[emoji] {
 .lol_article_list_item [type] {
   width: 30px;
   height: 30px;
-  margin-left: 5px;
+  padding-left: 5px;
+  margin-left: auto;
   flex-grow: 0;
 }
 
@@ -1804,6 +1821,11 @@ temp[emoji] {
   cursor: pointer;
 }
 
+#lol_rpanel_header_buttons {
+  display: flex;
+  flex-direction: column;
+}
+
 #lol_rpanel_refresh {
   flex-grow: 0;
   flex-shrink: 1;
@@ -1852,42 +1874,60 @@ temp[emoji] {
   margin-top: 5px;
 }
 
-#lol_rpanel_body_img1 {
-  width: 98%;
-  cursor: zoom-out;
-}
-#lol_rpanel_body_img2 {
-  width: 98%;
-  cursor: zoom-out;
-}
-#lol_rpanel_body_img3 {
-  width: 98%;
-  cursor: zoom-out;
-}
+#lol_rpanel_body_img1, 
+#lol_rpanel_body_img2, 
+#lol_rpanel_body_img3, 
 #lol_rpanel_body_img4 {
   width: 98%;
   cursor: zoom-out;
+  margin-bottom: 10px;
+  position: relative;
 }
 
-#lol_rpanel_body_img1[small] {
-  width: 50%;
-  margin-left: 25%;
-  cursor: zoom-in;
-}
-#lol_rpanel_body_img2[small] {
-  width: 50%;
-  margin-left: 25%;
-  cursor: zoom-in;
-}
-#lol_rpanel_body_img3[small] {
-  width: 50%;
-  margin-left: 25%;
-  cursor: zoom-in;
-}
+#lol_rpanel_body_img1[small], 
+#lol_rpanel_body_img2[small], 
+#lol_rpanel_body_img3[small], 
 #lol_rpanel_body_img4[small] {
   width: 50%;
   margin-left: 25%;
   cursor: zoom-in;
+}
+
+#lol_rpanel_body_img1_img, 
+#lol_rpanel_body_img2_img, 
+#lol_rpanel_body_img3_img, 
+#lol_rpanel_body_img4_img {
+  width: 100%;
+}
+
+#lol_rpanel_body_img1_add, 
+#lol_rpanel_body_img2_add, 
+#lol_rpanel_body_img3_add, 
+#lol_rpanel_body_img4_add {
+  display: none;
+  position: absolute;
+  background-image: url(icon_img2.png);
+  background-size: 100%;
+  width: 50px;
+  height: 50px;
+  border: 1px solid gray;
+  box-sizing: border-box;
+  cursor: pointer;
+  right: 0px;
+  bottom: 0px;
+}
+
+#lol_rpanel_body_img1_img:hover + #lol_rpanel_body_img1_add, 
+#lol_rpanel_body_img2_img:hover + #lol_rpanel_body_img2_add, 
+#lol_rpanel_body_img3_img:hover + #lol_rpanel_body_img3_add, 
+#lol_rpanel_body_img4_img:hover + #lol_rpanel_body_img4_add {
+  display: block;
+}
+#lol_rpanel_body_img1_add:hover,
+#lol_rpanel_body_img2_add:hover,
+#lol_rpanel_body_img3_add:hover,
+#lol_rpanel_body_img4_add:hover {
+  display: block;
 }
 
 #lol_rpanel_body_like {
@@ -1932,6 +1972,23 @@ temp[emoji] {
   line-height: 35px;
   border-radius: 6px;
   cursor: pointer;
+}
+
+/* 글 공유 버튼 */
+#lol_rpanel_body_share_button {
+  display: none;
+  width: 67px;
+  border: 1px solid gray;
+  background-color: white;
+  text-align: center;
+  color: rgb(58,184,201);
+  font-weight: bold;
+  height: 35px;
+  line-height: 35px;
+  border-radius: 6px;
+  cursor: pointer;
+  margin-left: auto;
+  margin-right: 10px;
 }
 
 #lol_rpanel_reply {
@@ -2208,4 +2265,64 @@ temp[emoji] {
 	to {
 		transform: translateY(90vh);
 	}
+}
+
+.toast_box {
+  animation-name: fadein;
+  animation-duration: 0.75s;
+  animation-fill-mode: both;
+  width: fit-content;
+  max-width: 800px;
+  height: fit-content;
+  border-radius: 10px;
+  padding-left: 24px;
+  padding-right: 24px;
+  padding-top: 10px;
+  padding-bottom: 10px;
+  background: rgba(127, 127, 127, 0.75);
+  color: white;
+  text-align: center;
+  white-space: pre-line;
+  position: absolute;
+  display: block;
+  z-index: 901;
+  /* font-size: large; */
+  pointer-events: none;
+  /* border: var(--UI_툴팁_보더); */
+}
+
+@keyframes fadein {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@-webkit-keyframes fadein {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fadeout {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@-webkit-keyframes fadeout {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
 }

@@ -71,9 +71,15 @@ var g_lol_same_article_prev = false
 var g_lol_write_image_data = '' // 글 첨부 이미지
 var g_lol_write_reply_image_data = '' // 댓글 첨부 이미지
 var g_lol_spec_android_id = g_lol_spec_android_id
+var g_lol_last_scroll_time = 0
 
 /* 채팅 모드 */
 var g_is_chat_mode = false
+
+/* 렛시 투네이션 */
+var toonatReg = /"tts_link":"(.*?)"/
+var lessy_socket = null
+var toonat_voices = ['lessy', 'maoruya', 'changu', 'beube', 'somnyang']
 
 window.onload = function() {
 	g_isWindowLoaded = true
@@ -169,7 +175,12 @@ window.onload = function() {
 	lol_rpanel_body_img2.onclick = lol_onclick_img
 	lol_rpanel_body_img3.onclick = lol_onclick_img
 	lol_rpanel_body_img4.onclick = lol_onclick_img
+	lol_rpanel_body_img1_add.onclick = lol_onclick_img_add
+	lol_rpanel_body_img2_add.onclick = lol_onclick_img_add
+	lol_rpanel_body_img3_add.onclick = lol_onclick_img_add
+	lol_rpanel_body_img4_add.onclick = lol_onclick_img_add
 	lol_rpanel_body_delete_button.onclick = lol_onclick_delete
+	lol_rpanel_body_share_button.onclick = lol_onclick_share
 	lol_rpanel_reply_board_input.onkeydown = lol_onkeydown_reply
 	lol_rpanel_reply_board_send.onclick = lol_onclick_reply_send
 	lol_rpanel_reply_board_write_image_placeholder.onpaste = lol_rpanel_reply_board_write_image_onpaste
@@ -186,6 +197,11 @@ window.onload = function() {
 
 	register_ui_tooltip_event(lol_rpanel_reply_board_write_image_placeholder, '여기에 붙여넣기(Ctrl+V)로 이미지 첨부')
 
+	register_ui_tooltip_event(lol_rpanel_body_img1_add, '채팅창에 이미지 공유하기')
+	register_ui_tooltip_event(lol_rpanel_body_img2_add, '채팅창에 이미지 공유하기')
+	register_ui_tooltip_event(lol_rpanel_body_img3_add, '채팅창에 이미지 공유하기')
+	register_ui_tooltip_event(lol_rpanel_body_img4_add, '채팅창에 이미지 공유하기')
+
 	register_ui_tooltip_event(video_link, '클릭하면 유튜브 주소가 복사됩니다.')
 	register_ui_tooltip_event(video_info_name, '재생 중인 영상이 없습니다.')
 	register_ui_tooltip_event(etc_bad_button, '싫어요 5표 이상 누적 시 영상이 스킵됩니다.')
@@ -194,6 +210,38 @@ window.onload = function() {
 	register_ui_tooltip_event(playlist_control_panel_playlist_info_rename_button, '재생목록 이름 변경')
 	register_ui_tooltip_event(playlist_control_panel_playlist_info_delete_button, '이 재생목록 지우기')
 	register_ui_tooltip_event(playlist_control_panel_playlist_info_new_video_button, '새 유튜브 영상 추가\n우클릭: 유튜브 재생목록 째로 추가하기')
+
+	
+	// create_lessy_socket()
+}
+
+var tts_port_string = '"name":"' + location.port.toString() + '"'
+function create_lessy_socket() 
+{
+	lessy_socket = new WebSocket('wss://toon.at:8071/eyJhdXRoIjoiODY5NmNmZWNlNjMyZDliNWFjMDkwMGRiMmNmM2VlMzUiLCJzZXJ2aWNlIjoiYWxlcnQiLCJ0eXBlIjowLCJsYW5ndWFnZSI6ImtvIn0')
+	lessy_socket.addEventListener("close", (function(t) { 
+		console.log('렛시 소켓 재연결!!')
+		create_lessy_socket()
+	}))
+	lessy_socket.addEventListener("message", (function(t) { 
+		if(!option_checkbox_tts.checked) // TTS 자동 재생 옵션 체크
+			return
+
+		// console.log(t.data)
+		if(t.data.indexOf(tts_port_string) == -1)
+			return
+
+		if(toonatReg.test(t.data))
+		{
+			var src = toonatReg.exec(t.data)[1]
+			// audio_toonation.src = src
+			// audio_toonation.play()
+			var lessy_tts = new Audio(src)
+			lessy_tts.volume = option_slider_tts_volume.value
+			lessy_tts.onended = destroy_self
+			lessy_tts.play()
+		}
+	}))
 }
 
 function createSnow() {

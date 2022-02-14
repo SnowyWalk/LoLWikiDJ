@@ -211,6 +211,14 @@ function control_panel_resize()
 function show_playlist_control_panel(isShow) 
 {
 	g_show_playlist_control_panel = isShow
+
+	if(isShow)
+	{
+		// 만약 롤백 패널이 켜져있다면 끄기
+		if(g_lol_panel_show)
+			onrclick_playlist_info_box()
+	}
+
 	if(isShow && g_playlist_info_list)
 		update_playlist()
 
@@ -1495,4 +1503,41 @@ function set_theme(theme_name)
 		lol_rpanel_reply_board_send.style.backgroundColor = 'var(--채팅_입력창_전송버튼_배경색)'
 		lol_rpanel_reply_board_send.style.border = 'var(--채팅_입력창_전송버튼_보더)'
 	}
+}
+
+// align = 'center' | 'flex-start' | 'flex-end'
+function make_toast(parent_element, text, duration_sec, align = 'center', ...css)
+{
+	var background_element = document.createElement('div')
+	background_element.classList.add('no-drag')
+	background_element.style.display = 'flex'
+	background_element.style.width = '100%'
+	background_element.style.height = '100%'
+	background_element.style.backgroundColor = 'rgb(0, 0, 0, 0)' // format('rgb(0, 0, 0, {0})', background_alpha_num)
+	background_element.style.position = 'absolute'
+	background_element.style.zIndex = '900'
+	background_element.style.pointerEvents = 'none'
+	background_element.style.justifyContent = 'center'
+	background_element.style.alignItems = align
+	background_element.style.left = '0px'
+	background_element.style.top = '0px'
+
+	var text_element = document.createElement('div')
+	text_element.classList.add('toast_box')
+	text_element.innerHTML = text
+	console.log(css)
+	css.forEach(e => {
+		var splitted = e.split(':')
+		console.log(splitted)
+		text_element.style[splitted[0]] = splitted[1]
+	})
+	background_element.appendChild(text_element)
+
+	parent_element.appendChild(background_element)
+
+	setTimeout((b, t) => {
+		setTimeout(e => e.remove(), 750, b)
+		t.style.animationName = 'fadeout'
+		// t.style.animationDuration = '0.75s'
+	}, duration_sec * 1000, background_element, text_element)
 }

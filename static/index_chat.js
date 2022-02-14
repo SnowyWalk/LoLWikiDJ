@@ -5,12 +5,11 @@ var ping_time = 0
 var cached_chat_call_audio = null
 
 /* 채팅창에 메시지 추가 함수 */
-var imgReg = /\/(img|ㅑㅡㅎ) (\S+)/i
+var imgReg = /\/(img|ㅑㅡㅎ)\s+(\S+)/i
 var byteReg = /[\da-zA-Z-_=\|\/\*-\+\.`~'\/,\!@#\$%\^\&\(\)\[\] "]/i
 var callReg = /@(\S+)/g
 var callRegPre = /@(\S+)/
 var emojiReg = /\p{Extended_Pictographic}/u
-var ttttt = ''
 function add_message(data) 
 {
 	if(g_nick == 'OBS' && data.type != 'message')
@@ -49,10 +48,21 @@ function add_message(data)
 			if(data.tts_hash)
 			{
 				var tts_icon = document.createElement('img')
-				tts_icon.src = 'static/tts.png'
+				if(toonat_voices.indexOf(data.tts_hash) >= 0)
+				{
+					if( ['maoruya'].indexOf(data.tts_hash) >= 0)
+						tts_icon.src = format('static/{0}.gif', data.tts_hash)
+					else
+						tts_icon.src = format('static/{0}.png', data.tts_hash)
+					tts_icon.classList.add('big_tts_icon')
+				}
+				else
+				{
+					tts_icon.src = 'static/tts.png'
+					tts_icon.onclick = play_tts_audio_this
+				}
 				tts_icon.classList.add('chat_tts_icon')
 				tts_icon.setAttribute('tts_hash', data.tts_hash)
-				tts_icon.onclick = play_tts_audio_this
 				message.appendChild(tts_icon)
 			}
 
@@ -100,32 +110,86 @@ function add_message(data)
 		break
 	}
 
-	var img = null
 	if(imgReg.test(text))
 	{
 		var img_url = imgReg.exec(text)[2]
-		var img = document.createElement('img')
-		img.classList.add('chat_img')
-		img.src = img_url
-		img.onmouseenter = image_onmouseenter
-		img.onmouseout = image_onmouseout
-		img.onmousemove = image_onmousemove
-		img.onerror = function() { img.style.height = '0px'; }
+		var lol_link_img = document.createElement('img')
+		lol_link_img.classList.add('chat_img')
+		lol_link_img.src = img_url
+		lol_link_img.onmouseenter = image_onmouseenter
+		lol_link_img.onmouseout = image_onmouseout
+		lol_link_img.onmousemove = image_onmousemove
+		lol_link_img.onerror = function() { lol_link_img.style.height = '0px'; }
 		if(need_scroll)
-			img.onload = scrollDown
+			lol_link_img.onload = scrollDown
 		text = text.replace(imgReg, '')
+		message.appendChild(lol_link_img)
 	}
 
 	message.classList.add(className)
 	message.classList.add('chat')
-	var temporary_element = document.createElement('temp')
-	temporary_element.appendChild(document.createTextNode(text))
-	temporary_element.toggleAttribute('emoji', emoji_mode)
-	message.appendChild(temporary_element)
+	if(data.message.length > 0)
+	{
+		var temporary_element = document.createElement('temp')
+		temporary_element.appendChild(document.createTextNode(text))
+		temporary_element.toggleAttribute('emoji', emoji_mode)
+		message.appendChild(temporary_element)
+	}
 	// message.appendChild(document.createTextNode(text))
-	if(img != null)
-		message.appendChild(img)
 	chat.appendChild(message)
+
+	if(data.lol_link_data)
+	{
+		var icon_img = data.lol_link_data.icon_img
+		var post_title = data.lol_link_data.post_title
+		var post_reply = data.lol_link_data.post_reply
+		var post_spec = data.lol_link_data.post_spec
+		var post_seq = data.lol_link_data.post_seq
+
+		var lol_link_div = document.createElement('div')
+		lol_link_div.classList.add('lol_article_list_item')
+		lol_link_div.classList.add('chat_lol_link')
+		lol_link_div.setAttribute('seq', post_seq)
+		lol_link_div.onclick = lol_onclick_article
+		
+		// 아이콘
+		var lol_link_img = document.createElement('img')
+		lol_link_img.toggleAttribute('icon', true)
+		lol_link_img.src = icon_img
+		lol_link_div.appendChild(lol_link_img)
+
+		var center_div = document.createElement('div')
+		center_div.toggleAttribute('article_info')
+
+		// 제목
+		var title_container = document.createElement('div')
+		title_container.toggleAttribute('title_container', true)
+
+		var title = document.createElement('div')
+		title.toggleAttribute('title', true)
+		// title.appendChild(document.createTextNode(e['post_title']))
+		title.innerHTML = post_title
+		title_container.appendChild(title)
+
+		if(post_reply > 0)
+		{
+			var reply_cnt = document.createElement('div')
+			reply_cnt.toggleAttribute('reply_cnt', true)
+			reply_cnt.innerHTML = format('[{0}]', post_reply)
+			title_container.appendChild(reply_cnt)
+		}
+		center_div.appendChild(title_container)
+
+		// 하단
+		var spec = document.createElement('div')
+		spec.toggleAttribute('spec', true)
+		spec.innerHTML = post_spec
+		center_div.appendChild(spec)
+		lol_link_div.appendChild(center_div)
+
+		message.appendChild(lol_link_div)
+	}
+	
 	if(data.bg)
 		message.style.backgroundColor = data.bg
 
@@ -231,13 +295,17 @@ var evalAllReg = /\/evalall\s+(.+)/i
 var debugReg = /\/debug\s+(.+)/i
 var adReg = /^\/(ad|ㅁㅇ)\s+(.+)/i
 var volReg = /^\/vol\s+(.+)/i
-function send() {
+function send(force_tts = false) {
 	if(!g_isLogin)
 		return
 
 	// 입력되어있는 데이터 가져오기
 	var message = chat_input.value 
-	g_last_chat = message
+	if(message)
+		g_last_chat = message
+
+	if(message && force_tts && !ttsReg.test(message))
+		message = '/tts ' + message
 
 	// 가져왔으니 데이터 빈칸으로 변경
 	chat_input.value = ''
@@ -292,7 +360,7 @@ function send() {
 	// play url 테스트
 	if(playReg.test(message))
 	{
-		var url = playReg.exec(message)[2]
+		var url = queueReg.exec(message)[2]
 		var video_id = youtube_url_parse(url)
 
 		socket.emit('queue', {dj: g_nick, video_id: video_id})
@@ -494,6 +562,8 @@ function send() {
 		tts_hash = GetDate() + ' ' + random_hash()
 		message = ttsReg.exec(message)[2]
 		var voice_name = document.querySelector('[name=tts_voice_name]:checked').value
+		if(toonat_voices.indexOf(voice_name) >= 0)
+			tts_hash = voice_name
 		socket.emit('tts', { text: message, tts_hash: tts_hash, voice_name: voice_name })
 	}
 
@@ -541,7 +611,9 @@ function send() {
 /* 채팅창 엔터 단축키 */
 function chat_keydown() {
 	if (window.event.keyCode == 13)
-		send()
+	{
+		send(window.event.shiftKey && option_checkbox_tts_key_bind.checked)
+	}
 	else if(window.event.keyCode == 38 && g_last_chat)
 	{
 		chat_input.value = g_last_chat

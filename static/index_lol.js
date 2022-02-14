@@ -9,6 +9,10 @@ function onrclick_playlist_info_box()
 	
 	if(g_lol_panel_show)
 	{
+		// 만약 플레이리스트가 켜져있었다면 끄기
+		if(g_show_playlist_control_panel)
+			toggle_playlist_control_panel()
+
 		g_lol_article_scroll_seq = 0
 		g_lol_article_list = []
 
@@ -128,8 +132,15 @@ function lol_onclick_aritcle_list_refresh()
 /* 글목록 패널 스크롤 이벤트 */
 function lol_lpanel_board_onscroll()
 {
-	if(lol_lpanel_board.scrollTop + lol_lpanel_board.clientHeight >= lol_lpanel_board.scrollHeight)
-		lol_get_article_list(g_lol_article_scroll_seq, g_lol_search_vote ? 15 : 30, g_lol_search_body, g_lol_search_nick, g_lol_search_vote, g_lol_search_mine)
+	if(lol_lpanel_board.scrollTop + lol_lpanel_board.clientHeight + 10 >= lol_lpanel_board.scrollHeight) // 1799.63 이런식으로 1800이 채 안되는 경우가 있었음. 10정도 여유 줌.
+	{
+		var curTime = +new Date()
+		if(curTime - g_lol_last_scroll_time >= 100)
+		{
+			g_lol_last_scroll_time = curTime
+			lol_get_article_list(g_lol_article_scroll_seq, g_lol_search_vote ? 15 : 30, g_lol_search_body, g_lol_search_nick, g_lol_search_vote, g_lol_search_mine)
+		}
+	}
 }
 
 /* 글 클릭 -> 해당 글 정보 요청 */
@@ -141,6 +152,10 @@ function lol_onclick_article()
 		console.log('seq가 없다?!', seq)
 		return
 	}
+
+	if(!g_lol_panel_show)
+		onrclick_playlist_info_box()
+
 	g_lol_rpanel_scroll_top_switch = true
 	socket.emit('lol_get_article_detail', { post_seq: seq, android_id: g_lol_android_id })
 }
@@ -308,7 +323,7 @@ function lol_onclick_write_confirm()
 	socket.emit('lol_write', { 
 		android_id: g_lol_android_id, 
 		subject: lol_write_subject.value,
-		body: lol_write_body.value,
+		body: lol_write_body.value + ' <ㄹㅗㄹㄷㅣ>',
 		youtube_url: lol_write_youtube.value,
 		image: g_lol_write_image_data })
 }
@@ -348,6 +363,9 @@ function lol_rpanel_update()
 
 	// 헤더
 	lol_rpanel_header_icon.src = lol_get_icon_url(g_lol_current_detail['icon_img'], g_lol_current_detail['badge_use'])
+	lol_rpanel_header_icon.onmouseenter = image_onmouseenter
+	lol_rpanel_header_icon.onmouseout = image_onmouseout
+	lol_rpanel_header_icon.onmousemove = image_onmousemove
 
 	lol_rpanel_header_title.firstChild.nodeValue = g_lol_current_detail['post_title']
 	lol_rpanel_header_nick.firstChild.nodeValue = g_lol_current_detail['nickname']
@@ -397,14 +415,19 @@ function lol_rpanel_update()
 		zzals = [format('http://lolwiki.kr/freeboard/uploads/fixed_img/files/{0}/{1}', lol_get_date_from_filename(g_lol_current_detail['fixedpic']), g_lol_current_detail['fixedpic'])]
 	}
 
-	lol_rpanel_body_img1.src = ''
-	lol_rpanel_body_img2.src = ''
-	lol_rpanel_body_img3.src = ''
-	lol_rpanel_body_img4.src = ''
+	lol_rpanel_body_img1_img.src = ''
+	lol_rpanel_body_img2_img.src = ''
+	lol_rpanel_body_img3_img.src = ''
+	lol_rpanel_body_img4_img.src = ''
+	lol_rpanel_body_img1_add.setAttribute('src', '')
+	lol_rpanel_body_img2_add.setAttribute('src', '')
+	lol_rpanel_body_img3_add.setAttribute('src', '')
+	lol_rpanel_body_img4_add.setAttribute('src', '')
 	if(zzals.length > 0)
 	{
 		lol_rpanel_body_img1.style.display = 'block'
-		lol_rpanel_body_img1.src = zzals[0]
+		lol_rpanel_body_img1_img.src = zzals[0]
+		lol_rpanel_body_img1_add.setAttribute('src', zzals[0])
 	}
 	else
 		lol_rpanel_body_img1.style.display = 'none'
@@ -412,7 +435,8 @@ function lol_rpanel_update()
 	if(zzals.length > 1)
 	{
 		lol_rpanel_body_img2.style.display = 'block'
-		lol_rpanel_body_img2.src = zzals[1]
+		lol_rpanel_body_img2_img.src = zzals[1]
+		lol_rpanel_body_img2_add.setAttribute('src', zzals[1])
 	}
 	else
 		lol_rpanel_body_img2.style.display = 'none'
@@ -420,7 +444,8 @@ function lol_rpanel_update()
 	if(zzals.length > 2)
 	{
 		lol_rpanel_body_img3.style.display = 'block'
-		lol_rpanel_body_img3.src = zzals[2]
+		lol_rpanel_body_img3_img.src = zzals[2]
+		lol_rpanel_body_img3_add.setAttribute('src', zzals[2])
 	}
 	else
 		lol_rpanel_body_img3.style.display = 'none'
@@ -428,7 +453,8 @@ function lol_rpanel_update()
 	if(zzals.length > 3)
 	{
 		lol_rpanel_body_img4.style.display = 'block'
-		lol_rpanel_body_img4.src = zzals[3]
+		lol_rpanel_body_img4_img.src = zzals[3]
+		lol_rpanel_body_img4_add.setAttribute('src', zzals[3])
 	}
 	else
 		lol_rpanel_body_img4.style.display = 'none'
@@ -457,6 +483,17 @@ function lol_rpanel_update()
 	else
 		lol_rpanel_body_delete_button.style.display = 'block'
 
+	// 공유 버튼
+	if(!is_invalid)
+		lol_rpanel_body_share_button.style.display = 'block'
+	else
+		lol_rpanel_body_share_button.style.display = 'none'
+	lol_rpanel_body_share_button.setAttribute('icon_img', lol_get_icon_url(g_lol_current_detail['icon_img'], g_lol_current_detail['badge_use']))
+	lol_rpanel_body_share_button.setAttribute('post_title', g_lol_current_detail['post_title'])
+	lol_rpanel_body_share_button.setAttribute('post_reply', g_lol_current_detail['replys'].length)
+	lol_rpanel_body_share_button.setAttribute('post_spec', format('{0} | 조회 {1} | 추천 {2}', g_lol_current_detail['nickname'], g_lol_current_detail['views'], g_lol_current_detail['likes']))
+	lol_rpanel_body_share_button.setAttribute('post_seq',  g_lol_current_detail['post_seq'])
+
 	// 댓글
 	// 모든 자식 노드 삭제
 	while ( lol_rpanel_reply_board_list.hasChildNodes() ) 
@@ -472,6 +509,9 @@ function lol_rpanel_update()
 		var img = document.createElement('img')
 		img.toggleAttribute('icon', true)
 		img.src = lol_get_icon_url(e['icon_img'], e['badge_use'])
+		img.onmouseenter = image_onmouseenter
+		img.onmouseout = image_onmouseout
+		img.onmousemove = image_onmousemove
 		div.appendChild(img)
 
 		var reply_body = document.createElement('div')
@@ -571,6 +611,20 @@ function lol_onclick_img()
 	element.toggleAttribute('small')
 }
 
+/* 글 이미지 채팅에 첨부 클릭 */
+function lol_onclick_img_add()
+{
+	event.stopPropagation()
+
+	if(!g_nick)
+		return
+
+	var element = event.currentTarget
+	var img_src = element.getAttribute('src')
+
+	socket.emit('chat_message', { type: 'message', message: format('/img {0}', img_src), tts_hash: '' })
+}
+
 /* 작성자의 작성글 보기 */
 function lol_onrclick_article_writer()
 {
@@ -627,6 +681,28 @@ function lol_onclick_delete()
 		return
 
 	socket.emit('lol_delete', { android_id: g_lol_android_id, post_seq: g_lol_current_detail['post_seq'] } )
+}
+
+/* 글 공유 버튼 */
+function lol_onclick_share()
+{
+	if(!g_nick)
+		return
+
+	var icon_img = lol_rpanel_body_share_button.getAttribute('icon_img') 
+	var post_title = lol_rpanel_body_share_button.getAttribute('post_title')
+	var post_reply = lol_rpanel_body_share_button.getAttribute('post_reply')
+	var post_spec = lol_rpanel_body_share_button.getAttribute('post_spec')
+	var post_seq = lol_rpanel_body_share_button.getAttribute('post_seq')
+	
+	socket.emit('chat_message', { type: 'message', message: '롤백 링크를 공유했습니다.', tts_hash: '', 
+		lol_link_data: { 
+			icon_img: icon_img,
+			post_title: post_title,
+			post_reply: post_reply,
+			post_spec: post_spec,
+			post_seq: post_seq
+		} })
 }
 
 /* 댓글 엔터 쇼트컷 이벤트 */
