@@ -116,27 +116,31 @@ socket.on('login', function(isSuccess) {
 	login_button.style.display = 'none'
 	login_remember_nick_holder.style.display = 'none'
 
-	add_system_message('후원 랭킹 (2022. 02. 12)\n'
+	add_system_message('후원 랭킹 (2022. 03. 11)\n'
 						+ '★ 0. Lily(샤르프로젝트) 님 ★\n' 
 						+ '☆ 0. 우뭇가사리 님 ☆\n' 
-						+ '1. 노통 님\n' 
-						+ '2. 코코로 님\n' 
-						+ '3. 콘파고 님\n'
-						+ '4. POIU 님\n'
-						+ '5. 누관검 님\n' 
-						+ '6. 다정이 님\n'
-						+ '7. 랠래 님\n'
-						+ '8. 샤르룽 님\n'
-						+ '9. 고냥이지 님\n'
-						+ '10. 디아 님\n'
-						+ '11. pagolas 님\n'
+						+ '1. 콘파고 님\n' 
+						+ '2. 노통 님\n' 
+						+ '3. 코코로 님\n'
+						+ '4. 누관검 님\n' 
+						+ '5. 디아 님\n'
+						+ '6. 랠래 님\n'
+						+ '7. 다정이 님\n'
+						+ '8. POIU 님\n'
+						+ '9. pagolas 님\n'
+						+ '10. 고냥이지 님\n'
+						+ '11. 샤르룽 님\n'
 						+ '12. 돌고래대통령 님\n'
 						+ '13. 인공사 님\n'
 						+ '14. 스프링 님\n'
-						+ '15. 고졸백수 님\n'
+						+ '15. clown 님\n'
 						+ '16. 우엥 님\n'
 						+ '17. 얼랭님 님\n'
-						+ '18. 강령군주 님\n'
+						+ '18. 광삼 님\n'
+						+ '19. 이슬3 님\n'
+						+ '20. 강령군주 님\n'
+						+ '21. 고졸백수 님\n'
+						+ '22. 헤은 님\n'
 						+ '후원 계좌 : 기업 539-028793-01-012 박*준', 'var(--채팅_후원랭킹)')
 	add_system_message('명령어 목록은 /? 을 입력해 볼 수 있습니다.')
 	add_system_message('전용 채널 개설 문의는 설보에게... (후원자 전용)')
@@ -311,7 +315,8 @@ socket.on('lol_article_list', function(data) {
 	g_lol_article_list = g_lol_article_list.concat(data)
 	
 	lol_lpanel_update()
-	lol_lpanel_refresh.style.display = 'block'
+	// lol_lpanel_refresh.style.display = 'block'
+	lol_lpanel_refresh.style.height = '38px'
 	lol_lpanel_search_menu.style.display = 'none'
 
 	if(g_lol_lpanel_scroll_top_switch)
@@ -357,6 +362,14 @@ socket.on('lol_user_info', function(user_info) {
 
 	lol_lpanel_update()
 	lol_rpanel_update()
+})
+
+socket.on('lol_change_nickname', function(is_success) {
+	if(!is_success)
+		alert('닉네임 변경에 실패했습니다.')
+
+	if(g_lol_android_id != g_lol_guest_id)
+		socket.emit('lol_user_info', g_lol_android_id)
 })
 
 socket.on('lol_write_reply', function(data) {
@@ -419,5 +432,6 @@ socket.on('lol_get_article_list_others', function(android_id) {
 
 /* 새 쪽지 감지됨 */
 socket.on('lol_get_new_memo', function() {
-	make_toast(lol_lpanel, '쪽지가 도착 했습니다.', 2, 'flex-end', 'marginBottom:5vh')
+	var toast = make_toast(lol_lpanel, '쪽지가 도착 했습니다.', 2, 'flex-end')
+	toast.text.style.marginBottom = '5vh'
 })

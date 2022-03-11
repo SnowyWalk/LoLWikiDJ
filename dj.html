@@ -333,7 +333,9 @@
   <div id="lol_panel" class="nanum">
     <div id="lol_lpanel" class="no-drag">
       <div id="lol_lpanel_header">
+        <img id="lol_lpanel_account_icon">
         <div id="lol_lpanel_account">로그인 해주세요.</div>
+        <div id="lol_lpanel_userinfo"></div>
         <div id="lol_lpanel_refresh"></div>
       </div>
       <div id="lol_lpanel_board">
@@ -349,6 +351,15 @@
             <div id="lol_lpanel_search_menu_button_mine" menu-button>내 글</div>
             <div id="lol_lpanel_search_menu_button_search" menu-button>글 검색</div>
             <div id="lol_lpanel_search_menu_button_nick" menu-button>닉네임</div>
+          </div>
+        </div>
+      </div>
+      <div id="lol_lpanel_userinfo_menu">
+        <div id="lol_lpanel_userinfo_menu_background">
+          <div id="lol_lpanel_userinfo_menu_inner_background">
+            <div id="lol_lpanel_userinfo_menu_button_nickname_change" menu-button>닉네임 변경</div>
+            <div id="lol_lpanel_userinfo_menu_button_icon_change" menu-button>아이콘 제작</div>
+            <div id="lol_lpanel_userinfo_menu_button_blocklist_reset" menu-button>차단목록 초기화</div>
           </div>
         </div>
       </div>
@@ -378,10 +389,22 @@
         <div id="lol_rpanel_body_img2"><img id="lol_rpanel_body_img2_img"><div id="lol_rpanel_body_img2_add"></div></div>
         <div id="lol_rpanel_body_img3"><img id="lol_rpanel_body_img3_img"><div id="lol_rpanel_body_img3_add"></div></div>
         <div id="lol_rpanel_body_img4"><img id="lol_rpanel_body_img4_img"><div id="lol_rpanel_body_img4_add"></div></div>
+        <input type="text" id="lol_rpanel_body_icon_change_placeholder" placeholder="여기에 붙여넣기(Ctrl+V)로 이미지 첨부" maxlength=0>
+        <div id="lol_rpanel_body_icon_change_canvas_container" class="no-drag">
+          <img id="lol_rpanel_body_icon_change_image">
+          <canvas id="lol_rpanel_body_icon_change_canvas"></canvas>
+          <canvas id="lol_rpanel_body_icon_change_canvas_over"></canvas>
+        </div>
+        <input type="range" id="lol_rpanel_body_icon_change_size_slider" min="1" max="100" step="1">
+        <div id="lol_rpanel_body_icon_change_global_move_panel"></div>
         <div id="lol_rpanel_body_body"></div>
         <div id="lol_rpanel_body_date">시간</div>
         <div id="lol_rpanel_body_like" class="no-drag">
           <div id="lol_rpanel_body_like_count">0</div>
+        </div>
+        <div id="lol_icon_change_buttons">
+          <div id="lol_rpanel_body_icon_change_cancel">취소</div>
+          <div id="lol_rpanel_body_icon_change_confirm">등록</div>
         </div>
         <div id="lol_rpanel_body_buttons" class="no-drag">
           <div id="lol_rpanel_body_delete_button">삭제</div>
@@ -392,7 +415,7 @@
             <ul id="lol_rpanel_reply_board_list"></ul>
             <div id="lol_rpanel_reply_board_write_container">
               <div container>
-                <img id="lol_rpanel_reply_board_write_image"></img>
+                <img id="lol_rpanel_reply_board_write_image">
                 <div id="lol_rpanel_reply_board_write_image_guide">이미지 첨부 중... 기다려주셈</div>
                 <canvas id="lol_rpanel_reply_board_write_canvas"></canvas>
               </div>

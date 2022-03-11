@@ -1370,6 +1370,14 @@ io.sockets.on('connection', function(socket)
 		socket.emit('lol_user_info', user_info)
 	})
 
+	/* 닉네임 변경 */
+	socket.on('lol_change_nickname', async function(android_id, new_nick) {
+		var is_success = await lol_change_nickname(android_id, new_nick)
+		log('INFO', 'lol_change_nickname', format('{0} 롤백 닉네임 변경 요청 -> {1}({2})', socket.name, new_nick, android_id))
+		
+		socket.emit('lol_change_nickname', is_success)
+	})
+
 	/* 댓글 작성 */
 	socket.on('lol_write_reply', async function(data) {
 		var android_id = data.android_id
@@ -1456,6 +1464,18 @@ io.sockets.on('connection', function(socket)
 		log('INFO', 'lol_get_article_list_others', format('{0}가 {1}번글 ({2})의 작성글 보기 시도', socket.name, post_seq, android_id))
 
 		socket.emit('lol_get_article_list_others', android_id)
+	})
+
+	socket.on('lol_icon_change', async function(data) {
+		var android_id = data.android_id
+		var image = data.image
+
+		log('INFO', 'lol_icon_change', format('{0}가 {1} 계정으로 아이콘 변경 요청', socket.name, android_id))
+
+		await lol_icon_change(android_id, image)
+
+		var user_info = await lol_get_user_info(android_id)
+		socket.emit('lol_user_info', user_info)
 	})
 
 }) 
@@ -2257,6 +2277,18 @@ async function lol_get_user_info(android_id)
 	return ret
 }
 
+/* 닉네임 변경 */
+async function lol_change_nickname(android_id, new_nick)
+{
+	var ret = await lol_POST('http://lolwiki.kr/freeboard/insert_userinfo_new.php',
+		{ boardid: 'freeboard', android_id: android_id, nickname: new_nick })
+
+	if(ret == 'exist')
+		return false
+
+	return true
+}
+
 /* 댓글 작성 */
 async function lol_write_reply(post_seq, android_id, body, image='') 
 {
@@ -2315,6 +2347,18 @@ async function lol_write(android_id, subject, body, youtube_url, image='')
 			// text: decodeURI(decodeURI(body)),
 			// youtube_url: decodeURI(youtube_url),
 			pic_new: image_filename } )
+}
+
+/* 아이콘 변경 */
+async function lol_icon_change(android_id, image)
+{
+	var image_filename = lol_make_image_filename()
+	var res = await lol_POST('http://lolwiki.kr/freeboard/uploads/icon_img/php_upload_2021.php',
+		{ image: image, 
+			file_name: image_filename,
+			doodlr: 0,
+			boardid: 'freeboard',
+			android_id: android_id })
 }
 
 function lol_make_image_filename()

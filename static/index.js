@@ -164,6 +164,14 @@ window.onload = function() {
 	lol_lpanel_search_menu_button_nick.onclick = lol_onclick_search_nick
 
 	lol_lpanel_write_button.onclick = lol_onclick_write
+
+	lol_lpanel_userinfo.onclick = lol_onclick_userinfo_button
+	lol_lpanel_userinfo_menu_background.onclick = lol_onclick_userinfo_background
+	lol_lpanel_userinfo_menu_inner_background.onclick = lol_onclick_userinfo_foreground
+	lol_lpanel_userinfo_menu_button_nickname_change.onclick = lol_onclick_userinfo_nickname_change
+	lol_lpanel_userinfo_menu_button_icon_change.onclick = lol_onclick_userinfo_icon_change
+	lol_lpanel_userinfo_menu_button_blocklist_reset.onclick = lol_onclick_userinfo_blocklist_reset
+
 	
 	lol_rpanel_header_nick.addEventListener('contextmenu', lol_onrclick_article_writer, false)
 	lol_rpanel_header_button.onclick = lol_onclick_auth_or_block
@@ -179,6 +187,18 @@ window.onload = function() {
 	lol_rpanel_body_img2_add.onclick = lol_onclick_img_add
 	lol_rpanel_body_img3_add.onclick = lol_onclick_img_add
 	lol_rpanel_body_img4_add.onclick = lol_onclick_img_add
+
+	lol_rpanel_body_icon_change_placeholder.onpaste = lol_icon_change_onpaste
+	lol_rpanel_body_icon_change_placeholder.onchange = lol_icon_change_clear_text
+	lol_rpanel_body_icon_change_image.onload = lol_icon_change_image_onload
+	lol_rpanel_body_icon_change_image.onmousedown = lol_icon_change_image_onmousedown
+	lol_rpanel_body_icon_change_global_move_panel.onmousemove = lol_icon_change_move_panel_onmousemove
+	lol_rpanel_body_icon_change_global_move_panel.onmouseup = lol_icon_change_move_panel_onmouseup
+	lol_rpanel_body_icon_change_size_slider.onchange = lol_icon_change_slider_onchange
+	lol_rpanel_body_icon_change_size_slider.oninput = lol_icon_change_slider_onchange
+	lol_rpanel_body_icon_change_cancel.onclick = lol_icon_change_cancel
+	lol_rpanel_body_icon_change_confirm.onclick = lol_icon_change_confirm
+
 	lol_rpanel_body_delete_button.onclick = lol_onclick_delete
 	lol_rpanel_body_share_button.onclick = lol_onclick_share
 	lol_rpanel_reply_board_input.onkeydown = lol_onkeydown_reply

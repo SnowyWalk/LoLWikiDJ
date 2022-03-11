@@ -1586,12 +1586,19 @@ temp[emoji] {
 }
 
 #lol_lpanel_header {
-  padding: 5px;
+  padding-right: 5px;
   border-bottom: 1px solid var(--롤백_보더색);
   display: flex;
   align-items: center;
   margin-left: 10px;
-  height: 50px;
+  height: 60px;
+}
+
+#lol_lpanel_account_icon {
+  display: none;
+  width: 45px;
+  height: 45px;
+  margin-right: 5px;
 }
 
 #lol_lpanel_account {
@@ -1599,12 +1606,25 @@ temp[emoji] {
   flex-shrink: 0;
 }
 
+#lol_lpanel_userinfo {
+  display: none;
+  flex-grow: 0;
+  flex-shrink: 1;
+  background-image: url('icon_profile.png');
+  width: 30px;
+  height: 30px;
+  background-repeat: no-repeat;
+  background-size: contain;
+  cursor: pointer;
+  margin-right: 15px;
+}
+
 #lol_lpanel_refresh {
   flex-grow: 0;
   flex-shrink: 1;
   background-image: url('refresh.png');
-  width: 38;
-  height: 38;
+  width: 38px;
+  height: 38px;
   background-repeat: no-repeat;
   background-size: contain;
   cursor: pointer;
@@ -1776,6 +1796,54 @@ temp[emoji] {
   color: rgb(204, 204, 204);
 }
 
+#lol_lpanel_userinfo_menu {
+  position: absolute;
+  display: none;
+  z-index: 32;
+  top: 0px;
+  left: 0px;
+  width: 485px;
+  height: 100%;
+}
+
+#lol_lpanel_userinfo_menu_background {
+  background-color: rgb(0,0,0,0.75);
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+#lol_lpanel_userinfo_menu_inner_background {
+  display: flex;
+  width: 80%;
+  background-color: black;
+  border: 2px solid gray;
+  flex-direction: column;
+  align-items: center;
+  margin-right: 16px;
+  padding-top: 50px;
+  padding-bottom: 50px;
+}
+
+#lol_lpanel_userinfo_menu [menu-button] {
+  border: 1px solid rgb(43,46,52);
+  width: 70%;
+  height: 65px;
+  margin-top: 8px;
+  margin-bottom: 8px;
+  text-align: center;
+  line-height: 65px;
+  font-size: larger;
+  font-weight: bold;
+  background: linear-gradient(to bottom,rgb(82,90,101),rgb(31,38,46));
+  border-radius: 5px;
+  cursor: pointer;
+  color: rgb(204, 204, 204);
+}
+
 #lol_rpanel_header {
   display: flex;
   margin: 15px;
@@ -1930,6 +1998,62 @@ temp[emoji] {
   display: block;
 }
 
+#lol_rpanel_body_icon_change_placeholder {
+  display: none;
+  min-width: 400px;
+  min-height: 200px;
+  text-align: center;
+  border: 1px dashed red;
+  cursor: pointer;
+  background: transparent;
+  caret-color: transparent;
+  font-size: large;
+}
+#lol_rpanel_body_icon_change_placeholder::placeholder {
+  color: red;
+  font-weight: bold;
+}
+
+#lol_rpanel_body_icon_change_canvas_container {
+  display: none;
+  position: relative;
+}
+
+#lol_rpanel_body_icon_change_image {
+  display: block;
+  width: 95%;
+  cursor: move;
+}
+
+#lol_rpanel_body_icon_change_canvas {
+  position: absolute;
+  top: 0px;
+  left: 0px;
+  width: 95%;
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+#lol_rpanel_body_icon_change_canvas_over {
+  display: none;
+}
+
+#lol_rpanel_body_icon_change_size_slider {
+  display: none;
+  width: 95%;
+}
+
+#lol_rpanel_body_icon_change_global_move_panel {
+  position: fixed;
+  top: 0px;
+  left: 0px;
+  width: 100%;
+  height: 100%;
+  display: none;
+  cursor: move;
+  z-index: 100;
+}
+
 #lol_rpanel_body_like {
   background-image: url('like_frame.png');
   background-repeat: no-repeat;
@@ -1950,6 +2074,44 @@ temp[emoji] {
   font-weight: bold;
   top: 40px;
   color: white;
+}
+
+/* 아이콘 변경 - 버튼 컨테이너 */
+#lol_icon_change_buttons {
+  display: none;
+  margin: 15px;
+}
+
+/* 아이콘 변경 - 취소 버튼 */
+#lol_rpanel_body_icon_change_cancel {
+  flex-grow: 1;
+  background: linear-gradient(0deg, rgb(141,141,141), rgb(184,184,184));
+  color: white;
+  font-weight: bold;
+  font-size: large;
+  margin-right: 20px;
+  border-radius: 7px;
+  height: 70px;
+  line-height: 70px;
+  border: 1px solid var(--롤백_글쓰기_내_버튼_호버색);
+  text-align: center;
+  cursor: pointer;
+}
+
+/* 아이콘 변경 - 등록 버튼 */
+#lol_rpanel_body_icon_change_confirm {
+  flex-grow: 1;
+  background: linear-gradient(0deg, rgb(33,50,94), rgb(60,98,196));
+  color: white;
+  font-weight: bold;
+  font-size: large;
+  margin-left: 20px;
+  border-radius: 7px;
+  height: 70px;
+  line-height: 70px;
+  border: 1px solid var(--롤백_글쓰기_내_버튼_호버색);
+  text-align: center;
+  cursor: pointer;
 }
 
 /* 글삭제버튼, 쪽지버튼 등 컨테이너 */
@@ -2222,6 +2384,7 @@ temp[emoji] {
   font-weight: bold;
   align-self: flex-end;
   margin-left: 10px;
+  flex-shrink: 0;
 }
 
 #lol_write_canvas {
