@@ -365,6 +365,22 @@ function lol_onclick_userinfo_blocklist_reset()
 	alert('만들기 귀찮아서 유기')
 }
 
+/* 내 정보 - 롤디자게 로그아웃 클릭 */
+function lol_onclick_userinfo_logout()
+{
+	var ans = confirm('롤디자게를 로그아웃 할까요?')
+	if(!ans)
+		return
+
+	localStorage.removeItem(g_storage_lol_key)
+
+	lol_lpanel_userinfo_menu.style.display = 'none'
+
+	g_lol_panel_show = false
+	lol_lpanel_board.scroll(0, 0)
+	lol_panel_update()
+}
+
 /* 글 쓰기 - 취소 */
 function lol_onclick_write_cancel() 
 {

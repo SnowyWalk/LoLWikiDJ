@@ -171,6 +171,7 @@ window.onload = function() {
 	lol_lpanel_userinfo_menu_button_nickname_change.onclick = lol_onclick_userinfo_nickname_change
 	lol_lpanel_userinfo_menu_button_icon_change.onclick = lol_onclick_userinfo_icon_change
 	lol_lpanel_userinfo_menu_button_blocklist_reset.onclick = lol_onclick_userinfo_blocklist_reset
+	lol_lpanel_userinfo_menu_button_logout.onclick = lol_onclick_userinfo_logout
 
 	
 	lol_rpanel_header_nick.addEventListener('contextmenu', lol_onrclick_article_writer, false)

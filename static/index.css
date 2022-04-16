@@ -1180,7 +1180,6 @@ temp[emoji] {
   float: left;
 }
 
-
 /* 재생목록 인포 */
 #playlist_control_panel_playlist_info {
   top: 0px;
@@ -1842,6 +1841,10 @@ temp[emoji] {
   border-radius: 5px;
   cursor: pointer;
   color: rgb(204, 204, 204);
+}
+
+#lol_lpanel_userinfo_menu [menu-button][red-button] {
+  background: linear-gradient(to bottom,rgb(205,102,105),rgb(154,50,50));
 }
 
 #lol_rpanel_header {
