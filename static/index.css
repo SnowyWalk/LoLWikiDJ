@@ -848,6 +848,11 @@ div.recent_list_video {
   border-color: var(--채팅_입력창_보더색_포커스);
 }
 
+/* 채팅 이모티콘 버튼 */
+#chat_emoticon_button {
+  display: none;
+}
+
 #chat_send {
   height: 26px;
   top: 2px;
@@ -879,6 +884,11 @@ div.recent_list_video {
   border-radius: 10px;
   cursor: pointer;
   border: var(--채팅_스크롤러_보더);
+}
+
+/* 채팅 이모티콘 */
+#chat_emoticon_window {
+  position: relative;
 }
 
 /* 이미지 돋보기 */

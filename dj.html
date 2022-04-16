@@ -213,9 +213,11 @@
     <div id="chat_extra">
       <div>
         <input type="text" id="chat_input" onpaste="chat_onpaste()" onkeydown="chat_keydown()" placeholder="메시지를 입력해주세요..">
+        <div id="chat_emoticon_button" class="no-drag">😋</div>
         <button id="chat_send" onclick="send()">전송</button>
       </div>
       <div id="chat_scroller" onclick="scrollDown()">스크롤해서 채팅이 멈췄습니다.</div> 
+      <div id="chat_emoticon_window"></div>
     </div>
   </div>
   <div id="image_expander"><img id="image_expander_src"></div>
