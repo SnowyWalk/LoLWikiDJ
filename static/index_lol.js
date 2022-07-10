@@ -51,6 +51,8 @@ function onrclick_playlist_info_box()
 /* 롤백 글 목록 조회 쿼리 */
 function lol_get_article_list(seq = 0, cnt = 30, body = '', nick = '', vote = false, mine = false)
 {
+	g_lol_is_bookmark = false
+
 	console.log('query', {android_id: g_lol_spec_android_id, seq: seq, cnt: cnt, body: body, nick: nick, vote: vote, mine: mine})
 	socket.emit('lol_get_article_list', {android_id: g_lol_spec_android_id, seq: seq, cnt: cnt, body: body, nick: nick, vote: vote, mine: mine})
 }
@@ -77,6 +79,9 @@ function lol_lpanel_update()
 		// 유저 아이콘
 		lol_lpanel_account_icon.src = lol_get_icon_url(g_lol_user_info['iconpic'], g_lol_user_info['badge_use'])
 		lol_lpanel_account_icon.style.display = 'block'
+		lol_lpanel_account_icon.onmouseenter = image_onmouseenter
+		lol_lpanel_account_icon.onmouseout = image_onmouseout
+		lol_lpanel_account_icon.onmousemove = image_onmousemove
 
 		// 닉네임
 		lol_lpanel_account.innerHTML = format('<b>{0}</b> ({1} 스택)', g_lol_user_info['nickname'], g_lol_user_info['point'])
@@ -126,6 +131,8 @@ function lol_lpanel_update()
 		// 하단
 		var spec = document.createElement('div')
 		spec.toggleAttribute('spec', true)
+		if(!e['before'])
+			e['before'] = e['post_date'].substr(0, 10)
 		spec.innerHTML = format('{0} | {1} | 조회 {2} | 추천 {3}{4}', e['before'].replace('size=1', ''), e['nickname'], e['views'], e['likes'], e['alarm'] > 0 ? format(' | 신고 {0}', e['alarm']) : '')
 		center_div.appendChild(spec)
 		div.appendChild(center_div)
@@ -144,6 +151,8 @@ function lol_lpanel_update()
 		div.appendChild(img2)
 
 		div.onclick = lol_onclick_article
+		if(g_lol_is_bookmark)
+			div.oncontextmenu = lol_onrclick_article
 
 		lol_lpanel_board_list.appendChild(div)
 	}
@@ -157,7 +166,14 @@ function lol_onclick_aritcle_list_refresh()
 	// lol_lpanel_refresh.style.display = 'none'
 	lol_lpanel_refresh.style.height = '0px'
 	lol_lpanel_board.scroll(0, 0)
-	lol_get_article_list(0, g_lol_search_vote ? 15 : 30, g_lol_search_body, g_lol_search_nick, g_lol_search_vote, g_lol_search_mine)
+	if(g_lol_is_bookmark)
+	{
+		socket.emit('lol_query_bookmark_list', {android_id: g_lol_android_id, offset: 0, count: 30})
+	}
+	else
+	{
+		lol_get_article_list(0, g_lol_search_vote ? 15 : 30, g_lol_search_body, g_lol_search_nick, g_lol_search_vote, g_lol_search_mine)
+	}
 }
 
 /* 글목록 패널 스크롤 이벤트 */
@@ -169,7 +185,14 @@ function lol_lpanel_board_onscroll()
 		if(curTime - g_lol_last_scroll_time >= 100)
 		{
 			g_lol_last_scroll_time = curTime
-			lol_get_article_list(g_lol_article_scroll_seq, g_lol_search_vote ? 15 : 30, g_lol_search_body, g_lol_search_nick, g_lol_search_vote, g_lol_search_mine)
+			if(g_lol_is_bookmark)
+			{
+				socket.emit('lol_query_bookmark_list', {android_id: g_lol_android_id, offset: g_lol_article_scroll_seq, count: 30})
+			}
+			else
+			{
+				lol_get_article_list(g_lol_article_scroll_seq, g_lol_search_vote ? 15 : 30, g_lol_search_body, g_lol_search_nick, g_lol_search_vote, g_lol_search_mine)
+			}
 		}
 	}
 }
@@ -191,13 +214,39 @@ function lol_onclick_article()
 	socket.emit('lol_get_article_detail', { post_seq: seq, android_id: g_lol_android_id })
 }
 
+/* 글 우클릭 -> 해당 글의 아카이브 정보 요청 */
+function lol_onrclick_article()
+{
+	event.stopPropagation()
+	event.preventDefault()
+
+	var seq = event.currentTarget.getAttribute('seq')
+	if(!seq)
+	{
+		console.log('seq가 없다?!', seq)
+		return
+	}
+
+	if(g_lol_android_id == g_lol_guest_id)
+		return
+
+	g_lol_rpanel_scroll_top_switch = true
+	socket.emit('lol_query_bookmark_archived', { post_seq: seq, android_id: g_lol_android_id })
+}
+
 /* 검색 버튼 클릭 */
 function lol_onclick_search_button()
 {
 	if(g_lol_android_id != g_lol_guest_id)
+	{
 		lol_lpanel_search_menu_button_mine.firstChild.nodeValue = '내 글'
+		lol_lpanel_search_menu_button_bookmark.firstChild.nodeValue = '북마크'
+	}
 	else
+	{
 		lol_lpanel_search_menu_button_mine.firstChild.nodeValue = '내 글 (로그인 필요)'
+		lol_lpanel_search_menu_button_bookmark.firstChild.nodeValue = '북마크 (로그인 필요)'
+	}
 
 	lol_lpanel_search_menu.style.display = 'block'
 }
@@ -307,6 +356,26 @@ function lol_onclick_search_nick()
 	lol_get_article_list(0, g_lol_search_vote ? 15 : 30, g_lol_search_body, g_lol_search_nick, g_lol_search_vote, g_lol_search_mine)
 }
 
+/* 검색 - 북마크 클릭 */
+function lol_onclick_search_bookmark()
+{
+	event.stopPropagation()
+	if(g_lol_android_id == g_lol_guest_id)
+		return
+
+	lol_lpanel_search_menu.style.display = 'none'
+	g_lol_search_body = ''
+	g_lol_search_nick = ''
+	g_lol_search_vote = false
+	g_lol_search_mine = false
+	g_lol_article_scroll_seq = 0
+	g_lol_article_list = []
+	g_lol_lpanel_scroll_top_switch = true
+	g_lol_spec_android_id = g_lol_android_id
+	g_lol_is_bookmark = true
+	socket.emit('lol_query_bookmark_list', {android_id: g_lol_android_id, offset: g_lol_article_scroll_seq, count: 30})
+}
+
 /* 왼쪽 글쓰기 버튼 클릭 */
 function lol_onclick_write()
 {
@@ -402,6 +471,7 @@ function lol_onclick_write_cancel()
 	lol_write_youtube.value = ''
 
 	g_lol_write_image_data = ''
+	g_lol_write_image_data_gif = ''
 	lol_write_image.style.display = 'none'
 	lol_write_image_guide.style.display = 'none'
 	lol_write_image.src = ''
@@ -424,7 +494,25 @@ function lol_onclick_write_confirm()
 		subject: lol_write_subject.value,
 		body: lol_write_body.value + ' <ㄹㅗㄹㄷㅣ>',
 		youtube_url: lol_write_youtube.value,
-		image: g_lol_write_image_data })
+		image: g_lol_write_image_data_gif ? g_lol_write_image_data_gif : g_lol_write_image_data,
+		is_gif: g_lol_write_image_data_gif ? true : false})
+}
+
+/* 글 북마크 버튼 */
+function lol_onclick_aritcle_bookmark()
+{
+	if(g_lol_current_detail.isBookmarked)
+	{
+		var ans = confirm('이 글의 북마크를 삭제하시겠습니까?')
+		if(!ans)
+			return
+	}
+
+	g_lol_current_detail.reply_cnt = g_lol_current_detail.replys.length
+	socket.emit('lol_bookmark', { android_id: g_lol_android_id, data: g_lol_current_detail, isRegister: g_lol_current_detail.isBookmarked ? false : true})
+
+	g_lol_current_detail.isBookmarked = !g_lol_current_detail.isBookmarked
+	lol_rpanel_bookmark.style.backgroundImage = g_lol_current_detail.isBookmarked ? "url('static/star_full.png')" : "url('static/star_empty.png')"
 }
 
 /* 글 새로고침 버튼 */
@@ -466,7 +554,7 @@ function lol_rpanel_update()
 
 	lol_rpanel_header_title.firstChild.nodeValue = g_lol_current_detail['post_title']
 	lol_rpanel_header_nick.firstChild.nodeValue = g_lol_current_detail['nickname']
-	lol_rpanel_header_spec.innerHTML = format('{0} 조회 <b>{1}</b>', g_lol_current_detail['stack'], g_lol_current_detail['views'])
+	lol_rpanel_header_spec.innerHTML = format('{0} 조회 <b>{1}</b>', g_lol_current_detail['stack'] ? g_lol_current_detail['stack'] : "", g_lol_current_detail['views'])
 
 	if(g_lol_android_id == g_lol_guest_id)
 	{
@@ -476,6 +564,9 @@ function lol_rpanel_update()
 	{
 		lol_rpanel_header_button.innerHTML = '[차단하기]'
 	}
+
+	lol_rpanel_bookmark.style.display = is_invalid ? 'none' : 'block'
+	lol_rpanel_bookmark.style.backgroundImage = g_lol_current_detail.isBookmarked ? "url('static/star_full.png')" : "url('static/star_empty.png')"
 
 	// 영상
 	if(!g_lol_same_article_prev)
@@ -507,7 +598,7 @@ function lol_rpanel_update()
 		var filename = g_lol_current_detail['doodlrurls'].substr(0, g_lol_current_detail['doodlrurls'].length - 1)
 		zzals = [format('http://lolwiki.kr/freeboard/uploads/doodlr/{0}/{1}', lol_get_date_from_filename(filename), filename)]
 	}
-	else if(g_lol_current_detail['fixedpic'].length)
+	else if(g_lol_current_detail['fixedpic'] && g_lol_current_detail['fixedpic'].length)
 	{
 		zzals = [format('http://lolwiki.kr/freeboard/uploads/fixed_img/files/{0}/{1}', lol_get_date_from_filename(g_lol_current_detail['fixedpic']), g_lol_current_detail['fixedpic'])]
 	}
@@ -570,7 +661,29 @@ function lol_rpanel_update()
 	lol_rpanel_body_icon_change_size_slider.style.display = 'none'
 	lol_icon_change_buttons.style.display = 'none'
 	
-	lol_rpanel_body_body.innerHTML = g_lol_current_detail['post_text'].replace('size=1', '').replace(/\r\n/g, '<br>')
+	lol_rpanel_body_body.innerHTML = g_lol_current_detail['post_text'].replace('size=1', '').replace(/\r\n/g, '<br>').replace(/？/g, '?').replace(/＆/g, '&')
+	document.querySelectorAll('#lol_rpanel_body_body > [src]').forEach( e => {
+		var div = document.createElement('div')
+		div.classList.add('lol_rpanel_img_body')
+		div.toggleAttribute('small', true)
+		e.parentNode.insertBefore(div, e)
+
+		var img = document.createElement('img')
+		img.src = e.getAttribute('src')
+		img.style.width = '100%'
+		img.classList.add('lol_rpanel_img_img')
+		div.appendChild(img)
+
+		var div_add = document.createElement('div')
+		div_add.classList.add('lol_rpanel_img_add')
+		div.appendChild(div_add)
+
+		div.onclick = lol_onclick_img
+		div_add.onclick = lol_onclick_img_add
+		div_add.setAttribute('src', e.getAttribute('src'))
+
+		e.remove()
+	})
 	lol_rpanel_body_date.firstChild.nodeValue = g_lol_current_detail['post_date']
 
 	// 추천
@@ -1062,6 +1175,7 @@ async function lol_write_image_clear_text()
 function lol_clear_image()
 {
 	g_lol_write_image_data = ''
+	g_lol_write_image_data_gif = ''
 	lol_write_image.style.display = 'none'
 	lol_write_image_guide.style.display = 'none'
 	lol_write_image.src = ''
@@ -1088,6 +1202,77 @@ function lol_write_image_onpaste()
 		lol_write_image_guide.style.display = 'block'
 	}
 	reader.readAsDataURL(blob)
+}
+
+async function lol_write_image_ondrop(e)
+{
+	e.stopPropagation();
+    e.preventDefault();
+ 
+	// console.warn(e.target.files)
+	// console.warn(e.dataTransfer)
+    // e.dataTransfer = e.originalEvent.dataTransfer;
+    var files = e.target.files || e.dataTransfer.files;
+ 
+    if (files.length > 1) {
+        alert('응니얼굴');
+        return;
+    }
+
+	if (!files[0].type.match(/image.*/)) {
+        alert('이미지가 아닙니다.');
+		return;
+	}
+		
+	var file = e.dataTransfer.files[0]
+	// console.log('file', file);
+
+	var gif_stream_result = await readAsArrayBuffer_async(file)
+	// console.warn('readAsArrayBuffer', gif_stream_result)
+	g_lol_write_image_data_gif = gif_stream_result
+
+	var base64_result = await readAsDataURL_async(file) // data:image/gif;base64,R0lGO ...
+	// console.log('target', base64_result)
+	lol_write_image_placeholder.style.display = 'none'
+	lol_write_image.src = base64_result
+	lol_write_image.style.display = 'block'
+	lol_write_image_guide.innerHTML = '이미지 첨부 중... 기다려주셈'
+	lol_write_image_guide.style.display = 'block'
+	e.target.style.borderWidth = '1px';
+
+	// var reader2 = new FileReader()
+	// reader2.onload = function (event) {
+	// 	console.warn('readAsBinaryString', event.target.result)
+	// }
+	// reader2.readAsBinaryString(file)
+}
+
+function readAsDataURL_async(file) {
+	return new Promise((resolve, reject) => {
+	  let reader = new FileReader();
+  
+	  reader.onload = () => {
+		resolve(reader.result);
+	  };
+  
+	  reader.onerror = reject;
+  
+	  reader.readAsDataURL(file);
+	})
+}
+
+function readAsArrayBuffer_async(file) {
+	return new Promise((resolve, reject) => {
+	  let reader = new FileReader();
+  
+	  reader.onload = () => {
+		resolve(reader.result);
+	  };
+  
+	  reader.onerror = reject;
+  
+	  reader.readAsArrayBuffer(file);
+	})
 }
 
 async function lol_write_image_onload()

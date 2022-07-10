@@ -10,6 +10,8 @@ var g_isLogin = false
 var g_icon_id = 0
 var g_current_chat_category = mainchat_header_chat // 채팅 카테고리 초기화 (기본값: 채팅) [채팅|접속자(DJ)|최근곡|옵션]
 var g_chat_noti_count = 0 // 내가 보지 못한 채팅 카운트
+var g_last_tts = new Date() // TTS 쿨타임 기록용
+var g_image_storage_panel_show = false // 이미지 저장소 패널 show/hide
 
 /* 최근 재생된 영상 데이터 */
 var g_recent_video_list = [] // [ { video_id, thumbnail, title, dj }, ... ]
@@ -25,6 +27,8 @@ var g_is_djing = false
 
 var g_good_list = [] // 좋아요 누른 사람 닉네임 목록
 var g_bad_list = [] // 싫어요 목록
+
+var g_hls = new Hls() // m3u8 플레이어용
 
 /* 웹 페이지 로딩 체크용 */
 var g_isConnected = false
@@ -69,9 +73,16 @@ var g_lol_search_vote = false
 var g_lol_search_mine = false
 var g_lol_same_article_prev = false
 var g_lol_write_image_data = '' // 글 첨부 이미지
+var g_lol_write_image_data_gif = '' // gif용 파일스트림 데이터
 var g_lol_write_reply_image_data = '' // 댓글 첨부 이미지
 var g_lol_spec_android_id = g_lol_spec_android_id
 var g_lol_last_scroll_time = 0
+var g_lol_bookmark_list = [] // [ 
+	// { post_title: '', post_seq: 0, replys: [ 그냥 빈 리스트로 댓글개수만 맞춤 ], badge_use: '401', post_date: "2022-06-19 21:37:13   ",
+	// youtube_url: '그냥 있으면 아무글자나 넣으면 됨', doodlr: '얘도', pic_new: '얘도', pic_multi: '얘도',
+	// nickname: '만악의정원', icon_img: "img_2511566_20220523163447.jpg", likes: 1
+	// }, ... ]
+var g_lol_is_bookmark = false // 현재 북마크를 보고있는지 
 
 /* 채팅 모드 */
 var g_is_chat_mode = false
@@ -84,11 +95,56 @@ var toonat_voices = ['lessy', 'maoruya', 'changu', 'beube', 'somnyang']
 window.onload = function() {
 	g_isWindowLoaded = true
 
+	// 옵션들 불러오기
 	set_theme(localStorage.getItem(g_storage_theme_key))
+	if('option_checkbox_mention' in localStorage)
+		option_checkbox_mention.checked = eval(localStorage.getItem('option_checkbox_mention'))
+	if('option_slider_mention_volume' in localStorage)
+		option_slider_mention_volume.value = eval(localStorage.getItem('option_slider_mention_volume'))
+	if('option_checkbox_tts' in localStorage)
+		option_checkbox_tts.checked = eval(localStorage.getItem('option_checkbox_tts'))
+	if('option_slider_tts_volume' in localStorage)
+		option_slider_tts_volume.value = eval(localStorage.getItem('option_slider_tts_volume'))
+	if('option_checkbox_tts_key_bind' in localStorage)
+		option_checkbox_tts_key_bind.checked = eval(localStorage.getItem('option_checkbox_tts_key_bind'))
+	if('option_tts_type' in localStorage)
+	{
+		var tts_type = localStorage.getItem('option_tts_type') // ko-KR-Standard-C
+		document.querySelector(format('input[value={0}]', tts_type)).checked = true
+	}
+	if('option_checkbox_dezeolmo' in localStorage)
+		option_checkbox_dezeolmo.checked = eval(localStorage.getItem('option_checkbox_dezeolmo'))
+	
+
+	// 옵션에 이벤트 추가
+	option_checkbox_mention.onchange = _ => localStorage.setItem('option_checkbox_mention', option_checkbox_mention.checked)
+	option_slider_mention_volume.onchange = _ => localStorage.setItem('option_slider_mention_volume', option_slider_mention_volume.value)
+	option_checkbox_tts.onchange = _ => localStorage.setItem('option_checkbox_tts', option_checkbox_tts.checked)
+	option_slider_tts_volume.onchange = _ => localStorage.setItem('option_slider_tts_volume', option_slider_tts_volume.value)
+	option_checkbox_tts_key_bind.onchange = _ => localStorage.setItem('option_checkbox_tts_key_bind', option_checkbox_tts_key_bind.checked)
+	tts_1.onchange = _ => localStorage.setItem('option_tts_type', document.querySelector('[name=tts_voice_name]:checked').value)
+	tts_2.onchange = _ => localStorage.setItem('option_tts_type', document.querySelector('[name=tts_voice_name]:checked').value)
+	tts_3.onchange = _ => localStorage.setItem('option_tts_type', document.querySelector('[name=tts_voice_name]:checked').value)
+	tts_4.onchange = _ => localStorage.setItem('option_tts_type', document.querySelector('[name=tts_voice_name]:checked').value)
+	tts_5.onchange = _ => localStorage.setItem('option_tts_type', document.querySelector('[name=tts_voice_name]:checked').value)
+	tts_6.onchange = _ => localStorage.setItem('option_tts_type', document.querySelector('[name=tts_voice_name]:checked').value)
+	tts_7.onchange = _ => localStorage.setItem('option_tts_type', document.querySelector('[name=tts_voice_name]:checked').value)
+	tts_8.onchange = _ => localStorage.setItem('option_tts_type', document.querySelector('[name=tts_voice_name]:checked').value)
+	option_checkbox_dezeolmo.onchange = _ => localStorage.setItem('option_checkbox_dezeolmo', option_checkbox_dezeolmo.checked)
 
 	var cached_lol_android_id = localStorage.getItem(g_storage_lol_key)
 	if(cached_lol_android_id)
 		g_lol_android_id = cached_lol_android_id
+
+	if(Hls.isSupported()) 
+	{
+		g_hls.on(Hls.Events.MANIFEST_PARSED,function() {
+			m3u8_player.play()
+			SetVideoBlock(!g_current_video_id)
+		})
+	}
+	else
+		console.error('m3u8 미지원 브라우저입니다 끼에에엑')
 
 	initial_resize()
 	
@@ -127,6 +183,14 @@ window.onload = function() {
 		}
 	}
 
+	chat.ondragover = function (e) {  e.stopPropagation(); e.preventDefault(); }
+	chat.ondragleave = function (e) {  e.stopPropagation(); e.preventDefault(); }
+	chat.ondrop = ondrop_chat_input_file
+	chat_input.ondragover = function (e) {  e.stopPropagation(); e.preventDefault(); }
+	chat_input.ondragleave = function (e) {  e.stopPropagation(); e.preventDefault(); }
+	chat_input.ondrop = ondrop_chat_input_file
+	chat_emoticon_button.onclick = onclick_chat_emoticon_button
+
 	/* 하단 볼륨 컨트롤러 */
 	video_info_volume_btn.onclick = onclick_video_info_volume_btn
 	video_info_volume_slider.onchange = onchange_video_info_volume_slider
@@ -162,6 +226,7 @@ window.onload = function() {
 	lol_lpanel_search_menu_button_mine.onclick = lol_onclick_search_mine
 	lol_lpanel_search_menu_button_search.onclick = lol_onclick_search_search
 	lol_lpanel_search_menu_button_nick.onclick = lol_onclick_search_nick
+	lol_lpanel_search_menu_button_bookmark.onclick = lol_onclick_search_bookmark
 
 	lol_lpanel_write_button.onclick = lol_onclick_write
 
@@ -177,6 +242,7 @@ window.onload = function() {
 	lol_rpanel_header_nick.addEventListener('contextmenu', lol_onrclick_article_writer, false)
 	lol_rpanel_header_button.onclick = lol_onclick_auth_or_block
 	lol_rpanel_header_button.addEventListener('contextmenu', lol_onrclick_auth_or_block, false)
+	lol_rpanel_bookmark.onclick = lol_onclick_aritcle_bookmark
 	lol_rpanel_refresh.onclick = lol_onclick_aritcle_refresh
 	lol_rpanel_body_instant_queue.onclick = lol_onclick_youtube_instant_queue
 	lol_rpanel_body_like.onclick = lol_onclick_like
@@ -211,7 +277,11 @@ window.onload = function() {
 
 	lol_write_cancel.onclick = lol_onclick_write_cancel
 	lol_write_confirm.onclick = lol_onclick_write_confirm
+	lol_write_image_placeholder.ondrop = lol_write_image_ondrop
 	lol_write_image_placeholder.onpaste = lol_write_image_onpaste
+	lol_write_image_placeholder.ondragenter = function (e) {  e.stopPropagation(); e.preventDefault(); e.target.style.borderWidth = '10px'; }
+	lol_write_image_placeholder.ondragover = function (e) {  e.stopPropagation(); e.preventDefault(); e.target.style.borderWidth = '10px'; }
+	lol_write_image_placeholder.ondragleave = function (e) {  e.stopPropagation(); e.preventDefault(); e.target.style.borderWidth = '1px'; }
 	lol_write_image_placeholder.onchange = lol_write_image_clear_text
 	lol_write_image.onclick = lol_clear_image
 	lol_write_image.onload = lol_write_image_onload
@@ -232,7 +302,26 @@ window.onload = function() {
 	register_ui_tooltip_event(playlist_control_panel_playlist_info_delete_button, '이 재생목록 지우기')
 	register_ui_tooltip_event(playlist_control_panel_playlist_info_new_video_button, '새 유튜브 영상 추가\n우클릭: 유튜브 재생목록 째로 추가하기')
 
-	
+	// $('#image_storage_justified_gallery').justifiedGallery({ maxRowsCount: 5})
+
+	// $(window).scroll(function() {
+	// 	if($(window).scrollTop() + $(window).height() == $(document).height()) {
+	// 		for (var i = 0; i < 5; i++) {
+	// 			$('#image_storage_justified_gallery').append('<div class="jg-entry jg-entry-visible">' +
+	// 				'<img src="/static/ //TODO" />' + 
+	// 				'</div>');
+	// 		}
+	// 		$('#gallery').justifiedGallery('norewind');
+	// 	}
+	// });
+
+	// $('#image_storage_justified_gallery').justifiedGallery( { 
+	// 	rowHeight: 300,
+	// 	maxRowHeight: 600,
+	// 	lastRow: 'nojustify',
+	// 	margins: 20
+	//  })
+
 	// create_lessy_socket()
 }
 

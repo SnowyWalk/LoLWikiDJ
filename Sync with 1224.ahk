@@ -5,7 +5,7 @@ SetWorkingDir %A_ScriptDir%  ; Ensures a consistent starting directory.
 
 
 srcFile := "1224.js"
-destFiles := ["8080.js", "8081.js", "8082.js", "1557.js", "1224.js", "49415.js", "3939.js", "1004.js", "1111.js", "2250.js"]
+destFiles := ["8080.js", "8081.js", "8082.js", "1557.js", "1224.js", "49415.js", "3939.js", "1004.js", "1111.js", "2250.js", "1128.js", "5599.js", "4010.js", "1337.js"]
 keepLines := 3
 
 FileRead, srcStr, % "*P65001 " srcFile

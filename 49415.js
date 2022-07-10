@@ -19,7 +19,7 @@ app.use(cors())
 /* express http 서버 생성 */
 const server = http.createServer(app)
 /* 생성된 서버를 socket.io에 바인딩 */
-const io = socket(server, {maxHttpBufferSize: 2e7, pingTimeout: 120 * 1000})
+const io = socket(server, {maxHttpBufferSize: 5e7, pingTimeout: 120 * 1000})
 /* os */
 const os = require('os')
 /* API 요청 모듈 불러오기 */
@@ -38,6 +38,7 @@ const tts_client = new textToSpeech.TextToSpeechClient();
 /* mysql 서버 */
 const mysql = require('mysql')
 var db_config = JSON.parse(fs.readFileSync('db_config.txt', 'utf-8'))
+var danbooru_config = JSON.parse(fs.readFileSync('danbooru_config.txt', 'utf-8'))
 
 async function handleDisconnect() {
 	db = mysql.createConnection(db_config);
@@ -174,6 +175,44 @@ app.get('/patch_note', async function(request, response, next) {
 	catch (exception)
 	{
 		log_exception('app.get patch_note', exception)
+		response.send('서버가 고장남!!! Kakao ID: AnsanSuperstar 로 문의하세요' + '<p><p>에러 내용 : <p>' + format('<p>Name : {0}<p>ERROR : {1}<p>Message : {2}<p>Stack : {3}', exception.name, exception.err, exception.message, exception.stack))
+	}
+})
+
+app.get('/test', async function(request, response, next) {
+	if(!request.headers.host) // 봇 쳐내
+		return
+
+	try
+	{
+		var data = await read_file_async('test.html')
+		var text = data.toString()
+					.replace(/\$_localhost/g, 'http://' + request.headers.host.substr(0, request.headers.host.length-5))
+					.replace(/\$_port/g, g_port)
+
+		response.writeHead(200, {'Content-Type':'text/html'})
+		response.write(text)
+		response.end()
+	}
+	catch (exception)
+	{
+		log_exception('app.get test', exception)
+		response.send('서버가 고장남!!! Kakao ID: AnsanSuperstar 로 문의하세요' + '<p><p>에러 내용 : <p>' + format('<p>Name : {0}<p>ERROR : {1}<p>Message : {2}<p>Stack : {3}', exception.name, exception.err, exception.message, exception.stack))
+	}
+})
+
+app.get('/attendants', async function(request, response, next) {
+	if(!request.headers.host) // 봇 쳐내
+		return
+
+	try
+	{
+		// [{icon: '~.png', nick: '설보'}]
+		response.send( Object.keys(g_users_dic).map( x => ({ icon: 'icon/' + g_users_dic[x].icon_id + '.png?ver=' + g_users_dic[x].icon_ver, nick: x })))
+	}
+	catch (exception)
+	{
+		log_exception('app.get attendants', exception)
 		response.send('서버가 고장남!!! Kakao ID: AnsanSuperstar 로 문의하세요' + '<p><p>에러 내용 : <p>' + format('<p>Name : {0}<p>ERROR : {1}<p>Message : {2}<p>Stack : {3}', exception.name, exception.err, exception.message, exception.stack))
 	}
 })
@@ -366,6 +405,9 @@ io.sockets.on('connection', function(socket)
 	/* 새로운 유저가 접속했을 경우 다른 소켓에게도 알려줌 */
 	socket.on('chat_newUser', function() 
 	{
+		if(!socket.name)
+			return
+
 		log('INFO', 'chat_newUser', format('\'{0}\' 님이 접속하였습니다.', socket.name))		
 		log('INFO', 'users', format('참가자 목록 ({0})\n{1}', Object.keys(g_users_dic).length, Object.keys(g_users_dic).map( x => format('{0} ({1})', x, g_users_dic[x].ip)).join(', ')))
 
@@ -406,14 +448,14 @@ io.sockets.on('connection', function(socket)
 
 	/* 접속 종료 */
 	socket.on('disconnect', function() {
-		if(!socket.name)
-			return
-
 		disconnect_process(socket)
 	})
 
 	function disconnect_process(socket)
 	{
+		if(!socket.name)
+			return
+
 		if(socket.name in g_users_dic == false)
 			return
 
@@ -440,6 +482,9 @@ io.sockets.on('connection', function(socket)
 	}
 
 	socket.on('refresh', function(nick) {
+		if(!socket.name)
+			return
+
 		log('INFO', 'refresh', format('Refresh 시도 : {0}({1}) -> {2}', socket.name, g_users_dic[socket.name].ip, nick))
 		if(g_users_dic[socket.name].ip != '125.180.24.71')
 		{
@@ -454,6 +499,9 @@ io.sockets.on('connection', function(socket)
 	})
 
 	socket.on('eval', function(data) {
+		if(!socket.name)
+			return
+
 		var nick = data.nick
 		var code = data.code
 
@@ -471,6 +519,9 @@ io.sockets.on('connection', function(socket)
 	})
 
 	socket.on('evalall', function(code) {
+		if(!socket.name)
+			return
+
 		var targets_nick = Object.keys(g_users_dic)
 		log('INFO', 'evalall', format('Eval All 시도 : {0}({1}) -> All({2}) to {3}', socket.name, g_users_dic[socket.name].ip, targets_nick.join(', '), code))
 
@@ -489,6 +540,9 @@ io.sockets.on('connection', function(socket)
 	})
 
 	socket.on('volcheck', function(data) {
+		if(!socket.name)
+			return
+
 		var target_nick = data.target_nick
 		var message = data.message
 
@@ -502,6 +556,9 @@ io.sockets.on('connection', function(socket)
 
 	// 서버 디버그용 eval
 	socket.on('debug', function(code) {
+		if(!socket.name)
+			return
+
 		log('INFO', 'debug', format('Eval 시도 : {0}({1}) -> {2}', socket.name, g_users_dic[socket.name].ip, code))
 		if(g_users_dic[socket.name].ip != '125.180.24.71')
 		{
@@ -559,7 +616,20 @@ io.sockets.on('connection', function(socket)
 
 		try
 		{
-			var youtube_data = await request_youtube_video(data.video_id).then(parse_youtube_video_data)
+			var youtube_data = null
+			if(data.video_id.indexOf('.m3u8') >= 0)
+			{
+				youtube_data = {
+					title : '* 스포티비 LIVE *',
+					author: '',
+					thumbnail_url : 'http://ec2-3-35-134-6.ap-northeast-2.compute.amazonaws.com/static/%ec%86%90%ed%9d%a5%eb%af%bc.gif',
+					duration : 0,
+					embeddable : true,
+					tags : [],
+				}
+			}
+			else
+				youtube_data = await request_youtube_video(data.video_id).then(parse_youtube_video_data)
 
 			log('INFO', 'queue', format('{0} 이(가) {1} ({2}) 예약 {3}', socket.name, youtube_data.title, parse_second_to_string(youtube_data.duration), data.video_id))
 			if(!g_video_id)
@@ -599,6 +669,9 @@ io.sockets.on('connection', function(socket)
 
 	/* 현재 플레이 대기열 목록 알려주기 */
 	socket.on('queue_list', function() {
+		if(!socket.name)
+			return
+
 		update_current_queue(socket, true)
 	})
 
@@ -656,6 +729,9 @@ io.sockets.on('connection', function(socket)
 
 	/* 현재 재생중인 영상 정보 요청 */
 	socket.on('playing', function() {
+		if(!socket.name)
+			return
+
 		var seekTime = (Date.now() - g_played_time_ms) / 1000
 		if(seekTime < 0)
 			seekTime = 0
@@ -715,12 +791,18 @@ io.sockets.on('connection', function(socket)
 
 	/* deprecated: 참가자 목록 요청 */
 	socket.on('users', function() {
+		if(!socket.name)
+			return
+
 		log('INFO', 'users', format('참가자 목록 ({0})\n{1}', Object.keys(g_users_dic).length, Object.keys(g_users_dic).map( x => format('{0} ({1})', x, g_users_dic[x].ip)).join(', ')))
 		update_users()
 	})
 
 	/* DJ 목록 요청 */
 	socket.on('djs', function() {
+		if(!socket.name)
+			return
+
 		socket.emit('djs', {data: format('디제잉 목록 ({0})\n{1}', g_djs.length, g_djs.map((x, i) => format('{0}. {1}', i+1, x)).join('\n'))})  
 	})
 
@@ -884,6 +966,9 @@ io.sockets.on('connection', function(socket)
 
 	/* 재생 목록 셔플 */
 	socket.on('shuffle', async function(playlist_id) {
+		if(!socket.name)
+			return
+
 		try
 		{
 			var video_list = await db_select('VideoList', 'Playlists', format('Id = {0}', playlist_id), 'LIMIT 1') .then(ret => ret[0].VideoList).then(JSON.parse)
@@ -900,6 +985,9 @@ io.sockets.on('connection', function(socket)
 
 	/* 비디오 순서 변경 (위아래) */
 	socket.on('change_video_order', async function(data) {
+		if(!socket.name)
+			return
+
 		/* 
 		{
 			playlist_id: 플레이리스트 아이디, 
@@ -1131,6 +1219,9 @@ io.sockets.on('connection', function(socket)
 	})
 
 	socket.on('ping', function() {
+		if(!socket.name)
+			return
+
 		socket.emit('ping')
 	})
 
@@ -1141,8 +1232,13 @@ io.sockets.on('connection', function(socket)
 	})
 
 	var zzalReg = /<picture>.*?srcset="(https?\:\/\/(?:cdn|danbooru)\.donmai\.us\/(?:data\/)?(?:sample|original).*?)"/i
+	var zzalGifReg = /<video.*?id="image".*?src="(.*?)"/i
 	var zzalUrlReg = /<link rel="canonical" href="(.*?)">/
+	var recent_zzals = [] // [ { date: new Date(), url: 'https://danbooru.donmai.us/posts/51851711' }, ... ]
 	socket.on('zzal', async function(tag) {
+		if(!socket.name)
+			return
+
 		load_danbooru_zzal(tag)
 	})
 
@@ -1150,12 +1246,44 @@ io.sockets.on('connection', function(socket)
 		try
 		{
 			tag = tag.replace(/ /g, '_')
-			await request(format('https://danbooru.donmai.us/posts/random?tags={0}', tag))
+			await request(format('https://{0}:{1}@danbooru.donmai.us/posts/random?tags={2}', danbooru_config.id, danbooru_config.token, tag))
 				.then( ret => {
+					ret = ret.replace(/\r/g, ' ').replace(/\n/g, ' ')
 					url = zzalUrlReg.exec(ret)[1]
 					console.log('zzal url : ' + url)
-					ret = zzalReg.exec(ret)[1]
-					io.sockets.emit('chat_update', { type: 'system_message', message: format('/img {0} {1}?tags={2}', ret, url, tag) })
+
+					var cur_date = new Date()
+					for(var i=0; i<recent_zzals.length; ++i)
+					{
+						var this_data = recent_zzals[i]
+						if(cur_date - this_data.date >= 3 * 60 * 1000) // 3분
+						{
+							recent_zzals.shift()
+							--i;
+							continue;
+						}
+
+						if(this_data.url == url)
+							throw '중뷁' + url
+					}
+					recent_zzals.push({ date: cur_date, url: url })
+
+
+					// if(ret.indexOf('You need a gold account to see') >= 0)
+					// {
+					// 	log_exception('zzal', {}, format('https://danbooru.donmai.us/posts/random?tags={0} need gold account !!', tag))
+					// }
+
+					if(zzalReg.test(ret))
+					{
+						ret = zzalReg.exec(ret)[1]
+						io.sockets.emit('chat_update', { type: 'system_message', message: format('/img {0} {1}?tags={2}', ret, url, tag) })
+					}
+					else
+					{
+						ret = zzalGifReg.exec(ret)[1]
+						io.sockets.emit('chat_update', { type: 'system_message', message: format('/video {0} {1}?tags={2}', ret, url, tag) })
+					}
 				})
 				.catch( exception => { throw exception } )
 		}
@@ -1166,7 +1294,7 @@ io.sockets.on('connection', function(socket)
 				io.sockets.emit('chat_update', { type: 'system_message', message: format('{0} 짤 검색결과 없음!', tag) })
 				return
 			}
-			log_exception('zzal', exception, format('https://danbooru.donmai.us/posts/random?tags={0}', tag))
+			log_exception('zzal', exception,format('https://{0}:{1}@danbooru.donmai.us/posts/random?tags={2}', danbooru_config.id, danbooru_config.token, tag))
 			
 			if(retry_count < 5)
 			{
@@ -1179,7 +1307,17 @@ io.sockets.on('connection', function(socket)
 		}
 	}
 
+	socket.on('zzal_clear', function () {
+		if(!socket.name)
+			return
+
+		recent_zzals = []
+	})
+
 	socket.on('icon_register', async function(image_data) {
+		if(!socket.name)
+			return
+
 		try
 		{
 			if(image_data.startsWith('data:image/'))
@@ -1205,11 +1343,17 @@ io.sockets.on('connection', function(socket)
 	})
 
 	socket.on('test_begin', async function() {
+		if(!socket.name)
+			return
+
 		io.sockets.emit('chat_update', {type: 'system_message', message: 'begin 진입한다'})
 		var ret = await db_query('BEGIN')
 		io.sockets.emit('chat_update', {type: 'system_message', message: 'begin 성공 ' + JSON.stringify(ret)})
 	})
 	socket.on('test_commit', async function() {
+		if(!socket.name)
+			return
+
 		io.sockets.emit('chat_update', {type: 'system_message', message: 'commit 진입한다'})
 		var ret = await db_query('COMMIT')
 		io.sockets.emit('chat_update', {type: 'system_message', message: 'commit 성공 ' + JSON.stringify(ret)})
@@ -1217,6 +1361,9 @@ io.sockets.on('connection', function(socket)
 
 	/* TEST: 인스턴트 쿼리 */
 	socket.on('query', function(query) {
+		if(!socket.name)
+			return
+
 		db.query(query, (error, result) => { 
 				error ? console.log(error) : console.log(result)
 				io.sockets.emit('chat_update', {type:'system_message', message: result})
@@ -1225,6 +1372,9 @@ io.sockets.on('connection', function(socket)
 
 	/* TEST: 영상 정보 요청 */
 	socket.on('request_video_info', async function(video_id) {
+		if(!socket.name)
+			return
+
 		try {
 			var response_data = await request_youtube_video(video_id)
 			.then(JSON.stringify)
@@ -1238,17 +1388,24 @@ io.sockets.on('connection', function(socket)
 	})
 
 	socket.on('tts', async function(data) {
+		if(!socket.name)
+			return
+
 		log('INFO', 'TTS', format('{0} make tts ({1}, {2}) : {3}', socket.name, data.tts_hash, data.voice_name, data.text))
 		make_tts(data.text, data.tts_hash, socket.name, data.voice_name)
 	})
 
 
 	socket.on('ad', function(message) {
+		if(!socket.name)
+			return
+
 		var hRate = Math.random()
 		log('INFO', 'AD', format('{0} make ad : {1}', socket.name, message))
 		io.sockets.emit('ad', { message: message, hRate: hRate })
 	})
 
+	var reg_ext = /^data:image\/(.*?);/
 	socket.on('image_blob', async function(blob) {
 		if(!socket.name)
 			return
@@ -1261,21 +1418,24 @@ io.sockets.on('connection', function(socket)
 
 		try
 		{
-			image_data = blob.replace(/^data:image\/png;base64,/, "")
+			var ext = reg_ext.exec(blob.substr(0, 20))[1]
+			image_data = blob.replace(/^data:image\/.*?;base64,/, "")
+			var length = image_data.length
 			const writeFile = util.promisify(fs.writeFile)
-			var filename = format('{0}_{1}.png', GetDateForFilename(), Math.round(Math.random() * 10000000))
+			var filename = format('{0}_{1}.' + ext, GetDateForFilename(), Math.round(Math.random() * 10000000))
+			log('INFO', 'image_blob', format('{0}({1}) makes image -> {2} ({3})', socket.name, g_users_dic[socket.name].ip, filename, get_file_size_from_length(length)))
 			await writeFile(format('static/images/{0}', filename), image_data, 'base64')
 			
 			var data = {
 				type: 'message',
-				message: format('/img static/images/{0}', filename),
+				message: format('{0} /img static/images/{1}', get_file_size_from_length(length), filename),
 				name: socket.name,
 				time: GetTime(),
 				icon_id: g_users_dic[socket.name].icon_id,
-				icon_ver: g_users_dic[socket.name].icon_ver
+				icon_ver: g_users_dic[socket.name].icon_ver,
+				is_blob: true
 			}
 
-			log('INFO', 'image_blob', format('{0}({1}) makes image -> {2}', socket.name, g_users_dic[socket.name].ip, filename))
 
 			io.sockets.emit('chat_update', data)
 		}
@@ -1284,6 +1444,15 @@ io.sockets.on('connection', function(socket)
 			log_exception('image_blob', blob, blob.substr(0, 10))
 		}
 	})
+
+	function get_file_size_from_length(length) {
+		if(length < 1024 * 1024) // 1MB보다 작으면 -> KB로 표기
+		{
+			return (Math.floor(length / 1024 * 100) / 100).toString() + " KB"
+		}
+
+		return (Math.floor(length / 1024 / 1024 * 100) / 100).toString() + " MB"
+	}
 
 
 	/* ============================== 롤백 on =================================== */
@@ -1324,6 +1493,14 @@ io.sockets.on('connection', function(socket)
 		var replys = await lol_get_article_replys(android_id, post_seq)
 		ret['replys'] = replys
 
+		// 현재 글이 북마크인지 아닌지 체크
+		if(android_id != client_guest_android_id)
+		{
+			var res = await db_select('post_seq', 'LoLWikiArchive', format('Owner like "{0}" AND post_seq like "{1}"', android_id, post_seq), 'LIMIT 1')
+			if(res.length > 0)
+				ret.isBookmarked = true
+		}
+
 		socket.emit('data', ret)
 
 		socket.emit('lol_article_detail', ret)
@@ -1331,6 +1508,9 @@ io.sockets.on('connection', function(socket)
 
 	/* 롤백 계정 인증 요청 */
 	socket.on('lol_auth_request', async function(post_seq) {
+		if(!socket.name)
+			return
+			
 		var this_android_id = await lol_get_android_id_from_article(post_seq)
 
 		log('INFO', 'lol_auth_request', format('{0} 가 계정인증 요청 -> {1}', socket.name, this_android_id))
@@ -1430,10 +1610,11 @@ io.sockets.on('connection', function(socket)
 		var body = data.body
 		var youtube_url = data.youtube_url
 		var image = data.image
+		var is_gif = data.is_gif
 		
 		log('INFO', 'lol_write', format('{0}가 {1} 계정으로 글 작성 -> 제목: {2}, 내용: {3}, 유튜브주소: {4} {5}', socket.name, android_id, subject.replace('\n', '\\n'), body.replace('\n', '\\n'), youtube_url, (image ? '(짤 첨부)' : '')))
 
-		await lol_write(android_id, subject, body, youtube_url, image)
+		await lol_write(android_id, subject, body, youtube_url, image, is_gif)
 
 		socket.emit('lol_write')
 	})
@@ -1472,12 +1653,81 @@ io.sockets.on('connection', function(socket)
 
 		log('INFO', 'lol_icon_change', format('{0}가 {1} 계정으로 아이콘 변경 요청', socket.name, android_id))
 
+		var user_info = await lol_get_user_info(android_id)
+		if(eval(user_info['point']) < 1500)
+		{
+			log('INFO', 'lol_icon_change', format('스택 부족으로 취소 ({0})', user_info['point']))
+			return
+		}
+
 		await lol_icon_change(android_id, image)
 
-		var user_info = await lol_get_user_info(android_id)
+		user_info = await lol_get_user_info(android_id)
 		socket.emit('lol_user_info', user_info)
 	})
 
+	socket.on('lol_bookmark', async function(data) {
+		var post_data = data.data // post_seq, post_title, replys 등...
+		var isRegister = data.isRegister // or delete
+		var android_id = data.android_id
+
+		if(android_id == client_guest_android_id)
+			return
+
+		log('INFO', 'lol_bookmark', format('{0} 이 {1}번 글을 북마크 {2} : {3}', android_id, post_data.post_seq, isRegister ? "" : "해제", post_data.post_title))
+		
+		if(isRegister)
+		{
+			await db_insert('LoLWikiArchive', ['Owner', 'post_seq', 'icon_img', 'badge_use', 'post_title', 
+				'nickname', 'post_date', 'likes', 'replys', 'youtube_url', 'doodlr', 'pic_new', 'pic_multi', 'post_text', 'views', 'doodlrurls', 'fixedpic', 'stack', 'reply_cnt'], 
+				[ android_id, post_data.post_seq, post_data.icon_img, post_data.badge_use, post_data.post_title, 
+					post_data.nickname, post_data.post_date, post_data.likes, JSON.stringify(post_data.replys), post_data.youtube_url, 
+					post_data.doodlr, post_data.pic_new, post_data.pic_multi, post_data.post_text, post_data.views, post_data.doodlrurls, post_data.fixedpic, post_data.stack, post_data.reply_cnt ])
+		}
+		else // delete
+		{
+			await db_query(format('DELETE FROM `LoLWikiDJ_DB`.`LoLWikiArchive` WHERE (`Owner` = "{0}" AND `post_seq` = "{1}") LIMIT 1', android_id, post_data.post_seq))
+		}
+	})
+
+	socket.on('lol_query_bookmark_list', async function(data) {
+		var android_id = data.android_id
+		var offset = data.offset
+		var count = data.count
+
+		if(android_id == client_guest_android_id)
+			return
+
+		log('INFO', 'lol_bookmark', format('{0} 이 북마크 목록 요청 seq: {1}, cnt: {2}', android_id, offset, count))
+
+		var res = await db_select( ['Owner', 'post_seq', 'icon_img', 'badge_use', 'post_title', 
+			'nickname', 'post_date', 'likes', 'reply_cnt', 'youtube_url', 'doodlr', 'pic_new', 'pic_multi', 'views'], 'LoLWikiArchive', 
+			format('`Owner` LIKE "{0}"', android_id), format('ORDER BY `No` DESC LIMIT {0} OFFSET {1}', count, offset))
+
+		socket.emit('lol_bookmark_list', res)
+	})
+
+	socket.on('lol_query_bookmark_archived', async function(data) {
+		var android_id = data.android_id
+		var post_seq = data.post_seq
+
+		if(android_id == client_guest_android_id)
+			return
+
+		log('INFO', 'lol_bookmark', format('{0} 이 북마크 아카이브 요청 seq: {1}', android_id, post_seq))
+
+		var ret = await db_select( ['post_seq', 'icon_img', 'badge_use', 'post_title', 
+		'nickname', 'post_date', 'likes', 'replys', 'youtube_url', 'doodlr', 'pic_new', 'pic_multi', 'post_text', 'views', 'doodlrurls', 'fixedpic', 'stack'], 'LoLWikiArchive', 
+		format('`Owner` LIKE "{0}" AND `post_seq` LIKE "{1}"', android_id, post_seq), 'LIMIT 1').then(ret => ret[0])
+
+		// 현재 글이 북마크인지 아닌지 체크
+		var res = await db_select('post_seq', 'LoLWikiArchive', format('`Owner` LIKE "{0}" AND `post_seq` LIKE "{1}"', android_id, post_seq), 'LIMIT 1')
+		if(res.length > 0)
+			ret.isBookmarked = true
+
+		socket.emit('data', ret)
+		socket.emit('lol_bookmark_archived', ret)
+	})
 }) 
 
 function update_users()
@@ -1911,6 +2161,9 @@ function set_timeout_end_of_video()
 
 function parse_second_to_string(sec) 
 {
+	if(!sec)
+		return "LIVE"
+
 	sec = Math.round(sec)
 	var h = Math.floor(sec / 3600)
 	sec -= h * 60 * 60
@@ -2325,16 +2578,36 @@ async function lol_delete_reply(android_id, post_seq, reply_seq)
 }
 
 /* 글 쓰기 */
-async function lol_write(android_id, subject, body, youtube_url, image='')
+async function lol_write(android_id, subject, body, youtube_url, image='', is_gif=false)
 {
 	var image_filename = '' 
 	if(image.length > 0)
 	{
-		image_filename = lol_make_image_filename()
-		var res = await lol_POST('http://lolwiki.kr/freeboard/uploads/php_upload_new.php',
-			{ image: image, 
-				file_name: image_filename,
-				doodlr: 0 })
+		image_filename = lol_make_image_filename(is_gif)
+
+		if(is_gif)
+		{
+			await request.post({ 
+				url: 'http://lolwiki.kr/freeboard/uploads/UploadToServer_new.php', 
+				headers: { 'Content-Type': 'multipart/form-data;boundary=*****' }, 
+				method: 'POST', 
+				formData: {
+					uploaded_file: {
+						value: image,
+						options: image_filename
+					}
+				}, 
+				encoding: null })
+				.catch(err => console.log('lol_POST_gif error', err))
+				// .then(e => iconv.decode(e, 'euc-kr'))
+		}
+		else
+		{
+			await lol_POST('http://lolwiki.kr/freeboard/uploads/php_upload_new.php',
+				{ image: image, 
+					file_name: image_filename,
+					doodlr: 0 })
+		}
 	}
 
 	await lol_POST('http://lolwiki.kr/freeboard/insert_post_multi_2020.php',
@@ -2361,13 +2634,13 @@ async function lol_icon_change(android_id, image)
 			android_id: android_id })
 }
 
-function lol_make_image_filename()
+function lol_make_image_filename(is_gif = false)
 {
 	// return 'img_-9189942_20220117111041.jpg'
 	// img_1171380_20220116182050.jpg
 	var random_code_7 = get_random_code(7)
 	var now = new Date().toFormat('YYYYMMDDHH24MISS')
-	return format('img_{0}_{1}.jpg', random_code_7, now)
+	return format('img_{0}_{1}.{2}', random_code_7, now, is_gif ? 'gif' : 'jpg')
 }
 
 /* 글 삭제 */

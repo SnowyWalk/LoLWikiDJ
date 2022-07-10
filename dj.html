@@ -10,6 +10,11 @@
   <link rel="shortcut icon" href="$_localhost/static/favicon.ico" type="image/x-icon">
   <link rel="stylesheet" href="$_localhost/static/index.css?ver=$_version">
   <script src="$_localhost/node_modules/socket.io/client-dist/socket.io.js"></script>
+  <!-- <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script> -->
+  <script src="$_localhost/static/hls.js?ver=$_version"></script>
+  <script src="$_localhost/static/jquery-1.11.1.js"></script> 
+  <link rel="stylesheet" href="$_localhost/static/justifiedGallery.min.css" />
+  <script src="$_localhost/static/jquery.justifiedGallery.min.js"></script>
 
   <style type="text/css">
     /* nanum-gothic-regular - latin_korean */
@@ -207,13 +212,17 @@
         </fieldset>
       </div>
 
+      <div class="option_row"><button id="option_button_chat_clear" class="nanum no-drag">채팅 로그 지우기</button></div>
+
+      <div class="option_row"><input type="checkbox" id="option_checkbox_dezeolmo" name="option_checkbox_dezeolmo"/> <label for="option_checkbox_dezeolmo" class="no-drag">데이터 절약 모드</label></div>
+
     </div>
 
     <!-- 채팅 엑스트라 (챗 스크롤러) -->
     <div id="chat_extra">
       <div>
         <input type="text" id="chat_input" onpaste="chat_onpaste()" onkeydown="chat_keydown()" placeholder="메시지를 입력해주세요..">
-        <div id="chat_emoticon_button" class="no-drag">😋</div>
+        <div id="chat_emoticon_button" class="no-drag hover">😋</div>
         <button id="chat_send" onclick="send()">전송</button>
       </div>
       <div id="chat_scroller" onclick="scrollDown()">스크롤해서 채팅이 멈췄습니다.</div> 
@@ -247,6 +256,7 @@
   <!-- 영상 플레이어 -->
   <div id="block_video" class="no-drag">재생 중인 영상이 없습니다.</div>
   <div id="video_player"></div>
+  <video id="m3u8_player"></video>
   <div id="marquee_screen"></div>
 
   <!-- 영상 위 광고 -->
@@ -353,6 +363,7 @@
             <div id="lol_lpanel_search_menu_button_mine" menu-button>내 글</div>
             <div id="lol_lpanel_search_menu_button_search" menu-button>글 검색</div>
             <div id="lol_lpanel_search_menu_button_nick" menu-button>닉네임</div>
+            <div id="lol_lpanel_search_menu_button_bookmark" menu-button yellow-text>북마크</div>
           </div>
         </div>
       </div>
@@ -380,6 +391,7 @@
           <div id="lol_rpanel_header_button" class="no-drag">[차단하기]</div>
         </div>
         <div id="lol_rpanel_header_buttons">
+          <div id="lol_rpanel_bookmark"></div>
           <div id="lol_rpanel_refresh"></div>
         </div>
       </div>
@@ -434,18 +446,43 @@
     </div>
 
     <div id="lol_write">
-      <input type="text" id="lol_write_subject" placeholder="제목 입력">
-      <textarea id="lol_write_body" placeholder="음란물 게재시 이용에 제재를 가할 수 있으며 법적 조치를 취할 수 있습니다."></textarea>
-      <div image-holder>
-        <input type="text" id="lol_write_image_placeholder" placeholder="여기에 붙여넣기(Ctrl+V)로 이미지 첨부" maxlength=0>
-        <img id="lol_write_image">
-        <div id="lol_write_image_guide">이미지 첨부 중... 기다려주셈</div>
-        <canvas id="lol_write_canvas"></canvas>
+      <div id="lol_write_container">
+        <input type="text" id="lol_write_subject" placeholder="제목 입력">
+        <textarea id="lol_write_body" placeholder="음란물 게재시 이용에 제재를 가할 수 있으며 법적 조치를 취할 수 있습니다."></textarea>
+        <div image-holder>
+          <input type="text" id="lol_write_image_placeholder" placeholder="여기에 붙여넣기(Ctrl+V) 또는 파일 드롭" maxlength=0>
+          <img id="lol_write_image">
+          <div id="lol_write_image_guide">이미지 첨부 중... 기다려주셈</div>
+          <canvas id="lol_write_canvas"></canvas>
+        </div>
+        <input type="text" id="lol_write_youtube" placeholder="영상 주소 입력">
       </div>
-      <input type="text" id="lol_write_youtube" placeholder="영상 주소 입력">
       <div id="lol_write_buttons">
         <div id="lol_write_cancel">취소</div>
         <div id="lol_write_confirm">등록</div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- 이미지 저장소 -->
+  <div id="image_storage" class="no-drag">
+    <div id="image_storage_header">
+      <div id="image_storage_header_close_button"></div>
+    </div>
+
+    <div id="image_storage_container">
+      <div id="image_storage_justified_gallery" class="justified-gallery">
+        <div class="jg-entry jg-entry-visible"><img src="static/emoticon/lessy_00.png"></div>
+        <div class="jg-entry jg-entry-visible"><img src="static/emoticon/lessy_01.jpg"></div>
+        <div class="jg-entry jg-entry-visible"><img src="static/_.png"></div>
+        <div class="jg-entry jg-entry-visible"><img src="static/1.png"></div>
+        <div class="jg-entry jg-entry-visible"><img src="static/beube2.png"></div>
+        <div class="jg-entry jg-entry-visible"><img src="static/bg.jpg"></div>
+        <div class="jg-entry jg-entry-visible"><img src="static/changu.png"></div>
+        <div class="jg-entry jg-entry-visible"><img src="static/good.png"></div>
+        <div class="jg-entry jg-entry-visible"><img src="static/youtube theme.png"></div>
+
       </div>
     </div>
 
@@ -472,9 +509,11 @@
   <audio id="audio_chat_call" src="$_localhost/static/call.mp3?ver=$_version"></audio>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" integrity="sha512-iBBXm8fW90+nuLcSKlbmrPcLa0OT92xO1BIsZ+ywDWZCvqsWgccV3gFoRBv0z+8dLJgyAHIhR35VZc2oM/gI1w==" crossorigin="anonymous" />
 
+
   <script src="https://www.youtube.com/iframe_api"></script>
   <!-- <script src= "https://player.twitch.tv/js/embed/v1.js"></script> -->
   <!-- <script type="module" src="https://unpkg.com/twitch-stream-embed"></script> -->
+
 
 </body>
 

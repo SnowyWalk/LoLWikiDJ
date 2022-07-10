@@ -28,6 +28,7 @@ function initial_resize()
 	option_mention_sample.onclick = onclick_chat_category_option_mention_sample
 	option_tts_sample.onclick = onclick_chat_category_option_tts_sample
 	option_button_logout.onclick = onclick_chat_category_option_logout
+	option_button_chat_clear.onclick = onclick_chat_category_option_chat_clear
 
 	option_tts_1_sample.onclick = onclick_chat_category_option_tts_1_sample
 	option_tts_2_sample.onclick = onclick_chat_category_option_tts_2_sample
@@ -107,6 +108,8 @@ function resize() {
 	/* 유튜브 플레이어 */
 	if(player)
 		player.setSize(window_width - mainchat_width, window_height - bottom_height)
+	m3u8_player.style.width = window_width - mainchat_width
+	m3u8_player.style.height = window_height - bottom_height
 
 	block_video.style.width = (window_width - mainchat_width)
 	block_video.style.height = (window_height - bottom_height)
@@ -954,6 +957,12 @@ function onclick_chat_category_option_logout()
 	location.reload()
 }
 
+function onclick_chat_category_option_chat_clear()
+{
+	while(chat.hasChildNodes())
+		chat.removeChild(chat.lastChild)
+}
+
 function onclick_chat_category_option_tts_1_sample() { play_tts_voice_sample(1) }
 function onclick_chat_category_option_tts_2_sample() { play_tts_voice_sample(2) }
 function onclick_chat_category_option_tts_3_sample() { play_tts_voice_sample(3) }
@@ -1032,9 +1041,15 @@ function onclick_video_info_volume_btn()
 		return
 
 	if(!player.isMuted())
+	{
 		player.mute()
+		m3u8_player.muted = true
+	}
 	else
+	{
 		player.unMute()
+		m3u8_player.muted = false
+	}
 
 	update_video_volume()
 }
@@ -1042,6 +1057,7 @@ function onclick_video_info_volume_btn()
 function onchange_video_info_volume_slider()
 {
 	player.setVolume(video_info_volume_slider.value)
+	m3u8_player.volume = eval(video_info_volume_slider.value) / 100
 }
 
 function update_video_volume()
