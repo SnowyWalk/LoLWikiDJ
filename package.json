@@ -1,0 +1,36 @@
+{
+  "name": "lolwikidj",
+  "version": "1.0.0",
+  "description": "<br>",
+  "main": "1224.js",
+  "scripts": {
+    "start": "npx supervisor 1224.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mirusu400/LoLWikiDJ.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/mirusu400/LoLWikiDJ/issues"
+  },
+  "homepage": "https://github.com/mirusu400/LoLWikiDJ#readme",
+  "dependencies": {
+    "@google-cloud/text-to-speech": "^4.0.0",
+    "cors": "^2.8.5",
+    "date-utils": "^1.2.21",
+    "express": "^4.18.1",
+    "http": "^0.0.1-security",
+    "iconv-lite": "^0.6.3",
+    "identicon": "^3.1.1",
+    "mysql": "^2.18.1",
+    "os": "^0.1.2",
+    "request-promise-native": "^1.0.9",
+    "showdown": "^2.1.0",
+    "socket.io": "^4.5.1",
+    "supervisor": "^0.12.0",
+    "util": "^0.12.4"
+  }
+}
