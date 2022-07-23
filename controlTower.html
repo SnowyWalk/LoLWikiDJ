@@ -1,0 +1,127 @@
+<html theme="default">
+<title>LoLWiki.DJ 컨트롤 타워</title>
+
+<head>
+  <meta charset="UTF-8">
+
+  <style type="text/css">
+	/* nanum-gothic-regular - latin_korean */
+	@font-face {
+	  font-family: 'Nanum Gothic';
+	  font-style: normal;
+	  font-weight: 400;
+	  src: url('/fonts/nanum-gothic-v17-latin_korean-regular.eot'); /* IE9 Compat Modes */
+	  src: local(''),
+		  url('/fonts/nanum-gothic-v17-latin_korean-regular.eot?#iefix') format('embedded-opentype'), /* IE6-IE8 */
+		  url('/fonts/nanum-gothic-v17-latin_korean-regular.woff2') format('woff2'), /* Super Modern Browsers */
+		  url('/fonts/nanum-gothic-v17-latin_korean-regular.woff') format('woff'), /* Modern Browsers */
+		  url('/fonts/nanum-gothic-v17-latin_korean-regular.ttf') format('truetype'), /* Safari, Android, iOS */
+		  url('/fonts/nanum-gothic-v17-latin_korean-regular.svg#NanumGothic') format('svg'); /* Legacy iOS */
+	}
+
+	@font-face {
+	  font-family: 'Dovemayo';
+	  src: url('/fonts/Dovemayo-Medium.eot');
+	  src: url('/fonts/Dovemayo-Medium.eot?#iefix') format('embedded-opentype'),
+		  url('/fonts/Dovemayo-Medium.svg#Dovemayo-Medium') format('svg'),
+		  url('/fonts/Dovemayo-Medium.ttf') format('truetype'),
+		  url('/fonts/Dovemayo-Medium.woff') format('woff'),
+		  url('/fonts/Dovemayo-Medium.woff2') format('woff2');
+	  font-weight: normal;
+	  font-style: normal;
+	}
+
+	@font-face {
+	  font-family: 'Dovemayo';
+	  src: url('/fonts/Dovemayo-Bold.eot');
+	  src: url('/fonts/Dovemayo-Bold.eot?#iefix') format('embedded-opentype'),
+		  url('/fonts/Dovemayo-Bold.svg#Dovemayo-Bold') format('svg'),
+		  url('/fonts/Dovemayo-Bold.ttf') format('truetype'),
+		  url('/fonts/Dovemayo-Bold.woff') format('woff'),
+		  url('/fonts/Dovemayo-Bold.woff2') format('woff2');
+	  font-weight: bold;
+	  font-style: normal;
+	}
+
+	img {
+		height: 45px;
+		width: 45px;
+		margin-right: 6px;
+		padding-top: 0px;
+		float: left;
+		border-radius: 30%;
+	}
+
+	.user {
+		line-height: 45px;
+		font-weight: bold;
+		padding-top: 5px;
+		padding-bottom: 5px;
+	}
+
+  </style>
+</head>
+
+<body>
+
+  <button onclick="refresh()">새로고침</button>
+  <label>※ 개인채널은 제외</label>
+  <br>
+  <div id="details">
+
+  </div>
+
+  <script>
+	async function refresh()
+	{
+		while ( details.hasChildNodes() ) 
+			details.removeChild( details.firstChild )
+
+		var ports = [8080, 8081, 8082, 1557, 1224, 1337] // 49415, 3939, 1004, 1111, 2250, 1128, 5599, 4010, 1337]
+		for(var p of ports)
+		{
+			try
+			{
+				var res = await request('http://' + location.hostname + ':' + p + '/attendants') //.then(JSON.parse)
+				console.log(res)
+
+				var h1 = document.createElement('h1')
+				h1.appendChild(document.createTextNode(p))
+				details.appendChild(h1)
+
+				for(var user of res)
+				{
+					var div = document.createElement('div')
+					div.classList.add('user')
+					var img = document.createElement('img')
+					img.src = 'http://' + location.hostname + ':8080/' + user.icon
+					div.appendChild(img)
+					var label = document.createElement('label')
+					label.appendChild(document.createTextNode(user.nick))
+					div.appendChild(label)
+
+					details.appendChild(div)
+				}
+
+			}
+			catch (e)
+			{
+				console.log(p, 'FAIL')
+			}
+		}
+	}
+
+	function request(url)
+	{
+		return new Promise(function (resolve, reject) {
+			fetch(url).then(res => res.ok ? resolve(res.json()) : reject())
+		})
+	}
+
+	window.onload = function() {
+	  refresh()
+	}
+  </script>
+</body>
+
+</html>

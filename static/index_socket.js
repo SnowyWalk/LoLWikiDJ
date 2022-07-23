@@ -116,34 +116,18 @@ socket.on('login', function(isSuccess) {
 	login_button.style.display = 'none'
 	login_remember_nick_holder.style.display = 'none'
 
-	add_system_message('후원 랭킹 (2022. 03. 19)\n'
-						+ '★ 0. Lily(샤르프로젝트) 님 ★\n' 
-						+ '☆ 0. 우뭇가사리 님 ☆\n' 
-						+ '1. 콘파고 님\n' 
-						+ '2. 노통 님\n' 
-						+ '3. 코코로 님\n'
-						+ '4. 다정이 님\n'
-						+ '5. 누관검 님\n' 
-						+ '6. 디아 님\n'
-						+ '7. eq 님\n'
-						+ '8. 랠래 님\n'
-						+ '9. POIU 님\n'
-						+ '10. 인공사 님\n'
-						+ '11. pagolas 님\n'
-						+ '12. 고냥이지 님\n'
-						+ '13. 복 님\n'
-						+ '14. 코리밋 님\n'
-						+ '15. 샤르룽 님\n'
-						+ '16. 돌고래대통령 님\n'
-						+ '17. 스프링 님\n'
-						+ '18. clown 님\n'
-						+ '19. 우엥 님\n'
-						+ '20. 얼랭님 님\n'
-						+ '21. 광삼 님\n'
-						+ '22. 이슬3 님\n'
-						+ '23. 강령군주 님\n'
-						+ '24. 고졸백수 님\n'
-						+ '25. 헤은 님\n'
+	donate_ranking_msg = '후원 랭킹 (2022. 07. 06)\n'
+	+ '★ 0. Lily(샤르프로젝트) 님 ★\n' 
+	+ '☆ 0. 우뭇가사리 님 ☆\n' 
+
+	var _index = 1
+	for(var e of ['다정이', '코코로', '콘파고', '네모', '헤은', 'eq', '엽떡조아', '누관검', '디아', '나낙고추', '인공사', 'pagolas', '클레이', '에양', 'POIU', '고냥이지', '복', '코리밋', '샤르룽', '돌고래대통령', '스프링', 'clown', '우엥', '얼랭', '광삼', 'dltmftka', '강령군주', '고졸백수'])
+	{
+		donate_ranking_msg += format('{0}. {1} 님\n', _index++, e)
+	}
+
+
+	add_system_message(donate_ranking_msg
 						+ '후원 계좌 : 기업 539-028793-01-012 박*준', 'var(--채팅_후원랭킹)')
 	add_system_message('명령어 목록은 /? 을 입력해 볼 수 있습니다.')
 	add_system_message('전용 채널 개설 문의는 설보에게... (후원자 전용)')
@@ -187,6 +171,10 @@ socket.on('djs', function(data_list) {
 
 /* 서버로부터 영상 데이터를 받은 경우 */
 socket.on('update_current_video', function(data) {
+
+	if(!g_isLogin)
+		return
+
 	if(data)
 	{
 		if(data.video_id && data.video_id != g_current_video_id)
@@ -208,6 +196,8 @@ socket.on('update_current_video', function(data) {
 		SetVideoBlock(true)
 		if(player)
 			player.pauseVideo()
+		m3u8_player.src = ''
+		m3u8_player.pause()
 		update_current_video_name()
 		livechat_hide()
 		return
@@ -223,8 +213,36 @@ socket.on('update_current_video', function(data) {
 	update_dj_state()
 	g_cued_time_ms = Date.now() - data.seek_s * 1000
 	var seek_time_s = (Date.now() - g_cued_time_ms) / 1000
-	if(player)
-		player.cueVideoById(data.video_id, seek_time_s, document.querySelector('[name=video_quality]:checked').value)
+
+
+	console.info((data.video_id.indexOf('.m3u8') >= 0), data.video_id)
+
+	if(data.video_id.indexOf('.m3u8') >= 0)
+	{
+		m3u8_player.style.display = 'block'
+		m3u8_player.volume = eval(video_info_volume_slider.value) / 100
+		if(player)
+			m3u8_player.muted = player.isMuted() 
+		g_hls.loadSource(data.video_id)
+		g_hls.attachMedia(m3u8_player)
+		if(player)
+		{
+			player.pauseVideo()
+			video_player.style.display = 'none'
+		}
+	}
+	else
+	{
+		m3u8_player.style.display = 'none'
+		m3u8_player.src = ''
+		m3u8_player.pause()
+
+		if(player)
+		{
+			video_player.style.display = 'block'
+			player.cueVideoById(data.video_id, seek_time_s, document.querySelector('[name=video_quality]:checked').value)
+		}
+	}
 })
 
 /* 좋/실 갱신 신호 받음*/
@@ -329,6 +347,25 @@ socket.on('lol_article_list', function(data) {
 	}
 })
 
+/* 북마크 리스트 수신 */
+socket.on('lol_bookmark_list', function(data) {
+	console.log('bookmark scroll_seq:', g_lol_article_scroll_seq, 'data:', data.length, 'result:', g_lol_article_scroll_seq + data.length)
+	g_lol_article_scroll_seq += data.length
+	g_lol_article_list = g_lol_article_list.concat(data)
+	
+	lol_lpanel_update()
+	// lol_lpanel_refresh.style.display = 'block'
+	lol_lpanel_refresh.style.height = '38px'
+	lol_lpanel_search_menu.style.display = 'none'
+
+	if(g_lol_lpanel_scroll_top_switch)
+	{
+		g_lol_lpanel_scroll_top_switch = false
+		lol_lpanel_board.scroll(0, 0)
+	}
+})
+
+
 socket.on('lol_article_detail', function(data) {
 	if(data.post_seq.length == 0)
 		return
@@ -344,6 +381,25 @@ socket.on('lol_article_detail', function(data) {
 	lol_rpanel_refresh.style.display = 'block'
 	lol_rpanel_update()
 })
+
+/* 북마크 아카이브 디테일 수신 */
+socket.on('lol_bookmark_archived', function(data) {
+	if(data.post_seq.length == 0)
+		return
+
+	if(g_lol_current_detail && g_lol_current_detail['post_seq'] == data.post_seq)
+		g_lol_same_article_prev = true
+	else
+		g_lol_same_article_prev = false
+
+	data.replys = JSON.parse(data.replys)
+	g_lol_current_detail = data
+
+	lol_write_panel_toggle(false)
+	lol_rpanel_refresh.style.display = 'block'
+	lol_rpanel_update()
+})
+
 
 socket.on('lol_auth_request', function(code) {
 	lol_rpanel_header_button.innerHTML = format('[룰루에게 <tt>{0}</tt> 을 교육하고 다시 눌러주세요.]', code)

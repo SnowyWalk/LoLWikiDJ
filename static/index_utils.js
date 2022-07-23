@@ -30,6 +30,9 @@ function youtube_playlist_url_parse(url_or_id)
 /* 90 -> "01:30" */
 function second_to_string(sec) 
 {
+	if(!sec)
+		return "LIVE"
+
 	sec = Math.round(sec)
 	var h = Math.floor(sec / 3600)
 	sec -= h * 60 * 60

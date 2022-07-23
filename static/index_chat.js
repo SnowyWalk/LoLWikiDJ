@@ -6,6 +6,7 @@ var cached_chat_call_audio = null
 
 /* 채팅창에 메시지 추가 함수 */
 var imgReg = /\/(img|ㅑㅡㅎ)\s+(\S+)/i
+var videoReg = /\/(video|퍙대)\s+(\S+)/i
 var byteReg = /[\da-zA-Z-_=\|\/\*-\+\.`~'\/,\!@#\$%\^\&\(\)\[\] "]/i
 var callReg = /@(\S+)/g
 var callRegPre = /@(\S+)/
@@ -113,27 +114,59 @@ function add_message(data)
 	if(imgReg.test(text))
 	{
 		var img_url = imgReg.exec(text)[2]
-		var lol_link_img = document.createElement('img')
-		lol_link_img.classList.add('chat_img')
-		lol_link_img.src = img_url
-		lol_link_img.onmouseenter = image_onmouseenter
-		lol_link_img.onmouseout = image_onmouseout
-		lol_link_img.onmousemove = image_onmousemove
-		lol_link_img.onerror = function() { lol_link_img.style.height = '0px'; }
-		if(need_scroll)
-			lol_link_img.onload = scrollDown
 		text = text.replace(imgReg, '')
-		message.appendChild(lol_link_img)
+
+		if(!option_checkbox_dezeolmo.checked)
+		{
+			var lol_link_img = document.createElement('img')
+			lol_link_img.classList.add('chat_img')
+			lol_link_img.src = img_url
+			lol_link_img.onmouseenter = image_onmouseenter
+			lol_link_img.onmouseout = image_onmouseout
+			lol_link_img.onmousemove = image_onmousemove
+			lol_link_img.onerror = function() { lol_link_img.style.height = '0px'; }
+			if(need_scroll)
+				lol_link_img.onload = scrollDown
+			message.appendChild(lol_link_img)
+		}
+	}
+
+	if(videoReg.test(text))
+	{
+		var video_url = videoReg.exec(text)[2]
+		var video = document.createElement('video')
+		video.classList.add('chat_img')
+		video.src = video_url
+		video.autoplay = 'autoplay'
+		video.loop = 'loop' 
+		video.controls = 'controls' 
+		video.muted = 'muted' 
+		video.onerror = function() { video.style.height = '0px'; }
+		if(need_scroll)
+			video.onloadeddata = scrollDown
+		text = text.replace(videoReg, '')
+		message.appendChild(video)
 	}
 
 	message.classList.add(className)
 	message.classList.add('chat')
 	if(data.message.length > 0)
 	{
-		var temporary_element = document.createElement('temp')
-		temporary_element.appendChild(document.createTextNode(text))
-		temporary_element.toggleAttribute('emoji', emoji_mode)
-		message.appendChild(temporary_element)
+		if(data.is_blob)
+		{
+			var temporary_element = document.createElement('div')
+			temporary_element.appendChild(document.createTextNode(text.substring(1)))
+			temporary_element.style.fontSize = 'small'
+			temporary_element.style.textAlign = 'right'
+			message.appendChild(temporary_element)
+		}
+		else
+		{
+			var temporary_element = document.createElement('temp')
+			temporary_element.appendChild(document.createTextNode(text))
+			temporary_element.toggleAttribute('emoji', emoji_mode)
+			message.appendChild(temporary_element)
+		}
 	}
 	// message.appendChild(document.createTextNode(text))
 	chat.appendChild(message)
@@ -286,6 +319,7 @@ var selectPlaylistReg = /^\/select_playlist\s+(\d+)/i
 var pushReg = /^\/push\s+(\S+)\s+(\d+)/i
 var queryReg = /^\/query\s+(.+)/i
 var zzalReg = /^\/짤\s+(.+)/i
+var zzalClearReg = /^\/(짤클리어|짤clear)/i
 var iconReg = /^\/icon\s+(.+)/i
 var muteReg = /^\/mute\s+(.+)/i
 var refreshReg = /^\/refresh\s+(.+)/i
@@ -357,11 +391,20 @@ function send(force_tts = false) {
 		socket.emit('zzal', tag)
 	}
 
+	if(zzalClearReg.test(message))
+	{
+		socket.emit('zzal_clear')
+	}
+
 	// play url 테스트
 	if(playReg.test(message))
 	{
 		var url = queueReg.exec(message)[2]
-		var video_id = youtube_url_parse(url)
+		var video_id = ''
+		if(url.indexOf('.m3u8') >= 0)
+			video_id = url
+		else
+			video_id = youtube_url_parse(url)
 
 		socket.emit('queue', {dj: g_nick, video_id: video_id})
 		return
@@ -370,7 +413,11 @@ function send(force_tts = false) {
 	if(queueReg.test(message))
 	{
 		var url = queueReg.exec(message)[2]
-		var video_id = youtube_url_parse(url)
+		var video_id = ''
+		if(url.indexOf('.m3u8') >= 0)
+			video_id = url
+		else
+			video_id = youtube_url_parse(url)
 
 		socket.emit('queue', {dj: g_nick, video_id: video_id})
 		return
@@ -517,7 +564,7 @@ function send(force_tts = false) {
 		return
 	}
 
-	if(message == '/clear' || message == '/CLEAR')
+	if(message == '/clear' || message == '/CLEAR' || message == '/클리어')
 	{
 		while(chat.hasChildNodes())
 			chat.removeChild(chat.lastChild)
@@ -557,14 +604,19 @@ function send(force_tts = false) {
 	}
 
 	var tts_hash = ''
-	if(ttsReg.test(message))
+	if(ttsReg.test(message)) 
 	{
-		tts_hash = GetDate() + ' ' + random_hash()
 		message = ttsReg.exec(message)[2]
-		var voice_name = document.querySelector('[name=tts_voice_name]:checked').value
-		if(toonat_voices.indexOf(voice_name) >= 0)
-			tts_hash = voice_name
-		socket.emit('tts', { text: message, tts_hash: tts_hash, voice_name: voice_name })
+		var now = new Date()
+		if(now - g_last_tts >= 1000) // 1s cooldown
+		{
+			tts_hash = GetDate() + ' ' + random_hash()
+			var voice_name = document.querySelector('[name=tts_voice_name]:checked').value
+			if(toonat_voices.indexOf(voice_name) >= 0)
+				tts_hash = voice_name
+			socket.emit('tts', { text: message, tts_hash: tts_hash, voice_name: voice_name })
+			g_last_tts = now
+		}
 	}
 
 	if(adReg.test(message))
@@ -644,6 +696,50 @@ function chat_onpaste() {
 		scrollDown()
 	}
 	reader.readAsDataURL(blob)
+}
+
+function ondrop_chat_input_file(e)
+{
+	e.stopPropagation();
+    e.preventDefault();
+ 
+	// console.warn(e.target.files)
+	// console.warn(e.dataTransfer)
+    // e.dataTransfer = e.originalEvent.dataTransfer;
+    var files = e.target.files || e.dataTransfer.files;
+
+	console.log(e, e.dataTransfer, e.dataTransfer.files, e.dataTransfer.files[0], files)
+
+ 
+    if (files.length > 1) {
+        alert('응니얼굴');
+        return;
+    }
+
+	if (!files[0].type.match(/image.*/)) {
+        alert('이미지가 아닙니다.');
+		return;
+	}
+		
+	var file = e.dataTransfer.files[0]
+	reader = new FileReader()
+	reader.onload = function (event) {
+	//   console.log('target', event.target)
+		var data = event.target.result // data:image/gif;base64,R0lGO ...
+		socket.emit('image_blob', data)
+	}
+	// console.log('file', file);
+	reader.readAsDataURL(file);
+}
+
+/* 이미지 저장소 버튼 클릭 이벤트 */
+function onclick_chat_emoticon_button()
+{
+	g_image_storage_panel_show = !g_image_storage_panel_show
+
+	image_storage.style.display = g_image_storage_panel_show ? 'flex' : 'none'
+
+	// image_storage.
 }
 
 function chat_scroll() {
