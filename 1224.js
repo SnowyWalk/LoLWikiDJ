@@ -1,23 +1,30 @@
 /* 공지말 */
-var g_port = 1224
+var g_port = 443
 var g_notice = '/img http://3.35.134.6/static/1.png'
+
+
 
 /* 설치한 express 모듈 불러오기 */
 const express = require('express')
 /* 설치한 socket.io 모듈 불러오기 */
 const socket = require('socket.io')
 /* Node.js 기본 내장 모듈 불러오기 */
-const http = require('http')
+// const http = require('http')
+const https = require('https');
 /* Node.js 기본 내장 모듈 불러오기 */
 const fs = require('fs')
 /* express 객체 생성 */
 const app = express()
 app.set('maxHttpBufferSize', 1e8)
+const httpsOptions = {
+	key: fs.readFileSync('C:/Certbot/live/mirunamu.duckdns.org/privkey.pem'),
+	cert: fs.readFileSync('C:/Certbot/live/mirunamu.duckdns.org/fullchain.pem')
+}
 /* CORS 설정 */
 var cors = require('cors')
 app.use(cors())
 /* express http 서버 생성 */
-const server = http.createServer(app)
+const server = https.createServer(httpsOptions, app)
 /* 생성된 서버를 socket.io에 바인딩 */
 const io = socket(server, {maxHttpBufferSize: 5e7, pingTimeout: 120 * 1000})
 /* os */
@@ -39,6 +46,8 @@ const tts_client = new textToSpeech.TextToSpeechClient();
 const mysql = require('mysql')
 var db_config = JSON.parse(fs.readFileSync('db_config.txt', 'utf-8'))
 var danbooru_config = JSON.parse(fs.readFileSync('danbooru_config.txt', 'utf-8'))
+
+
 
 async function handleDisconnect() {
 	db = mysql.createConnection(db_config);
@@ -133,7 +142,7 @@ app.get('/', async function(request, response, next) {
 	{
 		var data = await read_file_async('dj.html')
 		var text = data.toString()
-					.replace(/\$_localhost/g, 'http://' + request.headers.host.substr(0, request.headers.host.length-5))
+					.replace(/\$_localhost/g, 'https://' + request.headers.host)
 					.replace(/\$_port/g, g_port)
 
 		for(var e of text.match(/\/[^\/]*?\$_version/g))
@@ -187,7 +196,7 @@ app.get('/test', async function(request, response, next) {
 	{
 		var data = await read_file_async('test.html')
 		var text = data.toString()
-					.replace(/\$_localhost/g, 'http://' + request.headers.host.substr(0, request.headers.host.length-5))
+					.replace(/\$_localhost/g, 'https://' + request.headers.host.substr(0, request.headers.host.length-5))
 					.replace(/\$_port/g, g_port)
 
 		response.writeHead(200, {'Content-Type':'text/html'})
