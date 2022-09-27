@@ -82,7 +82,7 @@
 		{
 			try
 			{
-				var res = await request('http://' + location.hostname + ':' + p + '/attendants') //.then(JSON.parse)
+				var res = await request('https://' + p + '.lolwiki.xyz/attendants') //.then(JSON.parse)
 				console.log(res)
 
 				var h1 = document.createElement('h1')
@@ -94,7 +94,7 @@
 					var div = document.createElement('div')
 					div.classList.add('user')
 					var img = document.createElement('img')
-					img.src = 'http://' + location.hostname + ':8080/' + user.icon
+					img.src = 'https://' + p + '.lolwiki.xyz/' + user.icon
 					div.appendChild(img)
 					var label = document.createElement('label')
 					label.appendChild(document.createTextNode(user.nick))

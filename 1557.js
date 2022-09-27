@@ -7,7 +7,7 @@ const express = require('express')
 /* 설치한 socket.io 모듈 불러오기 */
 const socket = require('socket.io')
 /* Node.js 기본 내장 모듈 불러오기 */
-const http = require('http')
+const https = require('https')
 /* Node.js 기본 내장 모듈 불러오기 */
 const fs = require('fs')
 /* express 객체 생성 */
@@ -17,7 +17,10 @@ app.set('maxHttpBufferSize', 1e8)
 var cors = require('cors')
 app.use(cors())
 /* express http 서버 생성 */
-const server = http.createServer(app)
+const server = https.createServer({
+	key: fs.readFileSync('/etc/letsencrypt/live/lolwiki.xyz/privkey.pem'),
+	cert: fs.readFileSync('/etc/letsencrypt/live/lolwiki.xyz/fullchain.pem')
+}, app)
 /* 생성된 서버를 socket.io에 바인딩 */
 const io = socket(server, {maxHttpBufferSize: 5e7, pingTimeout: 120 * 1000})
 /* os */
@@ -38,6 +41,7 @@ const tts_client = new textToSpeech.TextToSpeechClient();
 /* mysql 서버 */
 const mysql = require('mysql')
 var db_config = JSON.parse(fs.readFileSync('db_config.txt', 'utf-8'))
+var twitch_config = JSON.parse(fs.readFileSync('twitch_config.txt', 'utf-8'))
 var danbooru_config = JSON.parse(fs.readFileSync('danbooru_config.txt', 'utf-8'))
 
 async function handleDisconnect() {
@@ -68,6 +72,7 @@ app.use('/static', express.static('./static'))
 app.use('/icon', express.static('./static/icon'))
 app.use('/tts', express.static('./tts'))
 app.use('/patch_note', express.static('./patch_note'))
+app.use('/modules', express.static('./node_modules/socket.io/client-dist'))
 
 /* CONSTANT */
 const ipReg = /((?:\d+\.){3}\d+)/
@@ -84,6 +89,7 @@ var g_video_author = ''
 var g_video_duration = 0
 var g_played_time_ms = 0 // ms
 var g_end_timer = null
+var g_video_is_twitch = false
 
 /* DJ 순서 목록 */
 var g_djs = []
@@ -127,7 +133,10 @@ var tts_dic = {
 /* Get 방식으로 / 경로에 접속하면 실행 됨 */
 app.get('/', async function(request, response, next) {
 	if(!request.headers.host) // 봇 쳐내
+	{
+		console.log('봇 ㄲㅈ\n')
 		return
+	}
 
 	try
 	{
@@ -193,6 +202,8 @@ app.get('/test', async function(request, response, next) {
 		response.writeHead(200, {'Content-Type':'text/html'})
 		response.write(text)
 		response.end()
+
+		console.log(request.query.uri)
 	}
 	catch (exception)
 	{
@@ -217,6 +228,48 @@ app.get('/attendants', async function(request, response, next) {
 	}
 })
 
+app.get('/lolwiki_mirror', async function(req, res, next) {
+	if(!req.query || !req.query.uri)
+		return
+
+	try
+	{
+		var img = await request({
+			url: decodeURI(req.query.uri), 
+			headers: headers, 
+			method: 'GET', 
+			encoding: null })
+		res.end(img)
+	}
+	catch (exception)
+	{	
+		log_exception('app.get lolwiki_mirror', exception)
+		var xbox = await read_image_async('static/xbox.jpg')
+		res.end(xbox)
+	}
+})
+
+app.get('/lolwiki_mirror/*', async function(req, res, next) {
+	if(!req.query || !req.query.uri)
+		return
+
+	try
+	{
+		var img = await request({
+			url: decodeURI(req.query.uri), 
+			headers: headers, 
+			method: 'GET', 
+			encoding: null })
+		res.end(img)
+	}
+	catch (exception)
+	{	
+		log_exception('app.get lolwiki_mirror', exception)
+		var xbox = await read_image_async('static/xbox.jpg')
+		res.end(xbox)
+	}
+})
+
 function stat_file_async(file_name)
 {
 	return new Promise(function (resolve, reject) {
@@ -230,6 +283,15 @@ function read_file_async(file_name)
 {
 	return new Promise(function (resolve, reject) {
 		fs.readFile(file_name, 'utf8', function(err, data) {
+			err ? reject(err) : resolve(data)
+		})
+	})
+}
+
+function read_image_async(file_name)
+{
+	return new Promise(function (resolve, reject) {
+		fs.readFile(file_name, function(err, data) {
 			err ? reject(err) : resolve(data)
 		})
 	})
@@ -253,10 +315,10 @@ io.sockets.on('connection', function(socket)
 		}
 
 		// 중복 로그인 검사 
-		var socket_ip = socket.handshake.address.match(ipReg)[1]
+		var socket_ip = socket.handshake.headers['x-forwarded-for'].match(ipReg)[1]
 		if(socket.name in g_users_dic)
 		{
-			if(g_users_dic[socket.name].ip == socket_ip) // 동일 아이피에서 로그인 했다면 그냥 기존 연결 끊고 새로 연결
+			if(g_users_dic[socket.name].ip == socket_ip) // 동일 아이피에서 로그인 했다면 그냥 기존 연결 끊고 새로 연결 -> 2022.08.04 https연결로 아이피체크 제거
 			{
 				log('INFO', '중복 로그인 교체 연결', socket.name)
 				var dest_socket = g_users_dic[socket.name].socket
@@ -555,7 +617,7 @@ io.sockets.on('connection', function(socket)
 	})
 
 	// 서버 디버그용 eval
-	socket.on('debug', function(code) {
+	socket.on('debug', async function(code) {
 		if(!socket.name)
 			return
 
@@ -566,7 +628,8 @@ io.sockets.on('connection', function(socket)
 			return
 		}
 
-		eval(code)
+		// eval(code)
+		eval('(async _ => { ' + code + '})()')
 	})
 
 	socket.on('check_user', function(nick) {
@@ -576,7 +639,7 @@ io.sockets.on('connection', function(socket)
 			return
 		}
 
-		if(g_users_dic[nick].ip != socket.handshake.address.match(ipReg)[1])
+		if(g_users_dic[nick].ip != socket.handshake.headers['x-forwarded-for'].match(ipReg)[1])
 		{
 			socket.emit('check_user', false) // 원래는 이미 존재한다고 해야하지만, 용도가 교체 로그인 체크이므로 false 반환.
 			return
@@ -622,10 +685,38 @@ io.sockets.on('connection', function(socket)
 				youtube_data = {
 					title : '* 스포티비 LIVE *',
 					author: '',
-					thumbnail_url : 'http://ec2-3-35-134-6.ap-northeast-2.compute.amazonaws.com/static/%ec%86%90%ed%9d%a5%eb%af%bc.gif',
+					thumbnail_url : '/static/%ec%86%90%ed%9d%a5%eb%af%bc.gif',
 					duration : 0,
 					embeddable : true,
 					tags : [],
+				}
+			}
+			else if(data.is_twitch)
+			{
+				if(data.video_id.startsWith('videos/')) // 영상
+				{
+					var video_id = data.video_id.replace('videos/', '')
+					var twitch_data2 = await twitch_get_video_info(video_id) 
+					youtube_data = {
+						title : twitch_data2.title,
+						author: twitch_data2.author,
+						thumbnail_url : twitch_data2.thumbnail_url,
+						duration : twitch_data2.duration,
+						embeddable : true,
+						tags : [],
+					}
+				}
+				else
+				{
+					var twitch_data2 = await twitch_get_stream_info(data.video_id)
+					youtube_data = {
+						title : twitch_data2.title,
+						author: twitch_data2.author,
+						thumbnail_url : twitch_data2.thumbnail_url,
+						duration : 0,
+						embeddable : true,
+						tags : [],
+					}
 				}
 			}
 			else
@@ -642,6 +733,7 @@ io.sockets.on('connection', function(socket)
 				g_video_thumbnail = youtube_data.thumbnail_url
 				g_video_duration = youtube_data.duration
 				g_played_time_ms = Date.now()
+				g_video_is_twitch = data.is_twitch
 	
 				// 영상 종료 타이머 설정
 				if(g_video_duration != 0)
@@ -654,7 +746,7 @@ io.sockets.on('connection', function(socket)
 			}
 			else
 			{
-				g_queue.push( { dj: data.dj, video_id: data.video_id, data: youtube_data } )
+				g_queue.push( { dj: data.dj, video_id: data.video_id, data: youtube_data, is_twitch: data.is_twitch } )
 
 				// 모두에게 플레이 대기열 알림
 				update_current_queue(io.sockets)
@@ -663,7 +755,14 @@ io.sockets.on('connection', function(socket)
 		catch (exception)
 		{
 			log_exception('queue', exception)
-			io.sockets.emit('chat_update', {type:'system_message', time: GetTime(), message: '유튜브 영상 조회 에러!'})
+			if(data.is_twitch)
+			{
+				io.sockets.emit('chat_update', {type:'system_message', time: GetTime(), message: '트위치 영상 조회 에러!'})
+			}
+			else
+			{
+				io.sockets.emit('chat_update', {type:'system_message', time: GetTime(), message: '유튜브 영상 조회 에러!'})
+			}
 		}
 	}
 
@@ -710,6 +809,7 @@ io.sockets.on('connection', function(socket)
 			g_video_thumbnail = response_data.thumbnail_url
 			g_video_duration = response_data.duration
 			g_played_time_ms = Date.now()
+			g_video_is_twitch = data.is_twitch
 
 			// 영상 종료 타이머 설정
 			if(g_video_duration != 0)
@@ -1242,6 +1342,7 @@ io.sockets.on('connection', function(socket)
 		load_danbooru_zzal(tag)
 	})
 
+	var danbooru_filter_reg = />(muscular male|mountain \(arknights\))</gi
 	async function load_danbooru_zzal(tag, retry_count = 0) {
 		try
 		{
@@ -1273,6 +1374,9 @@ io.sockets.on('connection', function(socket)
 					// {
 					// 	log_exception('zzal', {}, format('https://danbooru.donmai.us/posts/random?tags={0} need gold account !!', tag))
 					// }
+
+					if(danbooru_filter_reg.test(ret))
+						throw '금지어 컷 : ' + danbooru_filter_reg.exec(ret)[1]
 
 					if(zzalReg.test(ret))
 					{
@@ -1850,9 +1954,9 @@ function format()
 	return arguments[0].replace (/\{(\d+)\}/g, function (match, index) { return args[index]; }); 
 }
 
-var regH = /(\d+)H/
-var regM = /(\d+)M/
-var regS = /(\d+)S/
+var regH = /(\d+)H/i
+var regM = /(\d+)M/i
+var regS = /(\d+)S/i
 function parse_duration_to_second(pt_time)
 {
 	var h = 0
@@ -1899,6 +2003,7 @@ async function end_of_video() {
 		g_video_title = next_queue_data.data.title
 		g_video_author = next_queue_data.data.author
 		g_played_time_ms = Date.now()
+		g_video_is_twitch = next_queue_data.is_twitch
 
 		// 영상 종료 타이머 설정
 		if(g_video_duration != 0)
@@ -1953,6 +2058,7 @@ async function end_of_video() {
 			g_video_title = video_info.Name
 			g_video_author = video_info.Author
 			g_played_time_ms = Date.now()
+			g_video_is_twitch = false
 
 			// 영상 종료 타이머 설정
 			if(g_video_duration != 0)
@@ -1985,6 +2091,7 @@ async function end_of_video() {
 		g_video_duration = 0
 		g_video_title = ''
 		g_video_author = ''
+		g_video_is_twitch = false
 		io.sockets.emit('update_current_video', null)
 	}
 
@@ -2007,6 +2114,7 @@ function update_current_video(dest_socket)
 		title: g_video_title,
 		duration: g_video_duration,
 		thumbnail: g_video_thumbnail,
+		is_twitch: g_video_is_twitch,
 		seek_s: g_video_duration > 0 ? ((Date.now() - g_played_time_ms - 1000) / 1000) : 999999999
 	})
 }
@@ -2675,4 +2783,104 @@ async function lol_POST(url, body = {}) {
 	// const writeFile = util.promisify(fs.writeFile)
 	// await writeFile('asd.txt', a)
 	// return a
+}
+
+
+//////////////////////////////////////////////////////// Twitch ////////////////////////////////////////////////////////////////////////
+
+async function twitch_get_access_token()
+{
+	var ret = await request({ 
+		url: 'https://id.twitch.tv/oauth2/token', 
+		headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, 
+		method: 'POST', 
+		qs: {'client_id': twitch_config[0].client_id, 'client_secret': twitch_config[0].secret, 'grant_type': 'client_credentials'}, 
+		encoding: null })
+	return JSON.parse(ret.toString()).access_token
+}
+
+async function twitch_get_video_info(video_id)
+{
+	var ret = await request({ 
+		url: 'https://api.twitch.tv/helix/videos?id=' + video_id, 
+		headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'Client-Id': twitch_config[0].client_id, 'Authorization': 'Bearer ' + twitch_config[0].access_token }, 
+		method: 'GET', 
+		qs: { }, 
+		encoding: null }).then(JSON.parse).then(e => e.data[0])
+
+		return { author: ret.user_name, 
+			title: ret.title, 
+			thumbnail_url: ret.thumbnail_url.replace('%{width}', 1196).replace('%{height}', 896),  
+			duration: parse_duration_to_second(ret.duration)
+		}
+
+	/*
+		{
+			"data": [
+				{
+				"id": "335921245",
+				"stream_id": null,
+				"user_id": "141981764",
+				"user_login": "twitchdev",
+				"user_name": "TwitchDev",
+				"title": "Twitch Developers 101",
+				"description": "Welcome to Twitch development! Here is a quick overview of our products and information to help you get started.",
+				"created_at": "2018-11-14T21:30:18Z",
+				"published_at": "2018-11-14T22:04:30Z",
+				"url": "https://www.twitch.tv/videos/335921245",
+				"thumbnail_url": "https://static-cdn.jtvnw.net/cf_vods/d2nvs31859zcd8/twitchdev/335921245/ce0f3a7f-57a3-4152-bc06-0c6610189fb3/thumb/index-0000000000-%{width}x%{height}.jpg",
+				"viewable": "public",
+				"view_count": 1863062,
+				"language": "en",
+				"type": "upload",
+				"duration": "3m21s",
+				"muted_segments": [
+					{
+					"duration": 30,
+					"offset": 120
+					}
+				]
+				}
+			],
+			"pagination": {}
+		}
+	*/
+}
+
+async function twitch_get_stream_info(channel)
+{
+	var ret = await request({ 
+		url: format('https://api.twitch.tv/helix/search/channels?query={0}&first=1&live_only=true', channel), 
+		headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'Client-Id': twitch_config[0].client_id, 'Authorization': 'Bearer ' + twitch_config[0].access_token }, 
+		method: 'GET', 
+		qs: { }, 
+		encoding: null }).then(JSON.parse).then(e => e.data[0])
+
+		return { author: ret.display_name, 
+			title: ret.title, 
+			thumbnail_url: ret.thumbnail_url
+		}
+
+		/*
+		{
+			"data": [
+				{
+				"broadcaster_language": "en",
+				"broadcaster_login": "a_seagull",
+				"display_name": "A_Seagull",
+				"game_id": "506442",
+				"game_name": "DOOM Eternal",
+				"id": "19070311",
+				"is_live": true,
+				"tags_ids": [
+					"6ea6bca4-4712-4ab9-a906-e3336a9d8039"
+				],
+				"thumbnail_url": "https://static-cdn.jtvnw.net/jtv_user_pictures/a_seagull-profile_image-4d2d235688c7dc66-300x300.png",
+				"title": "a_seagull",
+				"started_at": "2020-03-18T17:56:00Z"
+				}
+			],
+			"pagination": {}
+		}
+		*/
 }

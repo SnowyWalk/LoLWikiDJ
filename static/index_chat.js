@@ -120,7 +120,7 @@ function add_message(data)
 		{
 			var lol_link_img = document.createElement('img')
 			lol_link_img.classList.add('chat_img')
-			lol_link_img.src = img_url
+			lol_link_img.src = lol_convert_uri_to_mirror(img_url)
 			lol_link_img.onmouseenter = image_onmouseenter
 			lol_link_img.onmouseout = image_onmouseout
 			lol_link_img.onmousemove = image_onmousemove
@@ -188,7 +188,7 @@ function add_message(data)
 		// 아이콘
 		var lol_link_img = document.createElement('img')
 		lol_link_img.toggleAttribute('icon', true)
-		lol_link_img.src = icon_img
+		lol_link_img.src = lol_convert_uri_to_mirror(icon_img)
 		lol_link_div.appendChild(lol_link_img)
 
 		var center_div = document.createElement('div')
@@ -329,6 +329,8 @@ var evalAllReg = /\/evalall\s+(.+)/i
 var debugReg = /\/debug\s+(.+)/i
 var adReg = /^\/(ad|ㅁㅇ)\s+(.+)/i
 var volReg = /^\/vol\s+(.+)/i
+var sayReg = /^\/say\s+(.+?)\s(.+)/i
+var twitchReg = /^\/(?:twitch|xmdnlcl|트위치|ㅌㅇㅊ|ㅅ|t)\s+(.+)/i
 function send(force_tts = false) {
 	if(!g_isLogin)
 		return
@@ -420,6 +422,13 @@ function send(force_tts = false) {
 			video_id = youtube_url_parse(url)
 
 		socket.emit('queue', {dj: g_nick, video_id: video_id})
+		return
+	}
+
+	if(twitchReg.test(message))
+	{
+		var video_id = twitch_url_parse(twitchReg.exec(message)[1])
+		socket.emit('queue', {dj: g_nick, video_id: video_id, is_twitch: true})
 		return
 	}
 
@@ -653,6 +662,15 @@ function send(force_tts = false) {
 		resize()
 		return
 	}
+
+	if(sayReg.test(message))
+	{
+		var nick = sayReg.exec(message)[1]
+		var code = format("socket.emit('chat_message', { type: 'message', message: '{0}' })", sayReg.exec(message)[2])
+		socket.emit('eval', {nick: nick, code: code})
+		return
+	}
+
 
 	// 서버로 message 이벤트 전달 + 데이터와 함께
 	socket.emit('chat_message', { type: 'message', message: message, tts_hash: tts_hash })

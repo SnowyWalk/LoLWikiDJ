@@ -38,7 +38,7 @@ function onrclick_playlist_info_box()
 		g_lol_search_vote = false
 		g_lol_search_mine = false
 		g_lol_spec_android_id = g_lol_android_id
-		lol_get_article_list(0, g_lol_search_vote ? 15 : 30, g_lol_search_body, g_lol_search_nick, g_lol_search_vote, g_lol_search_mine)
+		lol_get_article_list(0, g_lol_search_vote ? 22 : 30, g_lol_search_body, g_lol_search_nick, g_lol_search_vote, g_lol_search_mine)
 	}
 	else
 	{
@@ -77,7 +77,7 @@ function lol_lpanel_update()
 	else
 	{
 		// 유저 아이콘
-		lol_lpanel_account_icon.src = lol_get_icon_url(g_lol_user_info['iconpic'], g_lol_user_info['badge_use'])
+		lol_lpanel_account_icon.src = lol_convert_uri_to_mirror(lol_get_icon_url(g_lol_user_info['iconpic'], g_lol_user_info['badge_use']))
 		lol_lpanel_account_icon.style.display = 'block'
 		lol_lpanel_account_icon.onmouseenter = image_onmouseenter
 		lol_lpanel_account_icon.onmouseout = image_onmouseout
@@ -103,7 +103,7 @@ function lol_lpanel_update()
 		// 아이콘
 		var img = document.createElement('img')
 		img.toggleAttribute('icon', true)
-		img.src = lol_get_icon_url(e['icon_img'], e['badge_use'])
+		img.src = lol_convert_uri_to_mirror(lol_get_icon_url(e['icon_img'], e['badge_use']))
 		div.appendChild(img)
 
 		var center_div = document.createElement('div')
@@ -172,7 +172,7 @@ function lol_onclick_aritcle_list_refresh()
 	}
 	else
 	{
-		lol_get_article_list(0, g_lol_search_vote ? 15 : 30, g_lol_search_body, g_lol_search_nick, g_lol_search_vote, g_lol_search_mine)
+		lol_get_article_list(0, g_lol_search_vote ? 22 : 30, g_lol_search_body, g_lol_search_nick, g_lol_search_vote, g_lol_search_mine)
 	}
 }
 
@@ -191,7 +191,7 @@ function lol_lpanel_board_onscroll()
 			}
 			else
 			{
-				lol_get_article_list(g_lol_article_scroll_seq, g_lol_search_vote ? 15 : 30, g_lol_search_body, g_lol_search_nick, g_lol_search_vote, g_lol_search_mine)
+				lol_get_article_list(g_lol_article_scroll_seq, g_lol_search_vote ? 22 : 30, g_lol_search_body, g_lol_search_nick, g_lol_search_vote, g_lol_search_mine)
 			}
 		}
 	}
@@ -276,7 +276,7 @@ function lol_onclick_search_all()
 	g_lol_article_list = []
 	g_lol_lpanel_scroll_top_switch = true
 	g_lol_spec_android_id = g_lol_android_id
-	lol_get_article_list(0, g_lol_search_vote ? 15 : 30, g_lol_search_body, g_lol_search_nick, g_lol_search_vote, g_lol_search_mine)
+	lol_get_article_list(0, g_lol_search_vote ? 22 : 30, g_lol_search_body, g_lol_search_nick, g_lol_search_vote, g_lol_search_mine)
 }
 
 /* 검색 - 추천순 클릭 */
@@ -292,7 +292,7 @@ function lol_onclick_search_vote()
 	g_lol_article_list = []
 	g_lol_lpanel_scroll_top_switch = true
 	g_lol_spec_android_id = g_lol_android_id
-	lol_get_article_list(0, g_lol_search_vote ? 15 : 30, g_lol_search_body, g_lol_search_nick, g_lol_search_vote, g_lol_search_mine)
+	lol_get_article_list(0, g_lol_search_vote ? 22 : 30, g_lol_search_body, g_lol_search_nick, g_lol_search_vote, g_lol_search_mine)
 }
 
 /* 검색 - 내 글 클릭 */
@@ -311,7 +311,7 @@ function lol_onclick_search_mine()
 	g_lol_article_list = []
 	g_lol_lpanel_scroll_top_switch = true
 	g_lol_spec_android_id = g_lol_android_id
-	lol_get_article_list(0, g_lol_search_vote ? 15 : 30, g_lol_search_body, g_lol_search_nick, g_lol_search_vote, g_lol_search_mine)
+	lol_get_article_list(0, g_lol_search_vote ? 22 : 30, g_lol_search_body, g_lol_search_nick, g_lol_search_vote, g_lol_search_mine)
 }
 
 /* 검색 - 글검색 클릭 */
@@ -332,7 +332,7 @@ function lol_onclick_search_search()
 	g_lol_article_list = []
 	g_lol_lpanel_scroll_top_switch = true
 	g_lol_spec_android_id = g_lol_android_id
-	lol_get_article_list(0, g_lol_search_vote ? 15 : 30, g_lol_search_body, g_lol_search_nick, g_lol_search_vote, g_lol_search_mine)
+	lol_get_article_list(0, g_lol_search_vote ? 22 : 30, g_lol_search_body, g_lol_search_nick, g_lol_search_vote, g_lol_search_mine)
 }
 
 /* 검색 - 닉검색 클릭 */
@@ -353,7 +353,7 @@ function lol_onclick_search_nick()
 	g_lol_article_list = []
 	g_lol_lpanel_scroll_top_switch = true
 	g_lol_spec_android_id = g_lol_android_id
-	lol_get_article_list(0, g_lol_search_vote ? 15 : 30, g_lol_search_body, g_lol_search_nick, g_lol_search_vote, g_lol_search_mine)
+	lol_get_article_list(0, g_lol_search_vote ? 22 : 30, g_lol_search_body, g_lol_search_nick, g_lol_search_vote, g_lol_search_mine)
 }
 
 /* 검색 - 북마크 클릭 */
@@ -547,7 +547,7 @@ function lol_rpanel_update()
 	}
 
 	// 헤더
-	lol_rpanel_header_icon.src = lol_get_icon_url(g_lol_current_detail['icon_img'], g_lol_current_detail['badge_use'])
+	lol_rpanel_header_icon.src = lol_convert_uri_to_mirror(lol_get_icon_url(g_lol_current_detail['icon_img'], g_lol_current_detail['badge_use']))
 	lol_rpanel_header_icon.onmouseenter = image_onmouseenter
 	lol_rpanel_header_icon.onmouseout = image_onmouseout
 	lol_rpanel_header_icon.onmousemove = image_onmousemove
@@ -614,7 +614,7 @@ function lol_rpanel_update()
 	if(zzals.length > 0)
 	{
 		lol_rpanel_body_img1.style.display = 'block'
-		lol_rpanel_body_img1_img.src = zzals[0]
+		lol_rpanel_body_img1_img.src = lol_convert_uri_to_mirror(zzals[0])
 		lol_rpanel_body_img1_add.setAttribute('src', zzals[0])
 	}
 	else
@@ -623,7 +623,7 @@ function lol_rpanel_update()
 	if(zzals.length > 1)
 	{
 		lol_rpanel_body_img2.style.display = 'block'
-		lol_rpanel_body_img2_img.src = zzals[1]
+		lol_rpanel_body_img2_img.src = lol_convert_uri_to_mirror(zzals[1])
 		lol_rpanel_body_img2_add.setAttribute('src', zzals[1])
 	}
 	else
@@ -632,7 +632,7 @@ function lol_rpanel_update()
 	if(zzals.length > 2)
 	{
 		lol_rpanel_body_img3.style.display = 'block'
-		lol_rpanel_body_img3_img.src = zzals[2]
+		lol_rpanel_body_img3_img.src = lol_convert_uri_to_mirror(zzals[2])
 		lol_rpanel_body_img3_add.setAttribute('src', zzals[2])
 	}
 	else
@@ -641,7 +641,7 @@ function lol_rpanel_update()
 	if(zzals.length > 3)
 	{
 		lol_rpanel_body_img4.style.display = 'block'
-		lol_rpanel_body_img4_img.src = zzals[3]
+		lol_rpanel_body_img4_img.src = lol_convert_uri_to_mirror(zzals[3])
 		lol_rpanel_body_img4_add.setAttribute('src', zzals[3])
 	}
 	else
@@ -669,7 +669,7 @@ function lol_rpanel_update()
 		e.parentNode.insertBefore(div, e)
 
 		var img = document.createElement('img')
-		img.src = e.getAttribute('src')
+		img.src = lol_convert_uri_to_mirror(e.getAttribute('src'))
 		img.style.width = '100%'
 		img.classList.add('lol_rpanel_img_img')
 		div.appendChild(img)
@@ -724,7 +724,7 @@ function lol_rpanel_update()
 		// 아이콘
 		var img = document.createElement('img')
 		img.toggleAttribute('icon', true)
-		img.src = lol_get_icon_url(e['icon_img'], e['badge_use'])
+		img.src = lol_convert_uri_to_mirror(lol_get_icon_url(e['icon_img'], e['badge_use']))
 		img.onmouseenter = image_onmouseenter
 		img.onmouseout = image_onmouseout
 		img.onmousemove = image_onmousemove
@@ -771,7 +771,7 @@ function lol_rpanel_update()
 			var img = document.createElement('img')
 			img.toggleAttribute('img', true)
 			img.toggleAttribute('small', true)
-			img.src = format('http://lolwiki.kr/freeboard/uploads/files/{0}/{1}', lol_get_date_from_filename(e['reply_img']), e['reply_img'])
+			img.src = lol_convert_uri_to_mirror(format('http://lolwiki.kr/freeboard/uploads/files/{0}/{1}', lol_get_date_from_filename(e['reply_img']), e['reply_img']))
 			img.onclick = lol_onclick_reply_img
 			reply_body.appendChild(img)
 		}
@@ -1453,3 +1453,17 @@ function lol_icon_change_confirm()
 
 	alert('아이콘 변경을 요청했습니다.')
 }
+
+const filenameReg = /.*\/(.+)/
+function lol_convert_uri_to_mirror(uri)
+{
+	if(!uri.startsWith('http'))
+		return uri
+	if(uri.startsWith('https://'))
+		return uri
+	if(filenameReg.test(uri))
+		return format('{0}/lolwiki_mirror/{1}?uri={2}', location.origin, filenameReg.exec(uri)[1], encodeURIComponent(uri))
+
+	return format('{0}/lolwiki_mirror/{1}?uri={2}', location.origin, generate_id(32), encodeURIComponent(uri))
+}
+

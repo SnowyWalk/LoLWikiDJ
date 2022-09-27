@@ -110,6 +110,8 @@ function resize() {
 		player.setSize(window_width - mainchat_width, window_height - bottom_height)
 	m3u8_player.style.width = window_width - mainchat_width
 	m3u8_player.style.height = window_height - bottom_height
+	twitch_player_panel.style.width = window_width - mainchat_width
+	twitch_player_panel.style.height = window_height - bottom_height
 
 	block_video.style.width = (window_width - mainchat_width)
 	block_video.style.height = (window_height - bottom_height)

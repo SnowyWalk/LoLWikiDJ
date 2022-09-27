@@ -4,11 +4,14 @@ var ports = [8080, 8081, 8082, 1557, 1224, 49415, 3939, 1004, 1111, 2250, 1128, 
 
 const express = require('express')
 const app = express()
-const http = require('http')
-const server = http.createServer(app)
+const https = require('https')
+const fs = require('fs')
+const server = https.createServer({
+	key: fs.readFileSync('/etc/letsencrypt/live/lolwiki.xyz/privkey.pem'),
+	cert: fs.readFileSync('/etc/letsencrypt/live/lolwiki.xyz/fullchain.pem')
+}, app)
 /* Node.js 기본 내장 모듈 불러오기 */
 const util = require('util');
-const fs = require('fs')
 
 // /* API 요청 모듈 불러오기 */
 // const request = require('request-promise-native')

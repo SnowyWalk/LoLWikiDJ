@@ -6,15 +6,15 @@
 
   <!-- <script data-ad-client="ca-pub-7542030194414681" async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script> -->
 
-  <link rel="preload" href="$_localhost/static/bg.jpg" as="image">
-  <link rel="shortcut icon" href="$_localhost/static/favicon.ico" type="image/x-icon">
-  <link rel="stylesheet" href="$_localhost/static/index.css?ver=$_version">
-  <script src="$_localhost/node_modules/socket.io/client-dist/socket.io.js"></script>
+  <link rel="preload" href="/static/bg.jpg?ver=$_version" as="image">
+  <link rel="shortcut icon" href="/static/favicon.ico?ver=$_version" type="image/x-icon">
+  <link rel="stylesheet" href="/static/index.css?ver=$_version">
+  <script src="/modules/socket.io.js"></script>
   <!-- <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script> -->
-  <script src="$_localhost/static/hls.js?ver=$_version"></script>
-  <script src="$_localhost/static/jquery-1.11.1.js"></script> 
-  <link rel="stylesheet" href="$_localhost/static/justifiedGallery.min.css" />
-  <script src="$_localhost/static/jquery.justifiedGallery.min.js"></script>
+  <script src="/static/hls.js"></script>
+  <script src="/static/jquery-1.11.1.js"></script> 
+  <link rel="stylesheet" href="/static/justifiedGallery.min.css" />
+  <script src="/static/jquery.justifiedGallery.min.js"></script>
 
   <style type="text/css">
     /* nanum-gothic-regular - latin_korean */
@@ -61,9 +61,8 @@
 </head>
 
 <body>
-
  <!-- 초기화 전 전체블록 -->
-  <div id="init_block" style="background-image: url('$_localhost/static/bg.jpg'); color: black">
+  <div id="init_block" style="background-image: url('/static/bg.jpg?ver=$_version')"> <!-- style="background-image: url('$_localhost/static/bg.jpg');color: black"> -->
     <div id="login_bg"></div>
     <div id="login_port">$_port</div>
     <input type="text" id="login_id" placeholder="닉네임" onkeydown="login_keydown()">
@@ -334,12 +333,10 @@
   <div id="ui_tooltip">[툴팁]</div>
 
   <!-- 트위치 플레이어 패널 -->
-  <!--
   <div id="twitch_player_panel">
-    <twitch-stream channel="maoruya" chat id="twitch_player"></twitch-stream>
-    <div id="twitch_player2"></div>
+    <div id="twitch_player"></div>
   </div>
-  -->
+ 
 
   <!-- 롤백 패널 -->
   <div id="lol_panel" class="nanum">
@@ -492,28 +489,21 @@
   <!-- <audio id="audio_toonation" /> -->
     <!-- <iframe src="https://toon.at/widget/alertbox/8696cfece632d9b5ac0900db2cf3ee35" width="100" height="100" /> -->
 
-  <script src="$_localhost/static/index.js?ver=$_version"></script>
-  <script src="$_localhost/static/index_socket.js?ver=$_version"></script>
-  <script src="$_localhost/static/index_login.js?ver=$_version"></script>
-  <script src="$_localhost/static/index_chat.js?ver=$_version"></script>
-  <script src="$_localhost/static/index_utils.js?ver=$_version"></script>
-  <script src="$_localhost/static/index_UI.js?ver=$_version"></script>
-  <script src="$_localhost/static/index_lol.js?ver=$_version"></script>
-  <script src="$_localhost/static/index_yt_plugin.js?ver=$_version"></script>
-  <script src="$_localhost/static/index_livechat.js?ver=$_version"></script>
-  <!-- <link rel="stylesheet" type="text/css" href="$_localhost/node_modules/jquery-contextmenu/dist/jquery.contextMenu.min.css">
-  <link rel="stylesheet" type="text/css" href="$_localhost/node_modules/jquery-ui-dist/jquery-ui.min.css">
-  <script src="$_localhost/node_modules/jquery/dist/jquery.min.js"></script>
-  <script src="$_localhost/node_modules/jquery-contextmenu/dist/jquery.contextMenu.min.js"></script>
-  <script src="$_localhost/node_modules/jquery-ui-dist/jquery-ui.min.js"></script> -->
-  <audio id="audio_chat_call" src="$_localhost/static/call.mp3?ver=$_version"></audio>
+  <script src="/static/index.js?ver=$_version"></script>
+  <script src="/static/index_socket.js?ver=$_version"></script>
+  <script src="/static/index_login.js?ver=$_version"></script>
+  <script src="/static/index_chat.js?ver=$_version"></script>
+  <script src="/static/index_utils.js?ver=$_version"></script>
+  <script src="/static/index_UI.js?ver=$_version"></script>
+  <script src="/static/index_lol.js?ver=$_version"></script>
+  <script src="/static/index_yt_plugin.js?ver=$_version"></script>
+  <script src="/static/index_livechat.js?ver=$_version"></script>
+  <audio id="audio_chat_call" src="/static/call.mp3?ver=$_version"></audio>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" integrity="sha512-iBBXm8fW90+nuLcSKlbmrPcLa0OT92xO1BIsZ+ywDWZCvqsWgccV3gFoRBv0z+8dLJgyAHIhR35VZc2oM/gI1w==" crossorigin="anonymous" />
 
 
   <script src="https://www.youtube.com/iframe_api"></script>
-  <!-- <script src= "https://player.twitch.tv/js/embed/v1.js"></script> -->
-  <!-- <script type="module" src="https://unpkg.com/twitch-stream-embed"></script> -->
-
+  <script src= "https://player.twitch.tv/js/embed/v1.js"></script>
 
 </body>
 

@@ -27,6 +27,13 @@ function youtube_playlist_url_parse(url_or_id)
 	return url_or_id
 }
 
+function twitch_url_parse(url)
+{
+	if(url.endsWith('/videos'))
+		url = url.replace('/videos', '')
+	return url.replace(/https:\/\//i, '').replace(/www\.twitch\.tv\//i, '')
+}
+
 /* 90 -> "01:30" */
 function second_to_string(sec) 
 {
@@ -133,3 +140,17 @@ function lol_get_date_from_filename(filename)
 	var ret = reg.exec(filename)
 	return format('{0}_{1}_{2}', ret[1], ret[2], ret[3])
 }
+
+function dec2hex (dec) 
+{
+	return dec.toString(16).padStart(2, "0")
+}
+  
+  // generateId :: Integer -> String
+function generate_id (len) 
+{
+	var arr = new Uint8Array((len || 40) / 2)
+	window.crypto.getRandomValues(arr)
+	return Array.from(arr, dec2hex).join('')
+}
+

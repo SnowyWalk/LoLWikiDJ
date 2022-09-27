@@ -116,12 +116,16 @@ socket.on('login', function(isSuccess) {
 	login_button.style.display = 'none'
 	login_remember_nick_holder.style.display = 'none'
 
-	donate_ranking_msg = '후원 랭킹 (2022. 07. 06)\n'
+	donate_ranking_msg = '후원 랭킹 (2022. 09. 07)\n'
 	+ '★ 0. Lily(샤르프로젝트) 님 ★\n' 
 	+ '☆ 0. 우뭇가사리 님 ☆\n' 
+	
+
+	// \n -> ', '
+
 
 	var _index = 1
-	for(var e of ['다정이', '코코로', '콘파고', '네모', '헤은', 'eq', '엽떡조아', '누관검', '디아', '나낙고추', '인공사', 'pagolas', '클레이', '에양', 'POIU', '고냥이지', '복', '코리밋', '샤르룽', '돌고래대통령', '스프링', 'clown', '우엥', '얼랭', '광삼', 'dltmftka', '강령군주', '고졸백수'])
+	for(var e of ['다정이', '코코로', '콘파고', '헤은', '네모', 'eq', '엽떡조아', '누관검', '디아', '다유', '얼랭', '나낙고추', '돌고래대통령', '인공사', 'pagolas', '클레이', '에양', 'POIU', '고냥이지', '복', '코리밋', '샤르룽', '우엥', '스프링', 'clown', 'dltmftka', '광삼', '강령군주', '고졸백수'])
 	{
 		donate_ranking_msg += format('{0}. {1} 님\n', _index++, e)
 	}
@@ -190,6 +194,7 @@ socket.on('update_current_video', function(data) {
 		g_current_duration = 0
 		g_current_author = ''
 		g_current_video_id = ''
+		g_current_is_twitch = false
 		update_current_dj()
 		// player.cueVideoById('')
 		// player.stopVideo()
@@ -198,6 +203,8 @@ socket.on('update_current_video', function(data) {
 			player.pauseVideo()
 		m3u8_player.src = ''
 		m3u8_player.pause()
+		if(g_twitch_player)
+			g_twitch_player.pause()
 		update_current_video_name()
 		livechat_hide()
 		return
@@ -208,14 +215,14 @@ socket.on('update_current_video', function(data) {
 	g_current_duration = data.duration
 	g_current_video_id = data.video_id
 	g_current_dj = data.dj
+	g_current_is_twitch = data.is_twitch
 	update_current_dj()
 	update_current_video_name()
 	update_dj_state()
 	g_cued_time_ms = Date.now() - data.seek_s * 1000
 	var seek_time_s = (Date.now() - g_cued_time_ms) / 1000
 
-
-	console.info((data.video_id.indexOf('.m3u8') >= 0), data.video_id)
+	// console.log(data)
 
 	if(data.video_id.indexOf('.m3u8') >= 0)
 	{
@@ -230,12 +237,56 @@ socket.on('update_current_video', function(data) {
 			player.pauseVideo()
 			video_player.style.display = 'none'
 		}
+
+		if(g_twitch_ready)
+			g_twitch_player.pause()
+		twitch_player_panel.style.display = 'none'
+	}
+	else if(data.is_twitch)
+	{
+		m3u8_player.style.display = 'none'
+		m3u8_player.src = ''
+		m3u8_player.pause()
+
+		if(player)
+		{
+			player.pauseVideo()
+			video_player.style.display = 'none'
+		}
+
+		if(g_twitch_ready)
+		{
+			play_twitch()
+		}
+		else
+		{
+			g_twitch_timer_handle = setInterval(() => {
+				if(!g_current_is_twitch) // 트위치 로딩 중에 영상이 끝남
+				{
+					clearInterval(g_twitch_timer_handle)
+					return
+				}
+
+				if(g_twitch_ready) // 트위치 로딩이 완료됨
+				{
+					play_twitch()
+					clearInterval(g_twitch_timer_handle)
+					return
+				}
+			}, 100);
+		}
+		SetVideoBlock(!g_current_video_id)
+		twitch_player_panel.style.display = 'block'
 	}
 	else
 	{
 		m3u8_player.style.display = 'none'
 		m3u8_player.src = ''
 		m3u8_player.pause()
+
+		if(g_twitch_ready)
+			g_twitch_player.pause()
+		twitch_player_panel.style.display = 'none'
 
 		if(player)
 		{
@@ -244,6 +295,31 @@ socket.on('update_current_video', function(data) {
 		}
 	}
 })
+
+function play_twitch()
+{
+	if(/^videos\/(\d+)/i.test(g_current_video_id)) // 동영상
+	{
+		g_twitch_player.setVideo(/^videos\/(\d+)/i.exec(g_current_video_id)[1], (Date.now() - g_cued_time_ms) / 1000)
+		var currentTime_s = g_twitch_player.getCurrentTime()
+		var diff = Math.abs(currentTime_s - (Date.now() - g_cued_time_ms) / 1000)
+		// console.log('currentTime', currentTime_s, ', diff', diff, 'g_twitch_player.getCurrentTime()', g_twitch_player.getCurrentTime())
+
+		if(diff >= 0.5 || g_twitch_player.getCurrentTime() == 0)
+		{
+			g_twitch_player.seek((Date.now() - g_cued_time_ms) / 1000)
+			g_twitch_player.play()
+		}
+	}
+	// else if(/\/clip\//i.test(g_current_video_id)) // 클립 (클립 미지원)
+	// {
+	// }
+	else // 생방송
+	{
+		g_twitch_player.setChannel(g_current_video_id) 
+		g_twitch_player.play()
+	}
+}
 
 /* 좋/실 갱신 신호 받음*/
 socket.on('rating', function(data) {
@@ -486,7 +562,7 @@ socket.on('lol_get_article_list_others', function(android_id) {
 	g_lol_article_list = []
 	g_lol_lpanel_scroll_top_switch = true
 	g_lol_spec_android_id = android_id
-	lol_get_article_list(0, g_lol_search_vote ? 15 : 30, g_lol_search_body, g_lol_search_nick, g_lol_search_vote, g_lol_search_mine)
+	lol_get_article_list(0, g_lol_search_vote ? 22 : 30, g_lol_search_body, g_lol_search_nick, g_lol_search_vote, g_lol_search_mine)
 })
 
 /* 새 쪽지 감지됨 */

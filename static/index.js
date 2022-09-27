@@ -24,11 +24,15 @@ var g_current_title = ''
 var g_current_author = ''
 var g_current_duration = 0
 var g_is_djing = false
+var g_current_is_twitch = false
 
 var g_good_list = [] // 좋아요 누른 사람 닉네임 목록
 var g_bad_list = [] // 싫어요 목록
 
 var g_hls = new Hls() // m3u8 플레이어용
+var g_twitch_player = null
+var g_twitch_ready = false
+var g_twitch_timer_handle = 0
 
 /* 웹 페이지 로딩 체크용 */
 var g_isConnected = false
@@ -78,10 +82,10 @@ var g_lol_write_reply_image_data = '' // 댓글 첨부 이미지
 var g_lol_spec_android_id = g_lol_spec_android_id
 var g_lol_last_scroll_time = 0
 var g_lol_bookmark_list = [] // [ 
-	// { post_title: '', post_seq: 0, replys: [ 그냥 빈 리스트로 댓글개수만 맞춤 ], badge_use: '401', post_date: "2022-06-19 21:37:13   ",
-	// youtube_url: '그냥 있으면 아무글자나 넣으면 됨', doodlr: '얘도', pic_new: '얘도', pic_multi: '얘도',
-	// nickname: '만악의정원', icon_img: "img_2511566_20220523163447.jpg", likes: 1
-	// }, ... ]
+// { post_title: '', post_seq: 0, replys: [ 그냥 빈 리스트로 댓글개수만 맞춤 ], badge_use: '401', post_date: "2022-06-19 21:37:13   ",
+// youtube_url: '그냥 있으면 아무글자나 넣으면 됨', doodlr: '얘도', pic_new: '얘도', pic_multi: '얘도',
+// nickname: '만악의정원', icon_img: "img_2511566_20220523163447.jpg", likes: 1
+// }, ... ]
 var g_lol_is_bookmark = false // 현재 북마크를 보고있는지 
 
 /* 채팅 모드 */
@@ -92,29 +96,96 @@ var toonatReg = /"tts_link":"(.*?)"/
 var lessy_socket = null
 var toonat_voices = ['lessy', 'maoruya', 'changu', 'beube', 'somnyang']
 
-window.onload = function() {
+window.onload = function () {
+	g_twitch_player = new Twitch.Player('twitch_player', {
+		channel: 'lessy_virtual',
+		parent: [location.host]
+	})
+	g_twitch_player.addEventListener(Twitch.Player.READY, () => {
+		g_twitch_ready = true
+		if(!g_current_is_twitch)
+			g_twitch_player.pause()
+	})
+
+	g_twitch_player.addEventListener(Twitch.Player.CAPTIONS, () => {
+		console.log(Twitch.Player.CAPTIONS)
+		if(!g_current_is_twitch)
+			g_twitch_player.pause()
+	})
+
+	g_twitch_player.addEventListener(Twitch.Player.ENDED, () => {
+		console.log(Twitch.Player.ENDED)
+		if(!g_current_is_twitch)
+			g_twitch_player.pause()
+	})
+	g_twitch_player.addEventListener(Twitch.Player.PAUSE, () => {
+		console.log(Twitch.Player.PAUSE)
+		
+		if(!g_current_is_twitch)
+			g_twitch_player.pause()
+		else
+			play_twitch()
+	})
+	g_twitch_player.addEventListener(Twitch.Player.PLAY, () => {
+		console.log(Twitch.Player.PLAY)
+		if(!g_current_is_twitch)
+			g_twitch_player.pause()
+	})
+	g_twitch_player.addEventListener(Twitch.Player.PLAYBACK_BLOCKED, () => {
+		console.log(Twitch.Player.PLAYBACK_BLOCKED)
+		if(!g_current_is_twitch)
+			g_twitch_player.pause()
+	})
+	g_twitch_player.addEventListener(Twitch.Player.PLAYING, () => {
+		console.log(Twitch.Player.PLAYING)
+
+		if(!g_current_is_twitch)
+			g_twitch_player.pause()
+		else
+			play_twitch()
+	})
+	g_twitch_player.addEventListener(Twitch.Player.OFFLINE, () => {
+		console.log(Twitch.Player.OFFLINE)
+		if(!g_current_is_twitch)
+			g_twitch_player.pause()
+	})
+	g_twitch_player.addEventListener(Twitch.Player.ONLINE, () => {
+		console.log(Twitch.Player.ONLINE)
+		if(!g_current_is_twitch)
+			g_twitch_player.pause()
+	})
+	g_twitch_player.addEventListener(Twitch.Player.READY, () => {
+		console.log(Twitch.Player.READY)
+		if(!g_current_is_twitch)
+			g_twitch_player.pause()
+	})
+	g_twitch_player.addEventListener(Twitch.Player.SEEK, () => {
+		console.log(Twitch.Player.SEEK)
+		if(!g_current_is_twitch)
+			g_twitch_player.pause()
+	})
+
 	g_isWindowLoaded = true
 
 	// 옵션들 불러오기
 	set_theme(localStorage.getItem(g_storage_theme_key))
-	if('option_checkbox_mention' in localStorage)
+	if ('option_checkbox_mention' in localStorage)
 		option_checkbox_mention.checked = eval(localStorage.getItem('option_checkbox_mention'))
-	if('option_slider_mention_volume' in localStorage)
+	if ('option_slider_mention_volume' in localStorage)
 		option_slider_mention_volume.value = eval(localStorage.getItem('option_slider_mention_volume'))
-	if('option_checkbox_tts' in localStorage)
+	if ('option_checkbox_tts' in localStorage)
 		option_checkbox_tts.checked = eval(localStorage.getItem('option_checkbox_tts'))
-	if('option_slider_tts_volume' in localStorage)
+	if ('option_slider_tts_volume' in localStorage)
 		option_slider_tts_volume.value = eval(localStorage.getItem('option_slider_tts_volume'))
-	if('option_checkbox_tts_key_bind' in localStorage)
+	if ('option_checkbox_tts_key_bind' in localStorage)
 		option_checkbox_tts_key_bind.checked = eval(localStorage.getItem('option_checkbox_tts_key_bind'))
-	if('option_tts_type' in localStorage)
-	{
+	if ('option_tts_type' in localStorage) {
 		var tts_type = localStorage.getItem('option_tts_type') // ko-KR-Standard-C
 		document.querySelector(format('input[value={0}]', tts_type)).checked = true
 	}
-	if('option_checkbox_dezeolmo' in localStorage)
+	if ('option_checkbox_dezeolmo' in localStorage)
 		option_checkbox_dezeolmo.checked = eval(localStorage.getItem('option_checkbox_dezeolmo'))
-	
+
 
 	// 옵션에 이벤트 추가
 	option_checkbox_mention.onchange = _ => localStorage.setItem('option_checkbox_mention', option_checkbox_mention.checked)
@@ -133,12 +204,11 @@ window.onload = function() {
 	option_checkbox_dezeolmo.onchange = _ => localStorage.setItem('option_checkbox_dezeolmo', option_checkbox_dezeolmo.checked)
 
 	var cached_lol_android_id = localStorage.getItem(g_storage_lol_key)
-	if(cached_lol_android_id)
+	if (cached_lol_android_id)
 		g_lol_android_id = cached_lol_android_id
 
-	if(Hls.isSupported()) 
-	{
-		g_hls.on(Hls.Events.MANIFEST_PARSED,function() {
+	if (Hls.isSupported()) {
+		g_hls.on(Hls.Events.MANIFEST_PARSED, function () {
 			m3u8_player.play()
 			SetVideoBlock(!g_current_video_id)
 		})
@@ -147,9 +217,8 @@ window.onload = function() {
 		console.error('m3u8 미지원 브라우저입니다 끼에에엑')
 
 	initial_resize()
-	
-	if(g_isConnected && !g_isLogin)
-	{
+
+	if (g_isConnected && !g_isLogin) {
 		login_bg.style.display = 'block'
 		login_port.style.display = 'block'
 		login_id.style.display = 'block'
@@ -165,29 +234,27 @@ window.onload = function() {
 
 	window.onresize = resize
 	window.onkeydown = function () {
-		if(!g_isLogin)
+		if (!g_isLogin)
 			return
-	
-		if (window.event.keyCode == 13 && event.target.tagName != 'INPUT' && event.target.tagName != 'TEXTAREA')
-		{
+
+		if (window.event.keyCode == 13 && event.target.tagName != 'INPUT' && event.target.tagName != 'TEXTAREA') {
 			// if(!document.querySelector('#lol_rpanel_reply_board_input:focus'))
 			chat_input.focus()
 		}
 
-		if(event.target.tagName != 'INPUT' && event.target.tagName != 'TEXTAREA' && g_lol_panel_show && g_lol_current_detail && 'post_seq' in g_lol_current_detail )
-		{
-			if(window.event.keyCode == 38) // 위
+		if (event.target.tagName != 'INPUT' && event.target.tagName != 'TEXTAREA' && g_lol_panel_show && g_lol_current_detail && 'post_seq' in g_lol_current_detail) {
+			if (window.event.keyCode == 38) // 위
 				socket.emit('lol_get_article_detail', { post_seq: eval(g_lol_current_detail['post_seq']) + 1, android_id: g_lol_android_id })
-			else if(window.event.keyCode == 40) // 아래
+			else if (window.event.keyCode == 40) // 아래
 				socket.emit('lol_get_article_detail', { post_seq: eval(g_lol_current_detail['post_seq']) - 1, android_id: g_lol_android_id })
 		}
 	}
 
-	chat.ondragover = function (e) {  e.stopPropagation(); e.preventDefault(); }
-	chat.ondragleave = function (e) {  e.stopPropagation(); e.preventDefault(); }
+	chat.ondragover = function (e) { e.stopPropagation(); e.preventDefault(); }
+	chat.ondragleave = function (e) { e.stopPropagation(); e.preventDefault(); }
 	chat.ondrop = ondrop_chat_input_file
-	chat_input.ondragover = function (e) {  e.stopPropagation(); e.preventDefault(); }
-	chat_input.ondragleave = function (e) {  e.stopPropagation(); e.preventDefault(); }
+	chat_input.ondragover = function (e) { e.stopPropagation(); e.preventDefault(); }
+	chat_input.ondragleave = function (e) { e.stopPropagation(); e.preventDefault(); }
 	chat_input.ondrop = ondrop_chat_input_file
 	chat_emoticon_button.onclick = onclick_chat_emoticon_button
 
@@ -213,7 +280,7 @@ window.onload = function() {
 	/* 옵션 - 테마설정 */
 	theme_default.onchange = _ => set_theme(document.querySelector('[name=theme]:checked').value)
 	theme_dark.onchange = _ => set_theme(document.querySelector('[name=theme]:checked').value)
-	
+
 	/* 롤백 관련 */
 	lol_lpanel_board.onscroll = lol_lpanel_board_onscroll
 	lol_lpanel_refresh.onclick = lol_onclick_aritcle_list_refresh
@@ -238,7 +305,7 @@ window.onload = function() {
 	lol_lpanel_userinfo_menu_button_blocklist_reset.onclick = lol_onclick_userinfo_blocklist_reset
 	lol_lpanel_userinfo_menu_button_logout.onclick = lol_onclick_userinfo_logout
 
-	
+
 	lol_rpanel_header_nick.addEventListener('contextmenu', lol_onrclick_article_writer, false)
 	lol_rpanel_header_button.onclick = lol_onclick_auth_or_block
 	lol_rpanel_header_button.addEventListener('contextmenu', lol_onrclick_auth_or_block, false)
@@ -279,9 +346,9 @@ window.onload = function() {
 	lol_write_confirm.onclick = lol_onclick_write_confirm
 	lol_write_image_placeholder.ondrop = lol_write_image_ondrop
 	lol_write_image_placeholder.onpaste = lol_write_image_onpaste
-	lol_write_image_placeholder.ondragenter = function (e) {  e.stopPropagation(); e.preventDefault(); e.target.style.borderWidth = '10px'; }
-	lol_write_image_placeholder.ondragover = function (e) {  e.stopPropagation(); e.preventDefault(); e.target.style.borderWidth = '10px'; }
-	lol_write_image_placeholder.ondragleave = function (e) {  e.stopPropagation(); e.preventDefault(); e.target.style.borderWidth = '1px'; }
+	lol_write_image_placeholder.ondragenter = function (e) { e.stopPropagation(); e.preventDefault(); e.target.style.borderWidth = '10px'; }
+	lol_write_image_placeholder.ondragover = function (e) { e.stopPropagation(); e.preventDefault(); e.target.style.borderWidth = '10px'; }
+	lol_write_image_placeholder.ondragleave = function (e) { e.stopPropagation(); e.preventDefault(); e.target.style.borderWidth = '1px'; }
 	lol_write_image_placeholder.onchange = lol_write_image_clear_text
 	lol_write_image.onclick = lol_clear_image
 	lol_write_image.onload = lol_write_image_onload
@@ -301,6 +368,8 @@ window.onload = function() {
 	register_ui_tooltip_event(playlist_control_panel_playlist_info_rename_button, '재생목록 이름 변경')
 	register_ui_tooltip_event(playlist_control_panel_playlist_info_delete_button, '이 재생목록 지우기')
 	register_ui_tooltip_event(playlist_control_panel_playlist_info_new_video_button, '새 유튜브 영상 추가\n우클릭: 유튜브 재생목록 째로 추가하기')
+
+	chat_scroller.style.display = 'none'
 
 	// $('#image_storage_justified_gallery').justifiedGallery({ maxRowsCount: 5})
 
@@ -326,23 +395,21 @@ window.onload = function() {
 }
 
 var tts_port_string = '"name":"' + location.port.toString() + '"'
-function create_lessy_socket() 
-{
+function create_lessy_socket() {
 	lessy_socket = new WebSocket('wss://toon.at:8071/eyJhdXRoIjoiODY5NmNmZWNlNjMyZDliNWFjMDkwMGRiMmNmM2VlMzUiLCJzZXJ2aWNlIjoiYWxlcnQiLCJ0eXBlIjowLCJsYW5ndWFnZSI6ImtvIn0')
-	lessy_socket.addEventListener("close", (function(t) { 
+	lessy_socket.addEventListener("close", (function (t) {
 		console.log('렛시 소켓 재연결!!')
 		create_lessy_socket()
 	}))
-	lessy_socket.addEventListener("message", (function(t) { 
-		if(!option_checkbox_tts.checked) // TTS 자동 재생 옵션 체크
+	lessy_socket.addEventListener("message", (function (t) {
+		if (!option_checkbox_tts.checked) // TTS 자동 재생 옵션 체크
 			return
 
 		// console.log(t.data)
-		if(t.data.indexOf(tts_port_string) == -1)
+		if (t.data.indexOf(tts_port_string) == -1)
 			return
 
-		if(toonatReg.test(t.data))
-		{
+		if (toonatReg.test(t.data)) {
 			var src = toonatReg.exec(t.data)[1]
 			// audio_toonation.src = src
 			// audio_toonation.play()
@@ -362,10 +429,10 @@ function createSnow() {
 	snow.style.animationDirection = Math.random() * 3 + 2 + 's';
 	snow.style.opacity = Math.random();
 	snow.style.fontSize = Math.random() * 10 + 10 + 'px';
-  
+
 	document.body.appendChild(snow);
-  
+
 	setTimeout(() => {
-	   snow.remove();
+		snow.remove();
 	}, 6000);
- }
+}
