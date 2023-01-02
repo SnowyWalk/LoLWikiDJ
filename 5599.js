@@ -1867,11 +1867,28 @@ io.sockets.on('connection', function(socket)
 		var android_id = data.android_id
 		var post_seq = data.post_seq
 		var memo = data.memo
+
+		log('INFO', 'lol_update_user_memo', data)
 		
 		try
 		{
 			var writer_android_id = await lol_get_android_id_from_article(post_seq)
-			await db_update('LoLWikiMemos', format('UserMemos = JSON_SET(UserMemos, "$.{0}", "{1}")', writer_android_id, memo), format('android_id LIKE "{0}"', android_id))
+
+			// 만약 이 유저의 메모 정보가 없으면 레코드를 추가
+			var is_exist_record = await db_query(`SELECT EXISTS (SELECT android_id FROM LoLWikiMemos WHERE android_id LIKE "${android_id}" LIMIT 1) as success`)
+				.then(e => e[0])
+				.then(JSON.stringify)
+				.then(JSON.parse)
+				.then(e => e['success'])
+				
+			if(!is_exist_record)
+			{
+				log('INFO', 'lol_update_user_memo', 'new record created.')
+				await db_insert('LoLWikiMemos', ['android_id', 'UserMemos'], [android_id, '{}'])
+			}
+
+			await db_update('LoLWikiMemos', format('UserMemos = JSON_SET(UserMemos, \'$."{0}"\', "{1}")', writer_android_id, memo), format('android_id LIKE "{0}"', android_id))
+				.catch(err => log_exception('lol_update_user_memo - db update', err.err, data))
 			var user_memos = await lol_get_user_memos(android_id)
 			socket.emit('lol_get_user_memos', user_memos) // {'안드아이디': '메모'}
 		}
