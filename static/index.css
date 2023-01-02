@@ -71,7 +71,8 @@
   --롤백_보더색: rgb(244,244,244);
   --롤백_호버색: yellow;
   --롤백_글쓰기_내_버튼_호버색: var(--롤백_배경색);
-
+  --롤백_유저메모_글자색: rgb(117 117 117);
+  
   color: var(--글자색);
 }
 
@@ -146,6 +147,7 @@
   --롤백_보더색: var(--보더색);
   --롤백_호버색: var(--보더색);
   --롤백_글쓰기_내_버튼_호버색: var(--배경색);
+  --롤백_유저메모_글자색: rgb(110 110 110);
 
   color: var(--글자색);
 }
@@ -1674,7 +1676,7 @@ temp[emoji] {
 }
 
 #lol_lpanel_userinfo {
-  display: none;
+  display: block;
   flex-grow: 0;
   flex-shrink: 1;
   background-image: url('icon_profile.png');
@@ -1867,6 +1869,15 @@ temp[emoji] {
   color: rgb(255, 216, 61);
 }
 
+#lol_lpanel_userinfo_menu_label_account_code::before {
+  content: '계정 코드: ';
+}
+
+#lol_lpanel_userinfo_menu_label_account_code {
+  color: gray;
+  user-select: text;
+}
+
 #lol_lpanel_userinfo_menu {
   position: absolute;
   display: none;
@@ -1956,6 +1967,46 @@ temp[emoji] {
 #lol_rpanel_header_spec {
   font-size: large;
   margin-left: 6px;
+}
+
+#lol_rpanel_header_memo_container {
+  display: flex;
+  margin-left: 10px;
+  margin-top: 1px;
+  width: calc(100% - 500px);
+}
+
+#lol_rpanel_header_memo_button {
+  background-image: url('memo.png');
+  height: 80%;
+  aspect-ratio: 1;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: contain;
+  margin-top: -1px;
+  padding-left: 5px;
+  filter: invert(0.5);
+  cursor: pointer;
+  padding-right: 5px;
+}
+
+#lol_rpanel_header_memo_body {
+  display: none;
+  font-weight: bold;
+  color: var(--롤백_유저메모_글자색);
+}
+
+#lol_rpanel_header_memo_edit {
+  display: none;
+  background-image: url('rename_button.png');
+  height: 80%;
+  aspect-ratio: 1;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: contain;
+  filter: invert(0.5);
+  cursor: pointer;
+  margin-left: 10px;
 }
 
 #lol_rpanel_header_button {

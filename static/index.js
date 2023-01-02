@@ -76,6 +76,7 @@ var g_lol_search_nick = ''
 var g_lol_search_vote = false
 var g_lol_search_mine = false
 var g_lol_same_article_prev = false
+var g_lol_is_award = false // 명예의전당 여부 (스크롤 안되게 하기 위해)
 var g_lol_write_image_data = '' // 글 첨부 이미지
 var g_lol_write_image_data_gif = '' // gif용 파일스트림 데이터
 var g_lol_write_reply_image_data = '' // 댓글 첨부 이미지
@@ -87,6 +88,7 @@ var g_lol_bookmark_list = [] // [
 // nickname: '만악의정원', icon_img: "img_2511566_20220523163447.jpg", likes: 1
 // }, ... ]
 var g_lol_is_bookmark = false // 현재 북마크를 보고있는지 
+var g_lol_user_memos = null
 
 /* 채팅 모드 */
 var g_is_chat_mode = false
@@ -294,6 +296,7 @@ window.onload = function () {
 	lol_lpanel_search_menu_button_search.onclick = lol_onclick_search_search
 	lol_lpanel_search_menu_button_nick.onclick = lol_onclick_search_nick
 	lol_lpanel_search_menu_button_bookmark.onclick = lol_onclick_search_bookmark
+	lol_lpanel_search_menu_button_award.onclick = lol_onclick_search_award
 
 	lol_lpanel_write_button.onclick = lol_onclick_write
 
@@ -307,6 +310,8 @@ window.onload = function () {
 
 
 	lol_rpanel_header_nick.addEventListener('contextmenu', lol_onrclick_article_writer, false)
+	lol_rpanel_header_memo_button.onclick = lol_onclick_show_user_memo
+	lol_rpanel_header_memo_edit.onclick = lol_onclick_edit_user_memo
 	lol_rpanel_header_button.onclick = lol_onclick_auth_or_block
 	lol_rpanel_header_button.addEventListener('contextmenu', lol_onrclick_auth_or_block, false)
 	lol_rpanel_bookmark.onclick = lol_onclick_aritcle_bookmark

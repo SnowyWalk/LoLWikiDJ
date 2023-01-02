@@ -1,6 +1,6 @@
 /* 공지말 */
-var g_port = 1004
-var g_notice = '디아 전용 채널\n개설일 : 2021-12-28'
+var g_port = 8083
+var g_notice = '여기는 8083 인방 채널 입니당\n1080p 제한 해제: https://chrome.google.com/webstore/detail/ttv-lol/ofbbahodfeppoklmgjiokgfdgcndngjm/related'
 
 /* 설치한 express 모듈 불러오기 */
 const express = require('express')

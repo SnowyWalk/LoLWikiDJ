@@ -116,7 +116,7 @@ socket.on('login', function(isSuccess) {
 	login_button.style.display = 'none'
 	login_remember_nick_holder.style.display = 'none'
 
-	donate_ranking_msg = '후원 랭킹 (2022. 09. 07)\n'
+	donate_ranking_msg = '후원 랭킹 (2022. 10. 31)\n'
 	+ '★ 0. Lily(샤르프로젝트) 님 ★\n' 
 	+ '☆ 0. 우뭇가사리 님 ☆\n' 
 	
@@ -125,7 +125,7 @@ socket.on('login', function(isSuccess) {
 
 
 	var _index = 1
-	for(var e of ['다정이', '코코로', '콘파고', '헤은', '네모', 'eq', '엽떡조아', '누관검', '디아', '다유', '얼랭', '나낙고추', '돌고래대통령', '인공사', 'pagolas', '클레이', '에양', 'POIU', '고냥이지', '복', '코리밋', '샤르룽', '우엥', '스프링', 'clown', 'dltmftka', '광삼', '강령군주', '고졸백수'])
+	for(var e of ['다정이', '코코로', '콘파고', '헤은', '네모', 'eq', '얼랭', '엽떡조아', '누관검', '디아', '인공사', '다유', '고냥이지', '나낙고추', '돌고래대통령', 'pagolas', '클레이', '에양', 'POIU', '복', '코리밋', '샤르룽', '우엥', '페이커개인팬', '스프링', 'clown', 'dltmftka', '광삼', '강령군주', '고졸백수'])
 	{
 		donate_ranking_msg += format('{0}. {1} 님\n', _index++, e)
 	}
@@ -318,6 +318,7 @@ function play_twitch()
 	{
 		g_twitch_player.setChannel(g_current_video_id) 
 		g_twitch_player.play()
+		livechat_set_video_id(g_current_video_id)
 	}
 }
 
@@ -482,6 +483,11 @@ socket.on('lol_auth_request', function(code) {
 })
 
 socket.on('lol_login', function(android_id_and_user_info) {
+	if(!android_id_and_user_info)
+	{
+		alert('롤디자게 로그인에 실패했습니다!!')
+		return
+	}
 	g_lol_android_id = android_id_and_user_info[0]
 	g_lol_user_info = android_id_and_user_info[1]
 	localStorage.setItem(g_storage_lol_key, g_lol_android_id)
@@ -493,10 +499,43 @@ socket.on('lol_login', function(android_id_and_user_info) {
 })
 
 socket.on('lol_user_info', function(user_info) {
+	if(!user_info)
+	{
+		localStorage.removeItem(g_storage_lol_key)
+
+		lol_lpanel_userinfo_menu.style.display = 'none'
+	
+		g_lol_panel_show = false
+		lol_lpanel_board.scroll(0, 0)
+		lol_panel_update()
+		alert('유효하지 않은 로그인 정보입니다. 꼭 새로고침을 해주세요잉')
+		return
+	}
 	g_lol_user_info = user_info
 
 	lol_lpanel_update()
 	lol_rpanel_update()
+})
+
+socket.on('lol_get_user_memos', function(user_memos) {
+	console.log(`lol_get_user_memos received. : ${user_memos}`)
+	g_lol_user_memos = user_memos
+})
+
+socket.on('lol_query_article_writer_android_id', function(writer_android_id) {
+	if(g_lol_user_memos == null)
+	{
+		if(g_lol_android_id != g_lol_guest_id)
+		{
+			socket.emit('lol_get_user_memos', g_lol_android_id)
+			lol_rpanel_header_memo_button.style.display = 'block'
+		}
+		return
+	}
+
+	lol_rpanel_header_memo_body.firstChild.nodeValue = g_lol_user_memos[writer_android_id] != null ? g_lol_user_memos[writer_android_id] : '(메모 없음)'
+	lol_rpanel_header_memo_body.style.display = 'block'
+	lol_rpanel_header_memo_edit.style.display = 'block'
 })
 
 socket.on('lol_change_nickname', function(is_success) {
@@ -558,6 +597,7 @@ socket.on('lol_get_article_list_others', function(android_id) {
 	g_lol_search_nick = ''
 	g_lol_search_vote = false
 	g_lol_search_mine = true
+	g_lol_is_award = false
 	g_lol_article_scroll_seq = 0
 	g_lol_article_list = []
 	g_lol_lpanel_scroll_top_switch = true

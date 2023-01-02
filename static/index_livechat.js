@@ -315,6 +315,12 @@ function livechat_show()
 /* src 주소 얻어오기 */
 function livechat_get_src(video_id) 
 {
+	if(g_current_is_twitch)
+	{
+		if(theme_dark.checked)
+			return `https://www.twitch.tv/embed/${video_id}/chat?parent=${location.hostname}&darkpopout`	
+		return `https://www.twitch.tv/embed/${video_id}/chat?parent=${location.hostname}`
+	}
 	// https://gaming.youtube.com/live_chat?v=XYvQSWMyq8g&embed_domain=ec2-3-35-166-139.ap-northeast-2.compute.amazonaws.com
 	return 'https://gaming.youtube.com/live_chat?v=' + video_id + '&embed_domain=' + location.hostname
 }

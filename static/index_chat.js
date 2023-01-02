@@ -244,6 +244,9 @@ function add_message(data)
 				t_callRegResult = callReg.exec(text)
 			}
 		}
+
+		if(data.type == 'message' && decodeURIComponent(location.hash.substring(1)).split(',').filter(x => x.length > 0 && text.indexOf(x) != -1).length > 0)
+			play_call_audio()
 	}
 
 	return message
@@ -271,18 +274,21 @@ function add_play_message(data)
 	base.classList.add('chat')
 	base.classList.add('play_info')
 
-	var img = document.createElement('img')
-	if(need_scroll)
-		img.onload = scrollDown
-	img.src = data.thumbnail
-	img.setAttribute('video_id', data.video_id)
-	img.onclick = onclick_play_data
-	img.onmouseenter = image_onmouseenter
-	img.onmouseout = image_onmouseout
-	img.onmousemove = image_onmousemove
-	img.setAttribute('ui_tooltip_x_offset', 60)
-	register_ui_tooltip_event(img, '영상 주소 복사')
-	base.appendChild(img)
+	if(!option_checkbox_dezeolmo.checked)
+	{
+		var img = document.createElement('img')
+		if(need_scroll)
+			img.onload = scrollDown
+		img.src = data.thumbnail
+		img.setAttribute('video_id', data.video_id)
+		img.onclick = onclick_play_data
+		img.onmouseenter = image_onmouseenter
+		img.onmouseout = image_onmouseout
+		img.onmousemove = image_onmousemove
+		img.setAttribute('ui_tooltip_x_offset', 60)
+		register_ui_tooltip_event(img, '영상 주소 복사')
+		base.appendChild(img)
+	}
 
 	var dj = document.createElement('div')
 	dj.classList.add('play_info_dj')

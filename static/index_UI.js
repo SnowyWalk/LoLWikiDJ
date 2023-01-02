@@ -105,6 +105,13 @@ function resize() {
 	recent.style.height = (window_height - 50)
 	option.style.height = (window_height - 50)
 
+	var category_count = mainchat_header.childElementCount
+	for(var e of mainchat_header.children)
+	{
+		e.style.width = g_is_chat_mode ? window_width / category_count : mainchat_width / category_count
+		e.onclick = onclick_chat_category_btn
+	}
+
 	/* 유튜브 플레이어 */
 	if(player)
 		player.setSize(window_width - mainchat_width, window_height - bottom_height)

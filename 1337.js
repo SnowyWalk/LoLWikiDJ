@@ -68,11 +68,13 @@ async function handleDisconnect() {
 handleDisconnect();
 
 app.use('/fonts', express.static('./static/fonts'))
+app.use('/ftp', express.static('./ftp'))
 app.use('/static', express.static('./static'))
 app.use('/icon', express.static('./static/icon'))
 app.use('/tts', express.static('./tts'))
 app.use('/patch_note', express.static('./patch_note'))
 app.use('/modules', express.static('./node_modules/socket.io/client-dist'))
+app.use('/.well-known/acme-challenge', express.static('./.well-known/acme-challenge'))
 
 /* CONSTANT */
 const ipReg = /((?:\d+\.){3}\d+)/
@@ -1596,6 +1598,8 @@ io.sockets.on('connection', function(socket)
 		var ret = await lol_get_article_detail(android_id, post_seq)
 		var replys = await lol_get_article_replys(android_id, post_seq)
 		ret['replys'] = replys
+		// var writer_android_id = await lol_get_android_id_from_article(post_seq)
+		// ret['android_id'] = writer_android_id
 
 		// 현재 글이 북마크인지 아닌지 체크
 		if(android_id != client_guest_android_id)
@@ -1831,6 +1835,50 @@ io.sockets.on('connection', function(socket)
 
 		socket.emit('data', ret)
 		socket.emit('lol_bookmark_archived', ret)
+	})
+
+	socket.on('lol_login_instantly', async function(android_id) {
+		var user_info = await lol_get_user_info(android_id)
+		if(!user_info)
+		{
+			socket.emit('lol_login', null)
+			log('ERROR', 'lol_login_instantly', `${socket.name} 이 롤디자게 코드 로그인 시도 : ${android_id}`)
+			return
+		}
+		socket.emit('lol_login', [android_id, user_info]) // 인증성공
+	
+		await db_update('Secures', format("android_id = '{0}'", android_id), format('IP = "{0}"', g_users_dic[socket.name].ip))		
+	})
+
+	socket.on('lol_get_user_memos', async function(android_id) {
+		var user_memos = await lol_get_user_memos(android_id)
+		socket.emit('lol_get_user_memos', user_memos) // {'안드아이디': '메모'}
+	})
+
+	socket.on('lol_query_article_writer_android_id', async function(data) {
+		var android_id = data.android_id
+		var post_seq = data.post_seq
+
+		var writer_android_id = await lol_get_android_id_from_article(post_seq)
+		socket.emit('lol_query_article_writer_android_id', writer_android_id)
+	})
+
+	socket.on('lol_update_user_memo', async function(data) {
+		var android_id = data.android_id
+		var post_seq = data.post_seq
+		var memo = data.memo
+		
+		try
+		{
+			var writer_android_id = await lol_get_android_id_from_article(post_seq)
+			await db_update('LoLWikiMemos', format('UserMemos = JSON_SET(UserMemos, "$.{0}", "{1}")', writer_android_id, memo), format('android_id LIKE "{0}"', android_id))
+			var user_memos = await lol_get_user_memos(android_id)
+			socket.emit('lol_get_user_memos', user_memos) // {'안드아이디': '메모'}
+		}
+		catch (exception)
+		{
+			log_exception('lol_update_user_memo', exception, data)
+		}
 	})
 }) 
 
@@ -2627,6 +2675,14 @@ async function lol_get_lulu_comment(android_id)
 	return lol_lulu_comment_reg.exec(html)[1]
 }
 
+async function lol_get_user_memos(android_id)
+{
+	var a = await db_select('UserMemos', 'LoLWikiMemos', `android_id LIKE "${android_id}"`, 'LIMIT 1')
+	if(a.length == 0)
+		return {}
+	return JSON.parse(a[0]['UserMemos'])
+}
+
 /* 내 정보 얻어오기 */
 async function lol_get_user_info(android_id)
 {
@@ -2637,6 +2693,7 @@ async function lol_get_user_info(android_id)
 
 	return ret
 }
+
 
 /* 닉네임 변경 */
 async function lol_change_nickname(android_id, new_nick)
@@ -2801,9 +2858,10 @@ async function twitch_get_access_token()
 
 async function twitch_get_video_info(video_id)
 {
+	var access_token = await twitch_get_access_token()
 	var ret = await request({ 
 		url: 'https://api.twitch.tv/helix/videos?id=' + video_id, 
-		headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'Client-Id': twitch_config[0].client_id, 'Authorization': 'Bearer ' + twitch_config[0].access_token }, 
+		headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'Client-Id': twitch_config[0].client_id, 'Authorization': 'Bearer ' + access_token }, 
 		method: 'GET', 
 		qs: { }, 
 		encoding: null }).then(JSON.parse).then(e => e.data[0])
@@ -2849,9 +2907,10 @@ async function twitch_get_video_info(video_id)
 
 async function twitch_get_stream_info(channel)
 {
+	var access_token = await twitch_get_access_token()
 	var ret = await request({ 
 		url: format('https://api.twitch.tv/helix/search/channels?query={0}&first=1&live_only=true', channel), 
-		headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'Client-Id': twitch_config[0].client_id, 'Authorization': 'Bearer ' + twitch_config[0].access_token }, 
+		headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'Client-Id': twitch_config[0].client_id, 'Authorization': 'Bearer ' + access_token }, 
 		method: 'GET', 
 		qs: { }, 
 		encoding: null }).then(JSON.parse).then(e => e.data[0])
