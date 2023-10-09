@@ -4001,7 +4001,7 @@ function lol_rpanel_update()
 	else if(g_lol_current_detail['doodlr'] > 0)
 	{
 		var filename = g_lol_current_detail['doodlrurls'].substr(0, g_lol_current_detail['doodlrurls'].length - 1)
-		zzals = [format('http://lolwiki.kr/freeboard/uploads/doodlr/{0}/{1}', lol_get_date_from_filename(filename), filename)]
+		zzals = filename.split('/').map(x => format('http://lolwiki.kr/freeboard/uploads/doodlr/{0}/{1}', lol_get_date_from_filename(x), x))
 	}
 	else if(g_lol_current_detail['fixedpic'] && g_lol_current_detail['fixedpic'].length)
 	{

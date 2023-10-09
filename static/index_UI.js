@@ -970,6 +970,7 @@ function onclick_chat_category_option_chat_clear()
 {
 	while(chat.hasChildNodes())
 		chat.removeChild(chat.lastChild)
+	set_chat_category(mainchat_header_chat)
 }
 
 function onclick_chat_category_option_tts_1_sample() { play_tts_voice_sample(1) }
@@ -1063,6 +1064,20 @@ function onclick_video_info_volume_btn()
 	update_video_volume()
 }
 
+/* 이번 영상이 끝날 때까지만 음소거 */
+function onclick_video_info_volume_mute_once_btn()
+{
+	if(g_current_video_id == '')
+		return
+	
+	if(!player)
+		return
+
+	player.mute()
+	video_info_volume_mute_once_btn.style.display = 'none'
+	g_mute_video_id = g_current_video_id
+}
+
 function onchange_video_info_volume_slider()
 {
 	player.setVolume(video_info_volume_slider.value)
@@ -1076,6 +1091,12 @@ function update_video_volume()
 
 	video_info_volume_btn.style.backgroundImage = player.isMuted() ? 'url("static/tts_x.png")' : 'url("static/tts.png")'
 	video_info_volume_slider.value = player.getVolume()
+
+	if(g_mute_video_id != '' && !player.isMuted())
+	{
+		g_mute_video_id = ''
+		video_info_volume_mute_once_btn.style.display = 'block'
+	}
 }
 
 /* 영상 플레이 타임 갱신 */

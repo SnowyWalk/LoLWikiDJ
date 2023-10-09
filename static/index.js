@@ -34,6 +34,8 @@ var g_twitch_player = null
 var g_twitch_ready = false
 var g_twitch_timer_handle = 0
 
+var g_mute_video_id = '' // 이번 영상 음소거 (음소거할 대상 아이디가 들어가고, 다른 아이디 검출 시 볼륨 켜고 초기화한다.)
+
 /* 웹 페이지 로딩 체크용 */
 var g_isConnected = false
 var g_isWindowLoaded = false
@@ -264,6 +266,7 @@ window.onload = function () {
 	video_info_volume_btn.onclick = onclick_video_info_volume_btn
 	video_info_volume_slider.onchange = onchange_video_info_volume_slider
 	video_info_volume_slider.oninput = onchange_video_info_volume_slider
+	video_info_volume_mute_once_btn.onclick = onclick_video_info_volume_mute_once_btn
 
 	/* 롤디자게 숨겨진 버튼 */
 	current_playlist_info_box.addEventListener('contextmenu', onrclick_playlist_info_box)
@@ -368,6 +371,8 @@ window.onload = function () {
 	register_ui_tooltip_event(video_link, '클릭하면 유튜브 주소가 복사됩니다.')
 	register_ui_tooltip_event(video_info_name, '재생 중인 영상이 없습니다.')
 	register_ui_tooltip_event(etc_bad_button, '싫어요 5표 이상 누적 시 영상이 스킵됩니다.')
+	register_ui_tooltip_event(video_info_volume_mute_once_btn, '이 쓰레기 영상이 끝날 때까지 음소거합니다.')
+	
 
 	register_ui_tooltip_event(playlist_control_panel_playlist_info_shuffle, '영상 랜덤 셔플')
 	register_ui_tooltip_event(playlist_control_panel_playlist_info_rename_button, '재생목록 이름 변경')

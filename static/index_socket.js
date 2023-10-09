@@ -116,16 +116,17 @@ socket.on('login', function(isSuccess) {
 	login_button.style.display = 'none'
 	login_remember_nick_holder.style.display = 'none'
 
-	donate_ranking_msg = '후원 랭킹 (2022. 10. 31)\n'
+	donate_ranking_msg = '후원 랭킹 (2023. 07. 15)\n'
 	+ '★ 0. Lily(샤르프로젝트) 님 ★\n' 
 	+ '☆ 0. 우뭇가사리 님 ☆\n' 
 	
 
 	// \n -> ', '
+	
 
 
 	var _index = 1
-	for(var e of ['다정이', '코코로', '콘파고', '헤은', '네모', 'eq', '얼랭', '엽떡조아', '누관검', '디아', '인공사', '다유', '고냥이지', '나낙고추', '돌고래대통령', 'pagolas', '클레이', '에양', 'POIU', '복', '코리밋', '샤르룽', '우엥', '페이커개인팬', '스프링', 'clown', 'dltmftka', '광삼', '강령군주', '고졸백수'])
+	for(var e of ['다정이', '코코로', '콘파고', 'eq', '인공사', '나낙고추', '헤은', '네모', '돌고래대통령', '얼랭', 'pagolas', '엽떡조아', '달마검', '누관검', '디아', '우엥', '다유', '고냥이지', '클레이', '에양', 'POIU', '페이커개인팬', '복', '코리밋', '샤르룽', '스프링', '복수의히카르도', 'clown', 'dltmftka', '광삼', '강령군주', '고졸백수'])
 	{
 		donate_ranking_msg += format('{0}. {1} 님\n', _index++, e)
 	}
@@ -186,6 +187,15 @@ socket.on('update_current_video', function(data) {
 	}
 	else
 		add_system_message('영상 끝')
+
+	
+	// 이번 영상만 음소거 처리
+	if(g_mute_video_id != '' && (!data || g_mute_video_id != data.video_id))
+	{
+		g_mute_video_id = ''
+		player.unMute()
+		video_info_volume_mute_once_btn.style.display = 'block'
+	}
 
 	if(!data || !data.video_id)
 	{

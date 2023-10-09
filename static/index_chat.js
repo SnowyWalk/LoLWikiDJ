@@ -579,7 +579,7 @@ function send(force_tts = false) {
 		return
 	}
 
-	if(message == '/clear' || message == '/CLEAR' || message == '/클리어')
+	if(message == '/clear' || message == '/CLEAR' || message == '/클리어' || message == '/c' || message == '/C' || message == '/ㅊ')
 	{
 		while(chat.hasChildNodes())
 			chat.removeChild(chat.lastChild)

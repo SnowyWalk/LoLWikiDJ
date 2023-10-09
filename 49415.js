@@ -372,6 +372,16 @@ io.sockets.on('connection', function(socket)
 			var comment = ''
 			if(!is_exist_secure) // 새로 등록
 			{
+				// 해외 아이피 차단
+				var country_code = await get_ip_country(socket_ip)
+				if(country_code != 'KR')
+				{
+					log('ERROR_CATCH', '해외 아이피 접속 시도', format('접속을 차단했습니다. ({0}) 지역 코드: {1} | 닉네임: {2}', socket_ip, country_code, socket.name))
+					socket.name = ''
+					socket.emit('ban', null)
+					return
+				}
+
 				await db_insert('Secures', ['IP', 'ConnectData'], [socket_ip, JSON.stringify([{Name: socket.name, ConnectCount: 1, CreationDate: current_date, LastLoginDate: current_date}])])
 				connectCount = 1
 			}
@@ -720,6 +730,10 @@ io.sockets.on('connection', function(socket)
 						tags : [],
 					}
 				}
+			}
+			else if(data.is_naver_video)
+			{
+
 			}
 			else
 				youtube_data = await request_youtube_video(data.video_id).then(parse_youtube_video_data)
@@ -2427,6 +2441,31 @@ function parse_youtube_playlist_data(query_result)
 	return {list: ret_video_id_list, nextPageToken: query_result.nextPageToken}
 }
 
+
+/* 유튜브 재생목록에 특정 곡 추가 */
+function youtube_playlist_insert(playlist_id, videoId_list)
+{
+	/*
+	{
+		"context": {
+			"client": {
+				"clientName": "WEB",
+				"clientVersion": "2.20230104.01.00"
+			}
+		},
+		"actions": [
+			{
+				"addedVideoId": "1-nzZI-OBIQ",
+				"action": "ACTION_ADD_VIDEO"
+			}
+		],
+		"playlistId": "PL7axKIpVlfRu8kegDzrz5UTOhGTNGwzN9"
+	}
+	*/
+
+
+}
+
 function db_select(columns, from, where, options = '')
 {
 	var query = format('SELECT {0} FROM {1} WHERE {2} {3}', columns, from, where, options)
@@ -2550,6 +2589,18 @@ async function make_tts(text, tts_hash, target_nick, voice_name)
 		for(var e in g_users_dic)
 			g_users_dic[e].socket.emit('tts', {file_name: file_name, target_nick: target_nick})
 	}
+}
+
+// 아이피에서 국가 추출
+async function get_ip_country(ip)
+{
+	return await request({ 
+		url: format('https://api.ip2location.io/?key=720B0AB5C946C899A269BFE6EA40A45A&ip={0}&format=json', ip),
+		method: 'GET', 
+		encoding: null })
+		.catch(err => console.log('get_ip_country error', err))
+		.then(JSON.parse)
+		.then(e => e['country_code'])
 }
 
 
@@ -2858,6 +2909,7 @@ async function lol_POST(url, body = {}) {
 	// await writeFile('asd.txt', a)
 	// return a
 }
+
 
 
 //////////////////////////////////////////////////////// Twitch ////////////////////////////////////////////////////////////////////////

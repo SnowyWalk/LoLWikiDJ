@@ -356,7 +356,7 @@ body {
   position: absolute;
   right: 0px;
   top: 0px;
-  width: 200px;
+  width: 246px;
   height: 25px;
   /* border-left: 1px solid;
   border-bottom: 1px solid; */
@@ -378,9 +378,23 @@ body {
   background-size: 100%;
   position: relative;
   height: 25px;
-  float: left;
+  float: right;
   width: 25px;
   cursor: pointer;
+  margin-right: 10px;
+}
+
+#video_info_volume_mute_once_btn {
+  background: url('mute_once2.png');
+  background-size: 100%;
+  position: relative;
+  height: 25px;
+  float: left;
+  width: 46px;
+  cursor: pointer;
+  background-repeat: no-repeat;
+  right: 10px;
+  margin-top: 5px;
 }
 
 #video_info_name {
@@ -528,6 +542,7 @@ body {
   border-bottom: 1px solid;
   border-right: 1px solid;
   border-color: var(--보더색);
+  background-color: var(--배경색);
 }
 
 /* Twitch 영상 */
@@ -564,6 +579,7 @@ body {
   border-right: 1px solid;
   border-bottom: 1px solid;
   border-color: var(--보더색);
+  text-shadow: 0px 0px 21px, rgb(0, 255, 170) 0px 0px 42px, rgb(0, 255, 170) 0px 0px 82px;
 }
 
 #marquee_screen {
@@ -1054,6 +1070,10 @@ temp[emoji] {
 .chat_balloon {
   padding-left: 7px;
   padding-right: 7px;
+  opacity: 0.4;
+  top: -0.15em;
+  animation: animateOverlay 0.5s forwards;
+  position: relative;
 }
 
 .chat_time {
@@ -2696,3 +2716,9 @@ temp[emoji] {
     opacity: 0;
   }
 }
+
+@keyframes animateOverlay {
+  to {
+opacity: 1;
+top: 0;
+} }
