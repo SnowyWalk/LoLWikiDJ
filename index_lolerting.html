@@ -1,0 +1,363 @@
+<html>
+	<title>LoLerTing</title>
+
+	<head>
+		<meta charset="UTF-8" />
+		<script src="/modules/socket.io.js"></script>
+		<script src="/static/jquery-1.11.1.js"></script>
+		<link
+			rel="shortcut icon"
+			href="/static/favicon.ico"
+			type="image/x-icon"
+		/>
+	</head>
+
+	<body>
+		<script>
+			let socket = io()
+			let stream_audio = null
+			let stream_screen = null
+			let is_host = false
+			let peer = null
+			let my_id = 0
+			let ufrag_map = {} // for host
+			let peer_map = {} // for host
+			const config = {
+				iceServers: JSON.parse(
+					'[{"urls":["stun:stun.l.google.com:19302"]}]'
+				),
+				iceTransportPolicy: 'all',
+				iceCandidatePoolSize: 0,
+			}
+			const offerOptions = {
+				offerToReceiveAudio: 1,
+				offerToReceiveVideo: 1
+			  }
+			const answerUfragReg = /a=ice-ufrag:(\S+)/
+			const candidateUfragReg = /ufrag (\S+)/
+
+			async function create_peer_for_guest() {
+				log('피어 생성')
+				peer = new RTCPeerConnection(config)
+				
+				peer.onicecandidate = (e) => {
+					//log('onice ' + peer.connectionState)
+					message = {}
+					message.candidate = null
+					if (e.candidate) {
+						message.candidate = e.candidate.candidate
+						message.sdpMid = e.candidate.sdpMid
+						message.sdpMLineIndex = e.candidate.sdpMLineIndex
+
+						log('candidate 발생: ' + JSON.stringify(message))
+						socket.emit('candidate', {message: message, id: 'host'})
+					}
+					else
+						log('candidate: null')
+				}
+				peer.ontrack = (e) => {
+					//log('ontrack ' + peer.connectionState)
+					console.log('peer에 트랙이 추가됨: ', e)
+					log('peer에 트랙이 추가됨: ' + e.track.kind)
+					if (e.track.kind == 'audio')
+					{
+						remote_audio.srcObject = e.streams[0]
+					}
+					else if (e.track.kind == 'video')
+						remote_video.srcObject = e.streams[0]
+					else log('알 수 없는 트랙!!', e)
+				}
+			}
+
+			async function create_peer_for_host() {
+				log('피어 생성')
+				var peer_host = new RTCPeerConnection(config)
+				
+				peer_host.onicecandidate = (e) => {
+					//log('onice ' + peer.connectionState)
+					message = {}
+					message.candidate = null
+					if (e.candidate) {
+						message.candidate = e.candidate.candidate
+						message.sdpMid = e.candidate.sdpMid
+						message.sdpMLineIndex = e.candidate.sdpMLineIndex
+
+						log('candidate 발생: ' + JSON.stringify(message))
+						var ufrag = candidateUfragReg.exec(message.candidate)[1]
+						log('onicecandidate. ufrag = ' + ufrag + ', id = ' + ufrag_map[ufrag])
+						socket.emit('candidate', {message: message, id: ufrag_map[ufrag]})
+					}
+					else
+						log('candidate: null')
+				}
+
+				if (useAudio.checked) {
+					await stream_audio
+						.getAudioTracks()
+						.forEach((e) => peer_host.addTrack(e, stream_audio))
+				}
+
+				if (useScreen.checked) {
+					await stream_screen
+						.getVideoTracks()
+						.forEach((e) => peer_host.addTrack(e, stream_screen))
+				}
+
+				return peer_host
+			}
+
+			socket.on('connect', async function () {
+				// await navigator.mediaDevices.getUserMedia({ audio: true }) // 권한 체크
+				var my_devices =
+					await navigator.mediaDevices.enumerateDevices()
+				my_devices.forEach((e) => {
+					if (e.kind != 'audioinput') return
+					var option = document.createElement('option')
+					option.text = e.label ? e.label : '(이름 없는 마이크)'
+					option.value = e.deviceId
+					devices.appendChild(option)
+				})
+			})
+
+			socket.on('userid', function (id) {
+				my_id = id
+			})
+
+			socket.on('current', function (data) {
+				while (user_ul.firstChild) user_ul.firstChild.remove()
+
+				for (var e of data.users) {
+					var li = document.createElement('li')
+					var text = e
+					if (e == data.host) text += ' (방장)'
+					if (e == my_id) text += ' (나)'
+					li.appendChild(document.createTextNode(text))
+					user_ul.appendChild(li)
+				}
+			})
+
+			async function onclick_host_declare() {
+				if(peer)
+					peer.close()
+				peer = null
+				host_declare.disabled = true
+				remote_audio.pause()
+				if(audioContext && audioContext.state == 'running')
+					audioContext.close()
+				log('호스트 선언')
+				is_host = true
+
+				try {
+					//await navigator.mediaDevices.getUserMedia({ audio: true })
+					log(
+						'마이크: ' +
+							useAudio.checked +
+							', 화면공유: ' +
+							useScreen.checked
+					)
+
+					if (useAudio.checked) {
+						stream_audio =
+							await navigator.mediaDevices.getUserMedia({
+								audio: {
+									optional: [
+										{
+											sourceId: devices.value,
+										},
+									],
+								},
+							})
+						local_audio.srcObject = stream_audio
+					}
+					if (useScreen.checked) {
+						stream_screen =
+							await navigator.mediaDevices.getDisplayMedia({
+								video: true,
+							})
+						local_video.srcObject = stream_screen
+					}
+
+					socket.emit('host_declare')
+				} catch (ex) {
+					log('권한을 얻지 못함. 호스팅 실패.')
+					console.log(ex)
+				}
+
+			}
+
+			// 다른 유저의 호스트 선언 받음
+			socket.on('host_declare', async function () {
+				for(var key in peer_map)
+					peer_map[key].close()
+				peer_map = {}
+				if(peer)
+					peer.close()
+				peer = null
+				host_declare.disabled = false
+				if(audioContext && audioContext.state == 'running')
+					audioContext.close()
+				is_host = false
+				if (!peer) await create_peer_for_guest()
+
+				// offer 만들어서 host에게 전송
+				log('다른 유저의 호스트 선언 받음')
+				var offer = await peer.createOffer(offerOptions)
+				console.log('peer.setLocalDescription(offer) -> ', offer)
+				await peer.setLocalDescription(offer)
+				log('호스트에게 Offer 보냄')
+				socket.emit('offer', offer)
+			})
+
+			socket.on('offer', async function (offer_data) { // for host
+				log('다른 유저의 Offer 받음 <- ' + offer_data.id)
+
+				peer_map[offer_data.id] = await create_peer_for_host()
+
+				var ufrag_offer = answerUfragReg.exec(offer_data.offer.sdp)[1]
+				ufrag_map[ufrag_offer] = offer_data.id
+				log('offer. ufrag_offer = ' + ufrag_offer + ', id = ' + offer_data.id)
+
+				console.log('peer.setRemoteDescription(offer_data.offer) -> ', offer_data.offer)
+
+				await peer_map[offer_data.id].setRemoteDescription(offer_data.offer)
+				var answer = await peer_map[offer_data.id].createAnswer()
+
+				console.log('peer.setLocalDescription(answer) -> ', answer)
+
+				var ufrag_answer = answerUfragReg.exec(answer.sdp)[1]
+				log('offer. ufrag_answer = ' + ufrag_answer + ', id = ' + offer_data.id)
+				ufrag_map[ufrag_answer] = offer_data.id
+
+				log('Answer 보냄 -> ' + offer_data.id)
+				await peer_map[offer_data.id].setLocalDescription(answer)
+				socket.emit('answer', { answer: answer, id: offer_data.id })
+			})
+
+			socket.on('answer', async function (answer) {
+				log('호스트의 Answer 받음')
+				console.log('peer.setRemoteDescription(answer)', answer)
+				//log('answer ' + peer.connectionState)
+				await peer.setRemoteDescription(answer)
+				//log('answer ' + peer.connectionState)
+			})
+
+			function log(message) {
+				var li = document.createElement('li')
+				li.appendChild(document.createTextNode(message))
+				log_ul.appendChild(li)
+			}
+
+			socket.on('candidate', async function (candidate) {
+				log('다른 피어로부터 candidate 받음:' + JSON.stringify(candidate))
+				//log('another peer candidate ' + peer.connectionState)
+				console.log('candidate', candidate)
+				delete candidate.id
+				if (candidate.candidate) {
+					if(is_host)
+					{
+						var ufrag_candidate = candidateUfragReg.exec(candidate.candidate)[1]
+						peer_map[ufrag_map[ufrag_candidate]].addIceCandidate(candidate)
+					}
+					else
+						await peer.addIceCandidate(candidate)
+				}
+				else {
+					log('이럴수는없다')
+					await peer.addIceCandidate()
+				}
+
+				
+			})
+
+
+			let audioContext = null
+			let feedbackNode = null
+			let delayNode = null
+			function add_echo()
+			{
+				console.log('onplay')
+				audioContext = new (AudioContext || webkitAudioContext)()
+				const sourceNode = audioContext.createMediaStreamSource(
+					remote_audio.srcObject
+				)
+
+				const mix = 0.5
+				var feedback = 0.35
+				var time = 0.15
+
+				const inputNode = audioContext.createGain()
+				const wetGainNode = audioContext.createGain()
+				const dryGainNode = audioContext.createGain()
+				feedbackNode = audioContext.createGain()
+				delayNode = audioContext.createDelay()
+				feedbackNode.gain.value = feedback
+				delayNode.delayTime.value = time
+				const outputNode = audioContext.createGain()
+
+				sourceNode.connect(inputNode)
+
+				// Dry 소스 노드 연결
+				inputNode.connect(dryGainNode)
+				dryGainNode.connect(outputNode)
+				dryGainNode.gain.value = 1 - mix
+
+				// Delay 루프 생성
+				delayNode.connect(feedbackNode)
+				feedbackNode.connect(delayNode)
+
+				// Wet 소스 노드 연결
+				inputNode.connect(delayNode)
+				delayNode.connect(wetGainNode)
+				wetGainNode.connect(outputNode)
+				wetGainNode.gain.vaule = mix
+
+				outputNode.connect(audioContext.destination)
+			}
+
+			function onfeedback()
+			{
+				feedback_label.firstChild.nodeValue = 'feedback volume : ' + feedback_slider.value
+				feedbackNode.gain.value = feedback_slider.value
+			}
+			
+			function ontime()
+			{
+				time_label.firstChild.nodeValue = 'echo delay : ' + time_slider.value
+				delayNode.delayTime.value = time_slider.value
+			}
+
+			function close_echo()
+			{
+				if(audioContext && audioContext.state == 'running')
+					audioContext.close()
+			}
+		</script>
+
+		<select id="devices"></select>
+		<input type="checkbox" id="useAudio" checked/><label for="useAudio"
+			>마이크 사용</label
+		>
+		<input type="checkbox" id="useScreen" /><label for="useScreen"
+			>화면공유 사용</label
+		>
+		<button id="host_declare" onclick="onclick_host_declare()">내가 방장이 되겠다</button>
+		<h1>참여자 목록</h1>
+		<ul id="user_ul"></ul>
+		<h1>메시지 로그</h1>
+		<ul id="log_ul"></ul>
+		<audio id="local_audio" controls="true"></audio>
+		<br/>
+		<audio id="remote_audio" controls="true" autoplay onplay="add_echo()" onpause="close_echo()" onloadeddata="remote_audio.play()"></audio>
+		<br/>
+		<input type="range" min="0.01" max="1" step="0.001" value="0.35" id="feedback_slider" onchange="onfeedback()" style="width:80%">
+		<label id="feedback_label" for="feedback_slider">feedback volume : 0.35</label>
+		<br/>
+		<input type="range" min="0.01" max="2" step="0.001" value="0.15" id="time_slider" onchange="ontime()" style="width:80%">
+		<label id="time_label" for="time_slider">echo delay : 0.15</label>
+		<br/>
+		<video id="local_video" muted autoplay playsinline></video>
+		<br/>
+		<video id="remote_video" muted autoplay playsinline></video>
+		<br/>
+	</body>
+</html>
