@@ -1,0 +1,51 @@
+<html>
+
+<head>
+    <meta charset="UTF-8">
+
+    <script>
+        function update_time() {
+            var cur_value = cur_key.value ? cur_key.value : 0
+            if(cur_value > 250)
+                cur_value = 250
+            const max_key = 250
+            var now = new Date()
+            now.setMilliseconds(1000)
+            var full_charge_date = new Date(now.getTime() + (max_key - cur_value) * 5 * 60 * 1000)
+            var left_date = new Date(full_charge_date.getTime() - now.getTime() + now.getTimezoneOffset() * 60000)
+            var is_same_day = full_charge_date.getDate() == now.getDate()
+            var left_hour = left_date.getHours()
+            var left_min = left_date.getMinutes()
+            var left_str = `${left_hour ? left_hour + '시간 ' : ''}${left_min}분` 
+            left_time.firstChild.nodeValue = `풀충전 시각: ${is_same_day ? '오늘' : '내일'} ${full_charge_date.getHours()}:${full_charge_date.getMinutes()} (남은 시간: ${left_str})`
+            cur_time.firstChild.nodeValue = `현재 시각: ${now.getHours()}:${now.getMinutes()}`
+        }
+
+        window.onload = function() {
+            cur_key.onchange = update_time
+            update_time()
+            setInterval(update_time, 100);
+        }
+
+    </script>
+</head>
+
+<body>
+    <div id="container1">
+        <div>현재 인증키:</div>
+        <input type="number" id="cur_key" value="0">
+        <div> / 250</div>
+    </div>
+    
+    <div>
+        <div id="left_time" style="color: red">-</div>
+        <div id="cur_time" style="color: blue">-</div>
+        <div style="margin-top: 25px">※ 30인증키 = 2시간 30분</div>
+        <div style="margin-top: 5px">※ 100인증키 = 8시간 20분</div>
+        <div style="margin-top: 5px">※ 250인증키 = 20시간 50분</div>
+        <div style="margin-top: 5px">※ 하루의 기준: 오전 5시</div>
+    </div>
+
+</body>
+
+</html>
