@@ -79,7 +79,7 @@ function onPlayerStateChange(event)
 		}
 		else
 		{
-			if(g_current_video_id && g_current_video_id.indexOf('.m3u8') == -1 && !g_current_is_twitch)
+			if(g_current_video_id && g_current_video_id.indexOf('.m3u8') == -1 && g_current_video_id.indexOf('.flv') == -1 && !g_current_is_twitch)
 				livechat_set_video_id(g_current_video_id) // 생방이면 라이브챗 켜기
 			else
 				livechat_hide()
@@ -90,7 +90,7 @@ function onPlayerStateChange(event)
 
 	 if(event.data == 2)
 	 {
-		 if(g_current_video_id && g_current_video_id.indexOf('.m3u8') == -1 && !g_current_is_twitch)
+		 if(g_current_video_id && g_current_video_id.indexOf('.m3u8') == -1 && g_current_video_id.indexOf('.flv') == -1 && !g_current_is_twitch)
 			player.playVideo()
 	 }
 
