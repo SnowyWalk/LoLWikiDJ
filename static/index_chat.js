@@ -409,7 +409,7 @@ function send(force_tts = false) {
 	{
 		var url = queueReg.exec(message)[2]
 		var video_id = ''
-		if(url.indexOf('.m3u8') >= 0)
+		if(url.indexOf('.m3u8') >= 0 || url.indexOf('.flv') >= 0)
 			video_id = url
 		else
 			video_id = youtube_url_parse(url)
@@ -422,7 +422,7 @@ function send(force_tts = false) {
 	{
 		var url = queueReg.exec(message)[2]
 		var video_id = ''
-		if(url.indexOf('.m3u8') >= 0)
+		if(url.indexOf('.m3u8') >= 0 || url.indexOf('.flv') >= 0)
 			video_id = url
 		else
 			video_id = youtube_url_parse(url)

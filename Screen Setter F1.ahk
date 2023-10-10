@@ -4,7 +4,7 @@ SendMode Input  ; Recommended for new scripts due to its superior speed and reli
 SetWorkingDir %A_ScriptDir%  ; Ensures a consistent starting directory.
 
 
-jsList := [8080, 8081, 8082, 8083, 1557, 1224, 49415, 3939, 1004, 1111, 2250, 1128, 5599, 4010, 1337, 8079, "'8078 neural'"]
+jsList := [8080, 8081, 8082, 8083, 1557, 1224, 49415, 3939, 1004, 1111, 2250, 1128, 5599, 4010, 1337, 8079, "'8078 neural'", "'9000 RTMP Server'"]
 
 ; 8080 메인채널
 ; 8081 메인채널2
@@ -22,7 +22,7 @@ jsList := [8080, 8081, 8082, 8083, 1557, 1224, 49415, 3939, 1004, 1111, 2250, 11
 ; 4010 개인채널 : pagolas
 ; 1337 공용채널
 ; 8079 컨트롤타워
-
+; 9000 RTMP Server
 
 f1::
 for i, e in jsList

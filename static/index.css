@@ -533,7 +533,7 @@ body {
 }
 
 /* m3u8 영상 */
-#m3u8_player {
+#m3u8_player, #flv_player {
   top:0px; 
   left:0px; 
   position: fixed;

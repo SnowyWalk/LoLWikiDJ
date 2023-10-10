@@ -117,6 +117,8 @@ function resize() {
 		player.setSize(window_width - mainchat_width, window_height - bottom_height)
 	m3u8_player.style.width = window_width - mainchat_width
 	m3u8_player.style.height = window_height - bottom_height
+	flv_player.style.width = window_width - mainchat_width
+	flv_player.style.height = window_height - bottom_height
 	twitch_player_panel.style.width = window_width - mainchat_width
 	twitch_player_panel.style.height = window_height - bottom_height
 
@@ -1054,11 +1056,13 @@ function onclick_video_info_volume_btn()
 	{
 		player.mute()
 		m3u8_player.muted = true
+		flv_player.muted = true
 	}
 	else
 	{
 		player.unMute()
 		m3u8_player.muted = false
+		flv_player.muted = false
 	}
 
 	update_video_volume()
@@ -1082,6 +1086,7 @@ function onchange_video_info_volume_slider()
 {
 	player.setVolume(video_info_volume_slider.value)
 	m3u8_player.volume = eval(video_info_volume_slider.value) / 100
+	flv_player.volume = eval(video_info_volume_slider.value) / 100
 }
 
 function update_video_volume()
