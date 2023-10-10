@@ -209,12 +209,10 @@ socket.on('update_current_video', function(data) {
 		// player.cueVideoById('')
 		// player.stopVideo()
 		SetVideoBlock(true)
-		if(player)
-			player.pauseVideo()
-		m3u8_player.src = ''
-		m3u8_player.pause()
-		if(g_twitch_player)
-			g_twitch_player.pause()
+		youtube_player_toggle(false)
+		twitch_player_toggle(false)
+		m3u8_player_toggle(false)
+		flv_player_toggle(false)
 		update_current_video_name()
 		livechat_hide()
 		return
@@ -236,33 +234,44 @@ socket.on('update_current_video', function(data) {
 
 	if(data.video_id.indexOf('.m3u8') >= 0)
 	{
-		m3u8_player.style.display = 'block'
+		twitch_player_toggle(false)
+		m3u8_player_toggle(true)
+		flv_player_toggle(false)
+
 		m3u8_player.volume = eval(video_info_volume_slider.value) / 100
 		if(player)
 			m3u8_player.muted = player.isMuted() 
 		g_hls.loadSource(data.video_id)
 		g_hls.attachMedia(m3u8_player)
-		if(player)
-		{
-			player.pauseVideo()
-			video_player.style.display = 'none'
-		}
+		
+		youtube_player_toggle(false)
+	}
+	else if(data.video_id.indexOf('.flv') >= 0)
+	{
+		youtube_player_toggle(false)
+		twitch_player_toggle(false)
+		m3u8_player_toggle(false)
+		flv_player_toggle(true)
 
-		if(g_twitch_ready)
-			g_twitch_player.pause()
-		twitch_player_panel.style.display = 'none'
+		flv_player.volume = eval(video_info_volume_slider.value) / 100
+		if(player)
+			flv_player.muted = player.isMuted() 
+		g_flv = flvjs.createPlayer({
+			type: 'flv',
+			url: data.video_id // 'https://lolwiki.xyz:9002/live/1224.flv'
+		})
+		g_flv.attachMediaElement(flv_player)
+		g_flv.load()
+		g_flv.play()
+
+		SetVideoBlock(!g_current_video_id)
 	}
 	else if(data.is_twitch)
 	{
-		m3u8_player.style.display = 'none'
-		m3u8_player.src = ''
-		m3u8_player.pause()
-
-		if(player)
-		{
-			player.pauseVideo()
-			video_player.style.display = 'none'
-		}
+		youtube_player_toggle(false)
+		twitch_player_toggle(true)
+		m3u8_player_toggle(false)
+		flv_player_toggle(false)
 
 		if(g_twitch_ready)
 		{
@@ -286,25 +295,76 @@ socket.on('update_current_video', function(data) {
 			}, 100);
 		}
 		SetVideoBlock(!g_current_video_id)
-		twitch_player_panel.style.display = 'block'
 	}
 	else
 	{
-		m3u8_player.style.display = 'none'
-		m3u8_player.src = ''
-		m3u8_player.pause()
-
-		if(g_twitch_ready)
-			g_twitch_player.pause()
-		twitch_player_panel.style.display = 'none'
+		youtube_player_toggle(true)
+		twitch_player_toggle(false)
+		m3u8_player_toggle(false)
+		flv_player_toggle(false)
 
 		if(player)
 		{
-			video_player.style.display = 'block'
 			player.cueVideoById(data.video_id, seek_time_s, document.querySelector('[name=video_quality]:checked').value)
 		}
 	}
 })
+
+function youtube_player_toggle(enable)
+{
+	if(enable == false)
+	{
+		if(player)
+		{
+			player.pauseVideo()
+			video_player.style.display = 'none'
+		}
+		return
+	}
+
+	if(player)
+	{
+		video_player.style.display = 'block'
+	}
+}
+function twitch_player_toggle(enable)
+{
+	if(enable == false)
+	{
+		if(g_twitch_ready)
+			g_twitch_player.pause()
+		twitch_player_panel.style.display = 'none'
+		return
+	}
+
+	twitch_player_panel.style.display = 'block'
+}
+function m3u8_player_toggle(enable)
+{
+	if(enable == false)
+	{
+		m3u8_player.style.display = 'none'
+		m3u8_player.src = ''
+		m3u8_player.pause()
+		return
+	}
+
+	m3u8_player.style.display = 'block'
+}
+function flv_player_toggle(enable)
+{
+	if(enable == false)
+	{
+		m3u8_player.src = ''
+		flv_player.pause()
+		flv_player.style.display = 'none'
+		return
+	}
+
+	flv_player.style.display = 'block'
+}
+
+
 
 function play_twitch()
 {

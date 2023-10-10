@@ -69,6 +69,7 @@ handleDisconnect();
 
 app.use('/fonts', express.static('./static/fonts'))
 app.use('/ftp', express.static('./ftp'))
+app.use('/emoticon', express.static('./static/emoticon'))
 app.use('/static', express.static('./static'))
 app.use('/icon', express.static('./static/icon'))
 app.use('/tts', express.static('./tts'))
@@ -128,6 +129,9 @@ var tts_dic = {
 	somnyang: { locale: 'AYQVIQBLJHA', provider: 'lovo' },
 }
 
+/* RTSP 스트림 */
+
+
 // app.get('/static/fonts/*', function(request, response, next) {
 // 	response.header( "Access-Control-Allow-Origin", "*")
 // })
@@ -136,7 +140,7 @@ var tts_dic = {
 app.get('/', async function(request, response, next) {
 	if(!request.headers.host) // 봇 쳐내
 	{
-		console.log('봇 감지\n')
+		console.log('봇 ㄲㅈ\n')
 		return
 	}
 
@@ -698,6 +702,18 @@ io.sockets.on('connection', function(socket)
 					title : '* 스포티비 LIVE *',
 					author: '',
 					thumbnail_url : '/static/%ec%86%90%ed%9d%a5%eb%af%bc.gif',
+					duration : 0,
+					embeddable : true,
+					tags : [],
+				}
+			}
+			else if(data.video_id.indexOf('.flv') >= 0)
+			{
+				var random_num = String(Math.floor(Math.random() * 37)+1).padStart(2, '0')
+				youtube_data = {
+					title : '* 개인방송 LIVE *',
+					author: '',
+					thumbnail_url : format('/emoticon/lessy_{0}.jpg', random_num),
 					duration : 0,
 					embeddable : true,
 					tags : [],

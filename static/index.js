@@ -33,6 +33,7 @@ var g_hls = new Hls() // m3u8 플레이어용
 var g_twitch_player = null
 var g_twitch_ready = false
 var g_twitch_timer_handle = 0
+var g_flv = '' // flv 플레이어용
 
 var g_mute_video_id = '' // 이번 영상 음소거 (음소거할 대상 아이디가 들어가고, 다른 아이디 검출 시 볼륨 켜고 초기화한다.)
 
