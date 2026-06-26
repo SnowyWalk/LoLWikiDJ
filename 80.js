@@ -1,13 +1,13 @@
 /* 공지말 */
-var g_port = 2250
-var g_notice = '서버 개설일자: 2022-02-11\n소유자: 김네모'
+var g_port = 80
+var g_notice = '(공지) 롤디 주소 변경 : lolwiki.xyz'
 
 /* 설치한 express 모듈 불러오기 */
 const express = require('express')
 /* 설치한 socket.io 모듈 불러오기 */
 const socket = require('socket.io')
 /* Node.js 기본 내장 모듈 불러오기 */
-const https = require('https')
+const http = require('http')
 /* Node.js 기본 내장 모듈 불러오기 */
 const fs = require('fs')
 /* express 객체 생성 */
@@ -17,12 +17,9 @@ app.set('maxHttpBufferSize', 1e8)
 var cors = require('cors')
 app.use(cors())
 /* express http 서버 생성 */
-const server = https.createServer({
-	key: fs.readFileSync('/etc/letsencrypt/live/lolwiki.xyz/privkey.pem'),
-	cert: fs.readFileSync('/etc/letsencrypt/live/lolwiki.xyz/fullchain.pem')
-}, app)
+const server = http.createServer(app)
 /* 생성된 서버를 socket.io에 바인딩 */
-const io = socket(server, {maxHttpBufferSize: 5e7, pingTimeout: 120 * 1000})
+const io = socket(server, {maxHttpBufferSize: 2e7, pingTimeout: 120 * 1000})
 /* os */
 const os = require('os')
 /* API 요청 모듈 불러오기 */
@@ -38,16 +35,9 @@ var converter = new showdown.Converter()
 const textToSpeech = require('@google-cloud/text-to-speech');
 const util = require('util');
 const tts_client = new textToSpeech.TextToSpeechClient();
-/* JSON 유틸 */
-const jsonic = require('jsonic');
-const JSON5 = require('json5');
 /* mysql 서버 */
 const mysql = require('mysql')
-var db_config = JSON5.parse(fs.readFileSync('db_config.txt', 'utf-8'))
-var twitch_config = JSON5.parse(fs.readFileSync('twitch_config.txt', 'utf-8'))
-var danbooru_config = JSON5.parse(fs.readFileSync('danbooru_config.txt', 'utf-8'))
-
-var g_master_ip = '118.129.199.135'
+var db_config = JSON.parse(fs.readFileSync('db_config.txt', 'utf-8'))
 
 async function handleDisconnect() {
 	db = mysql.createConnection(db_config);
@@ -73,14 +63,10 @@ async function handleDisconnect() {
 handleDisconnect();
 
 app.use('/fonts', express.static('./static/fonts'))
-app.use('/ftp', express.static('./ftp'))
-app.use('/emoticon', express.static('./static/emoticon'))
 app.use('/static', express.static('./static'))
 app.use('/icon', express.static('./static/icon'))
 app.use('/tts', express.static('./tts'))
 app.use('/patch_note', express.static('./patch_note'))
-app.use('/modules', express.static('./node_modules/socket.io/client-dist'))
-app.use('/.well-known/acme-challenge', express.static('./.well-known/acme-challenge'))
 
 /* CONSTANT */
 const ipReg = /((?:\d+\.){3}\d+)/
@@ -97,7 +83,6 @@ var g_video_author = ''
 var g_video_duration = 0
 var g_played_time_ms = 0 // ms
 var g_end_timer = null
-var g_video_is_twitch = false
 
 /* DJ 순서 목록 */
 var g_djs = []
@@ -134,9 +119,6 @@ var tts_dic = {
 	somnyang: { locale: 'AYQVIQBLJHA', provider: 'lovo' },
 }
 
-/* RTSP 스트림 */
-
-
 // app.get('/static/fonts/*', function(request, response, next) {
 // 	response.header( "Access-Control-Allow-Origin", "*")
 // })
@@ -144,10 +126,7 @@ var tts_dic = {
 /* Get 방식으로 / 경로에 접속하면 실행 됨 */
 app.get('/', async function(request, response, next) {
 	if(!request.headers.host) // 봇 쳐내
-	{
-		console.log('봇 ㄲㅈ\n')
 		return
-	}
 
 	try
 	{
@@ -199,88 +178,6 @@ app.get('/patch_note', async function(request, response, next) {
 	}
 })
 
-app.get('/test', async function(request, response, next) {
-	if(!request.headers.host) // 봇 쳐내
-		return
-
-	try
-	{
-		var data = await read_file_async('test.html')
-		var text = data.toString()
-					.replace(/\$_localhost/g, 'http://' + request.headers.host.substr(0, request.headers.host.length-5))
-					.replace(/\$_port/g, g_port)
-
-		response.writeHead(200, {'Content-Type':'text/html'})
-		response.write(text)
-		response.end()
-
-		console.log(request.query.uri)
-	}
-	catch (exception)
-	{
-		log_exception('app.get test', exception)
-		response.send('서버가 고장남!!! Kakao ID: AnsanSuperstar 로 문의하세요' + '<p><p>에러 내용 : <p>' + format('<p>Name : {0}<p>ERROR : {1}<p>Message : {2}<p>Stack : {3}', exception.name, exception.err, exception.message, exception.stack))
-	}
-})
-
-app.get('/attendants', async function(request, response, next) {
-	if(!request.headers.host) // 봇 쳐내
-		return
-
-	try
-	{
-		// [{icon: '~.png', nick: '설보'}]
-		response.send( Object.keys(g_users_dic).map( x => ({ icon: 'icon/' + g_users_dic[x].icon_id + '.png?ver=' + g_users_dic[x].icon_ver, nick: x })))
-	}
-	catch (exception)
-	{
-		log_exception('app.get attendants', exception)
-		response.send('서버가 고장남!!! Kakao ID: AnsanSuperstar 로 문의하세요' + '<p><p>에러 내용 : <p>' + format('<p>Name : {0}<p>ERROR : {1}<p>Message : {2}<p>Stack : {3}', exception.name, exception.err, exception.message, exception.stack))
-	}
-})
-
-app.get('/lolwiki_mirror', async function(req, res, next) {
-	if(!req.query || !req.query.uri)
-		return
-
-	try
-	{
-		var img = await request({
-			url: decodeURI(req.query.uri), 
-			headers: headers, 
-			method: 'GET', 
-			encoding: null })
-		res.end(img)
-	}
-	catch (exception)
-	{	
-		log_exception('app.get lolwiki_mirror', exception)
-		var xbox = await read_image_async('static/xbox.jpg')
-		res.end(xbox)
-	}
-})
-
-app.get('/lolwiki_mirror/*', async function(req, res, next) {
-	if(!req.query || !req.query.uri)
-		return
-
-	try
-	{
-		var img = await request({
-			url: decodeURI(req.query.uri), 
-			headers: headers, 
-			method: 'GET', 
-			encoding: null })
-		res.end(img)
-	}
-	catch (exception)
-	{	
-		log_exception('app.get lolwiki_mirror', exception)
-		var xbox = await read_image_async('static/xbox.jpg')
-		res.end(xbox)
-	}
-})
-
 function stat_file_async(file_name)
 {
 	return new Promise(function (resolve, reject) {
@@ -294,15 +191,6 @@ function read_file_async(file_name)
 {
 	return new Promise(function (resolve, reject) {
 		fs.readFile(file_name, 'utf8', function(err, data) {
-			err ? reject(err) : resolve(data)
-		})
-	})
-}
-
-function read_image_async(file_name)
-{
-	return new Promise(function (resolve, reject) {
-		fs.readFile(file_name, function(err, data) {
 			err ? reject(err) : resolve(data)
 		})
 	})
@@ -326,10 +214,10 @@ io.sockets.on('connection', function(socket)
 		}
 
 		// 중복 로그인 검사 
-		var socket_ip = socket.handshake.headers['x-forwarded-for'].match(ipReg)[1]
+		var socket_ip = socket.handshake.address.match(ipReg)[1]
 		if(socket.name in g_users_dic)
 		{
-			if(g_users_dic[socket.name].ip == socket_ip) // 동일 아이피에서 로그인 했다면 그냥 기존 연결 끊고 새로 연결 -> 2022.08.04 https연결로 아이피체크 제거
+			if(g_users_dic[socket.name].ip == socket_ip) // 동일 아이피에서 로그인 했다면 그냥 기존 연결 끊고 새로 연결
 			{
 				log('INFO', '중복 로그인 교체 연결', socket.name)
 				var dest_socket = g_users_dic[socket.name].socket
@@ -381,16 +269,6 @@ io.sockets.on('connection', function(socket)
 			var comment = ''
 			if(!is_exist_secure) // 새로 등록
 			{
-				// 해외 아이피 차단
-				// var country_code = await get_ip_country(socket_ip)
-				// if(country_code != 'KR')
-				// {
-				// 	log('ERROR_CATCH', '해외 아이피 접속 시도', format('접속을 차단했습니다. ({0}) 지역 코드: {1} | 닉네임: {2}', socket_ip, country_code, socket.name))
-				// 	socket.name = ''
-				// 	socket.emit('ban', null)
-				// 	return
-				// }
-
 				await db_insert('Secures', ['IP', 'ConnectData'], [socket_ip, JSON.stringify([{Name: socket.name, ConnectCount: 1, CreationDate: current_date, LastLoginDate: current_date}])])
 				connectCount = 1
 			}
@@ -398,7 +276,7 @@ io.sockets.on('connection', function(socket)
 			{
 				comment = secureData[0].Comment
 				// 해당 Name이 존재하는지 체크
-				secureData = JSON5.parse(secureData[0].ConnectData)
+				secureData = JSON.parse(secureData[0].ConnectData)
 
 				var thisSecureData = null
 				for(var e of secureData)
@@ -488,9 +366,6 @@ io.sockets.on('connection', function(socket)
 	/* 새로운 유저가 접속했을 경우 다른 소켓에게도 알려줌 */
 	socket.on('chat_newUser', function() 
 	{
-		if(!socket.name)
-			return
-
 		log('INFO', 'chat_newUser', format('\'{0}\' 님이 접속하였습니다.', socket.name))		
 		log('INFO', 'users', format('참가자 목록 ({0})\n{1}', Object.keys(g_users_dic).length, Object.keys(g_users_dic).map( x => format('{0} ({1})', x, g_users_dic[x].ip)).join(', ')))
 
@@ -531,14 +406,14 @@ io.sockets.on('connection', function(socket)
 
 	/* 접속 종료 */
 	socket.on('disconnect', function() {
+		if(!socket.name)
+			return
+
 		disconnect_process(socket)
 	})
 
 	function disconnect_process(socket)
 	{
-		if(!socket.name)
-			return
-
 		if(socket.name in g_users_dic == false)
 			return
 
@@ -565,11 +440,8 @@ io.sockets.on('connection', function(socket)
 	}
 
 	socket.on('refresh', function(nick) {
-		if(!socket.name)
-			return
-
 		log('INFO', 'refresh', format('Refresh 시도 : {0}({1}) -> {2}', socket.name, g_users_dic[socket.name].ip, nick))
-		if(g_users_dic[socket.name].ip != g_master_ip)
+		if(g_users_dic[socket.name].ip != '125.180.24.71')
 		{
 			log('ERROR_CATCH', 'refresh', '아이피 인증 실패!')
 			return
@@ -582,14 +454,11 @@ io.sockets.on('connection', function(socket)
 	})
 
 	socket.on('eval', function(data) {
-		if(!socket.name)
-			return
-
 		var nick = data.nick
 		var code = data.code
 
 		log('INFO', 'eval', format('Eval 시도 : {0}({1}) -> {2} to {3}', socket.name, g_users_dic[socket.name].ip, nick, code))
-		if(g_users_dic[socket.name].ip != g_master_ip)
+		if(g_users_dic[socket.name].ip != '125.180.24.71')
 		{
 			log('ERROR_CATCH', 'eval', '아이피 인증 실패!')
 			return
@@ -602,13 +471,10 @@ io.sockets.on('connection', function(socket)
 	})
 
 	socket.on('evalall', function(code) {
-		if(!socket.name)
-			return
-
 		var targets_nick = Object.keys(g_users_dic)
 		log('INFO', 'evalall', format('Eval All 시도 : {0}({1}) -> All({2}) to {3}', socket.name, g_users_dic[socket.name].ip, targets_nick.join(', '), code))
 
-		if(g_users_dic[socket.name].ip != g_master_ip)
+		if(g_users_dic[socket.name].ip != '125.180.24.71')
 		{
 			log('ERROR_CATCH', 'evalall', '아이피 인증 실패!')
 			return
@@ -623,9 +489,6 @@ io.sockets.on('connection', function(socket)
 	})
 
 	socket.on('volcheck', function(data) {
-		if(!socket.name)
-			return
-
 		var target_nick = data.target_nick
 		var message = data.message
 
@@ -638,19 +501,15 @@ io.sockets.on('connection', function(socket)
 	})
 
 	// 서버 디버그용 eval
-	socket.on('debug', async function(code) {
-		if(!socket.name)
-			return
-
+	socket.on('debug', function(code) {
 		log('INFO', 'debug', format('Eval 시도 : {0}({1}) -> {2}', socket.name, g_users_dic[socket.name].ip, code))
-		if(g_users_dic[socket.name].ip != g_master_ip)
+		if(g_users_dic[socket.name].ip != '125.180.24.71')
 		{
 			log('ERROR_CATCH', 'debug', '아이피 인증 실패!')
 			return
 		}
 
-		// eval(code)
-		eval('(async _ => { ' + code + '})()')
+		eval(code)
 	})
 
 	socket.on('check_user', function(nick) {
@@ -660,7 +519,7 @@ io.sockets.on('connection', function(socket)
 			return
 		}
 
-		if(g_users_dic[nick].ip != socket.handshake.headers['x-forwarded-for'].match(ipReg)[1])
+		if(g_users_dic[nick].ip != socket.handshake.address.match(ipReg)[1])
 		{
 			socket.emit('check_user', false) // 원래는 이미 존재한다고 해야하지만, 용도가 교체 로그인 체크이므로 false 반환.
 			return
@@ -700,64 +559,7 @@ io.sockets.on('connection', function(socket)
 
 		try
 		{
-			var youtube_data = null
-			if(data.video_id.indexOf('.m3u8') >= 0)
-			{
-				youtube_data = {
-					title : '* 스포티비 LIVE *',
-					author: '',
-					thumbnail_url : '/static/%ec%86%90%ed%9d%a5%eb%af%bc.gif',
-					duration : 0,
-					embeddable : true,
-					tags : [],
-				}
-			}
-			else if(data.video_id.indexOf('.flv') >= 0)
-			{
-				var random_num = String(Math.floor(Math.random() * 37)+1).padStart(2, '0')
-				youtube_data = {
-					title : '* 개인방송 LIVE *',
-					author: '',
-					thumbnail_url : format('/emoticon/lessy_{0}.jpg', random_num),
-					duration : 0,
-					embeddable : true,
-					tags : [],
-				}
-			}
-			else if(data.is_twitch)
-			{
-				if(data.video_id.startsWith('videos/')) // 영상
-				{
-					var video_id = data.video_id.replace('videos/', '')
-					var twitch_data2 = await twitch_get_video_info(video_id) 
-					youtube_data = {
-						title : twitch_data2.title,
-						author: twitch_data2.author,
-						thumbnail_url : twitch_data2.thumbnail_url,
-						duration : twitch_data2.duration,
-						embeddable : true,
-						tags : [],
-					}
-				}
-				else
-				{
-					var twitch_data2 = await twitch_get_stream_info(data.video_id)
-					youtube_data = {
-						title : twitch_data2.title,
-						author: twitch_data2.author,
-						thumbnail_url : twitch_data2.thumbnail_url,
-						duration : 0,
-						embeddable : true,
-						tags : [],
-					}
-				}
-			}
-			else if(data.is_naver_video)
-			{
-
-			}
-			else
-				youtube_data = await request_youtube_video(data.video_id).then(parse_youtube_video_data)
+			var youtube_data = await request_youtube_video(data.video_id).then(parse_youtube_video_data)
 
 			log('INFO', 'queue', format('{0} 이(가) {1} ({2}) 예약 {3}', socket.name, youtube_data.title, parse_second_to_string(youtube_data.duration), data.video_id))
 			if(!g_video_id)
@@ -770,7 +572,6 @@ io.sockets.on('connection', function(socket)
 				g_video_thumbnail = youtube_data.thumbnail_url
 				g_video_duration = youtube_data.duration
 				g_played_time_ms = Date.now()
-				g_video_is_twitch = data.is_twitch
 	
 				// 영상 종료 타이머 설정
 				if(g_video_duration != 0)
@@ -783,7 +584,7 @@ io.sockets.on('connection', function(socket)
 			}
 			else
 			{
-				g_queue.push( { dj: data.dj, video_id: data.video_id, data: youtube_data, is_twitch: data.is_twitch } )
+				g_queue.push( { dj: data.dj, video_id: data.video_id, data: youtube_data } )
 
 				// 모두에게 플레이 대기열 알림
 				update_current_queue(io.sockets)
@@ -792,22 +593,12 @@ io.sockets.on('connection', function(socket)
 		catch (exception)
 		{
 			log_exception('queue', exception)
-			if(data.is_twitch)
-			{
-				io.sockets.emit('chat_update', {type:'system_message', time: GetTime(), message: '트위치 영상 조회 에러!'})
-			}
-			else
-			{
-				io.sockets.emit('chat_update', {type:'system_message', time: GetTime(), message: '유튜브 영상 조회 에러!'})
-			}
+			io.sockets.emit('chat_update', {type:'system_message', time: GetTime(), message: '유튜브 영상 조회 에러!'})
 		}
 	}
 
 	/* 현재 플레이 대기열 목록 알려주기 */
 	socket.on('queue_list', function() {
-		if(!socket.name)
-			return
-
 		update_current_queue(socket, true)
 	})
 
@@ -846,7 +637,6 @@ io.sockets.on('connection', function(socket)
 			g_video_thumbnail = response_data.thumbnail_url
 			g_video_duration = response_data.duration
 			g_played_time_ms = Date.now()
-			g_video_is_twitch = data.is_twitch
 
 			// 영상 종료 타이머 설정
 			if(g_video_duration != 0)
@@ -866,9 +656,6 @@ io.sockets.on('connection', function(socket)
 
 	/* 현재 재생중인 영상 정보 요청 */
 	socket.on('playing', function() {
-		if(!socket.name)
-			return
-
 		var seekTime = (Date.now() - g_played_time_ms) / 1000
 		if(seekTime < 0)
 			seekTime = 0
@@ -928,18 +715,12 @@ io.sockets.on('connection', function(socket)
 
 	/* deprecated: 참가자 목록 요청 */
 	socket.on('users', function() {
-		if(!socket.name)
-			return
-
 		log('INFO', 'users', format('참가자 목록 ({0})\n{1}', Object.keys(g_users_dic).length, Object.keys(g_users_dic).map( x => format('{0} ({1})', x, g_users_dic[x].ip)).join(', ')))
 		update_users()
 	})
 
 	/* DJ 목록 요청 */
 	socket.on('djs', function() {
-		if(!socket.name)
-			return
-
 		socket.emit('djs', {data: format('디제잉 목록 ({0})\n{1}', g_djs.length, g_djs.map((x, i) => format('{0}. {1}', i+1, x)).join('\n'))})  
 	})
 
@@ -1024,7 +805,7 @@ io.sockets.on('connection', function(socket)
 		{
 			await db_beginTransaction()
 
-			var my_playlists = await db_select('Playlists', 'Accounts', format('Name LIKE "{0}"', socket.name), 'LIMIT 1').then(ret => ret[0].Playlists).then(JSON5.parse)
+			var my_playlists = await db_select('Playlists', 'Accounts', format('Name LIKE "{0}"', socket.name), 'LIMIT 1').then(ret => ret[0].Playlists).then(JSON.parse)
 			my_playlists.splice(my_playlists.indexOf(playlist_id), 1)
 
 			await db_update('Accounts', format('Playlists = "{0}"', JSON.stringify(my_playlists)), format('Name LIKE "{0}"', socket.name))
@@ -1068,7 +849,7 @@ io.sockets.on('connection', function(socket)
 			await db_beginTransaction()
 
 			// 재생목록을 가져오고 해당 영상이 있는지 체크
-			var video_list = await db_select('VideoList', 'Playlists', format('Id = {0}', data.playlist_id)).then(ret => ret[0].VideoList).then(JSON5.parse)
+			var video_list = await db_select('VideoList', 'Playlists', format('Id = {0}', data.playlist_id)).then(ret => ret[0].VideoList).then(JSON.parse)
 			var dest_count = video_list.filter(x => x == data.video_id).length
 			if(dest_count == 0)
 				throw {message: format('플레이리스트에 해당 영상이 없음. {0} not in {1}', data.video_id, JSON.stringify(video_list))}
@@ -1103,12 +884,9 @@ io.sockets.on('connection', function(socket)
 
 	/* 재생 목록 셔플 */
 	socket.on('shuffle', async function(playlist_id) {
-		if(!socket.name)
-			return
-
 		try
 		{
-			var video_list = await db_select('VideoList', 'Playlists', format('Id = {0}', playlist_id), 'LIMIT 1') .then(ret => ret[0].VideoList).then(JSON5.parse)
+			var video_list = await db_select('VideoList', 'Playlists', format('Id = {0}', playlist_id), 'LIMIT 1') .then(ret => ret[0].VideoList).then(JSON.parse)
 			shuffle(video_list)
 			await db_update('Playlists', format('VideoList = "{0}"', JSON.stringify(video_list)), format('Id = {0}', playlist_id))
 
@@ -1122,9 +900,6 @@ io.sockets.on('connection', function(socket)
 
 	/* 비디오 순서 변경 (위아래) */
 	socket.on('change_video_order', async function(data) {
-		if(!socket.name)
-			return
-
 		/* 
 		{
 			playlist_id: 플레이리스트 아이디, 
@@ -1146,7 +921,7 @@ io.sockets.on('connection', function(socket)
 
 		try
 		{
-			var video_list = await db_select('VideoList', 'Playlists', format('Id = {0}', data.playlist_id)).then(ret => ret[0].VideoList).then(JSON5.parse)
+			var video_list = await db_select('VideoList', 'Playlists', format('Id = {0}', data.playlist_id)).then(ret => ret[0].VideoList).then(JSON.parse)
 			if(video_list.length <= 1)
 				return
 
@@ -1238,7 +1013,7 @@ io.sockets.on('connection', function(socket)
 			var failed = result.filter(x => !x.Id && !x.Name)
 
 			// 재생목록에 이미 있는 영상인지 중복체크
-			var cur_videos = await db_select('VideoList', 'Playlists', format('Id = {0}', playlist_id), 'LIMIT 1').then(e => e[0].VideoList).then(JSON5.parse)
+			var cur_videos = await db_select('VideoList', 'Playlists', format('Id = {0}', playlist_id), 'LIMIT 1').then(e => e[0].VideoList).then(JSON.parse)
 			var duplicated = successed.filter(x => cur_videos.indexOf(x.Id) != -1)
 			if(duplicated.length > 0)
 				successed = successed.filter(x => !duplicated.find(y => y.Id == x.Id))
@@ -1356,9 +1131,6 @@ io.sockets.on('connection', function(socket)
 	})
 
 	socket.on('ping', function() {
-		if(!socket.name)
-			return
-
 		socket.emit('ping')
 	})
 
@@ -1369,62 +1141,21 @@ io.sockets.on('connection', function(socket)
 	})
 
 	var zzalReg = /<picture>.*?srcset="(https?\:\/\/(?:cdn|danbooru)\.donmai\.us\/(?:data\/)?(?:sample|original).*?)"/i
-	var zzalGifReg = /<video.*?id="image".*?src="(.*?)"/i
 	var zzalUrlReg = /<link rel="canonical" href="(.*?)">/
-	var recent_zzals = [] // [ { date: new Date(), url: 'https://danbooru.donmai.us/posts/51851711' }, ... ]
 	socket.on('zzal', async function(tag) {
-		if(!socket.name)
-			return
-
 		load_danbooru_zzal(tag)
 	})
 
-	var danbooru_filter_reg = />(muscular male|mountain \(arknights\))</gi
 	async function load_danbooru_zzal(tag, retry_count = 0) {
 		try
 		{
 			tag = tag.replace(/ /g, '_')
-			await request(format('https://{0}:{1}@danbooru.donmai.us/posts/random?tags={2}', danbooru_config.id, danbooru_config.token, tag))
+			await request(format('https://danbooru.donmai.us/posts/random?tags={0}', tag))
 				.then( ret => {
-					ret = ret.replace(/\r/g, ' ').replace(/\n/g, ' ')
 					url = zzalUrlReg.exec(ret)[1]
 					console.log('zzal url : ' + url)
-
-					var cur_date = new Date()
-					for(var i=0; i<recent_zzals.length; ++i)
-					{
-						var this_data = recent_zzals[i]
-						if(cur_date - this_data.date >= 3 * 60 * 1000) // 3분
-						{
-							recent_zzals.shift()
-							--i;
-							continue;
-						}
-
-						if(this_data.url == url)
-							throw '중뷁' + url
-					}
-					recent_zzals.push({ date: cur_date, url: url })
-
-
-					// if(ret.indexOf('You need a gold account to see') >= 0)
-					// {
-					// 	log_exception('zzal', {}, format('https://danbooru.donmai.us/posts/random?tags={0} need gold account !!', tag))
-					// }
-
-					if(danbooru_filter_reg.test(ret))
-						throw '금지어 컷 : ' + danbooru_filter_reg.exec(ret)[1]
-
-					if(zzalReg.test(ret))
-					{
-						ret = zzalReg.exec(ret)[1]
-						io.sockets.emit('chat_update', { type: 'system_message', message: format('/img {0} {1}?tags={2}', ret, url, tag) })
-					}
-					else
-					{
-						ret = zzalGifReg.exec(ret)[1]
-						io.sockets.emit('chat_update', { type: 'system_message', message: format('/video {0} {1}?tags={2}', ret, url, tag) })
-					}
+					ret = zzalReg.exec(ret)[1]
+					io.sockets.emit('chat_update', { type: 'system_message', message: format('/img {0} {1}?tags={2}', ret, url, tag) })
 				})
 				.catch( exception => { throw exception } )
 		}
@@ -1435,7 +1166,7 @@ io.sockets.on('connection', function(socket)
 				io.sockets.emit('chat_update', { type: 'system_message', message: format('{0} 짤 검색결과 없음!', tag) })
 				return
 			}
-			log_exception('zzal', exception,format('https://{0}:{1}@danbooru.donmai.us/posts/random?tags={2}', danbooru_config.id, danbooru_config.token, tag))
+			log_exception('zzal', exception, format('https://danbooru.donmai.us/posts/random?tags={0}', tag))
 			
 			if(retry_count < 5)
 			{
@@ -1448,17 +1179,7 @@ io.sockets.on('connection', function(socket)
 		}
 	}
 
-	socket.on('zzal_clear', function () {
-		if(!socket.name)
-			return
-
-		recent_zzals = []
-	})
-
 	socket.on('icon_register', async function(image_data) {
-		if(!socket.name)
-			return
-
 		try
 		{
 			if(image_data.startsWith('data:image/'))
@@ -1484,17 +1205,11 @@ io.sockets.on('connection', function(socket)
 	})
 
 	socket.on('test_begin', async function() {
-		if(!socket.name)
-			return
-
 		io.sockets.emit('chat_update', {type: 'system_message', message: 'begin 진입한다'})
 		var ret = await db_query('BEGIN')
 		io.sockets.emit('chat_update', {type: 'system_message', message: 'begin 성공 ' + JSON.stringify(ret)})
 	})
 	socket.on('test_commit', async function() {
-		if(!socket.name)
-			return
-
 		io.sockets.emit('chat_update', {type: 'system_message', message: 'commit 진입한다'})
 		var ret = await db_query('COMMIT')
 		io.sockets.emit('chat_update', {type: 'system_message', message: 'commit 성공 ' + JSON.stringify(ret)})
@@ -1502,9 +1217,6 @@ io.sockets.on('connection', function(socket)
 
 	/* TEST: 인스턴트 쿼리 */
 	socket.on('query', function(query) {
-		if(!socket.name)
-			return
-
 		db.query(query, (error, result) => { 
 				error ? console.log(error) : console.log(result)
 				io.sockets.emit('chat_update', {type:'system_message', message: result})
@@ -1513,9 +1225,6 @@ io.sockets.on('connection', function(socket)
 
 	/* TEST: 영상 정보 요청 */
 	socket.on('request_video_info', async function(video_id) {
-		if(!socket.name)
-			return
-
 		try {
 			var response_data = await request_youtube_video(video_id)
 			.then(JSON.stringify)
@@ -1529,24 +1238,17 @@ io.sockets.on('connection', function(socket)
 	})
 
 	socket.on('tts', async function(data) {
-		if(!socket.name)
-			return
-
 		log('INFO', 'TTS', format('{0} make tts ({1}, {2}) : {3}', socket.name, data.tts_hash, data.voice_name, data.text))
 		make_tts(data.text, data.tts_hash, socket.name, data.voice_name)
 	})
 
 
 	socket.on('ad', function(message) {
-		if(!socket.name)
-			return
-
 		var hRate = Math.random()
 		log('INFO', 'AD', format('{0} make ad : {1}', socket.name, message))
 		io.sockets.emit('ad', { message: message, hRate: hRate })
 	})
 
-	var reg_ext = /^data:image\/(.*?);/
 	socket.on('image_blob', async function(blob) {
 		if(!socket.name)
 			return
@@ -1559,24 +1261,21 @@ io.sockets.on('connection', function(socket)
 
 		try
 		{
-			var ext = reg_ext.exec(blob.substr(0, 20))[1]
-			image_data = blob.replace(/^data:image\/.*?;base64,/, "")
-			var length = image_data.length
+			image_data = blob.replace(/^data:image\/png;base64,/, "")
 			const writeFile = util.promisify(fs.writeFile)
-			var filename = format('{0}_{1}.' + ext, GetDateForFilename(), Math.round(Math.random() * 10000000))
-			log('INFO', 'image_blob', format('{0}({1}) makes image -> {2} ({3})', socket.name, g_users_dic[socket.name].ip, filename, get_file_size_from_length(length)))
+			var filename = format('{0}_{1}.png', GetDateForFilename(), Math.round(Math.random() * 10000000))
 			await writeFile(format('static/images/{0}', filename), image_data, 'base64')
 			
 			var data = {
 				type: 'message',
-				message: format('{0} /img static/images/{1}', get_file_size_from_length(length), filename),
+				message: format('/img static/images/{0}', filename),
 				name: socket.name,
 				time: GetTime(),
 				icon_id: g_users_dic[socket.name].icon_id,
-				icon_ver: g_users_dic[socket.name].icon_ver,
-				is_blob: true
+				icon_ver: g_users_dic[socket.name].icon_ver
 			}
 
+			log('INFO', 'image_blob', format('{0}({1}) makes image -> {2}', socket.name, g_users_dic[socket.name].ip, filename))
 
 			io.sockets.emit('chat_update', data)
 		}
@@ -1585,15 +1284,6 @@ io.sockets.on('connection', function(socket)
 			log_exception('image_blob', blob, blob.substr(0, 10))
 		}
 	})
-
-	function get_file_size_from_length(length) {
-		if(length < 1024 * 1024) // 1MB보다 작으면 -> KB로 표기
-		{
-			return (Math.floor(length / 1024 * 100) / 100).toString() + " KB"
-		}
-
-		return (Math.floor(length / 1024 / 1024 * 100) / 100).toString() + " MB"
-	}
 
 
 	/* ============================== 롤백 on =================================== */
@@ -1633,16 +1323,6 @@ io.sockets.on('connection', function(socket)
 		var ret = await lol_get_article_detail(android_id, post_seq)
 		var replys = await lol_get_article_replys(android_id, post_seq)
 		ret['replys'] = replys
-		// var writer_android_id = await lol_get_android_id_from_article(post_seq)
-		// ret['android_id'] = writer_android_id
-
-		// 현재 글이 북마크인지 아닌지 체크
-		if(android_id != client_guest_android_id)
-		{
-			var res = await db_select('post_seq', 'LoLWikiArchive', format('Owner like "{0}" AND post_seq like "{1}"', android_id, post_seq), 'LIMIT 1')
-			if(res.length > 0)
-				ret.isBookmarked = true
-		}
 
 		socket.emit('data', ret)
 
@@ -1651,9 +1331,6 @@ io.sockets.on('connection', function(socket)
 
 	/* 롤백 계정 인증 요청 */
 	socket.on('lol_auth_request', async function(post_seq) {
-		if(!socket.name)
-			return
-			
 		var this_android_id = await lol_get_android_id_from_article(post_seq)
 
 		log('INFO', 'lol_auth_request', format('{0} 가 계정인증 요청 -> {1}', socket.name, this_android_id))
@@ -1753,11 +1430,10 @@ io.sockets.on('connection', function(socket)
 		var body = data.body
 		var youtube_url = data.youtube_url
 		var image = data.image
-		var is_gif = data.is_gif
 		
 		log('INFO', 'lol_write', format('{0}가 {1} 계정으로 글 작성 -> 제목: {2}, 내용: {3}, 유튜브주소: {4} {5}', socket.name, android_id, subject.replace('\n', '\\n'), body.replace('\n', '\\n'), youtube_url, (image ? '(짤 첨부)' : '')))
 
-		await lol_write(android_id, subject, body, youtube_url, image, is_gif)
+		await lol_write(android_id, subject, body, youtube_url, image)
 
 		socket.emit('lol_write')
 	})
@@ -1796,142 +1472,12 @@ io.sockets.on('connection', function(socket)
 
 		log('INFO', 'lol_icon_change', format('{0}가 {1} 계정으로 아이콘 변경 요청', socket.name, android_id))
 
-		var user_info = await lol_get_user_info(android_id)
-		if(eval(user_info['point']) < 1500 && false)
-		{
-			log('INFO', 'lol_icon_change', format('스택 부족으로 취소 ({0})', user_info['point']))
-			return
-		}
-
 		await lol_icon_change(android_id, image)
 
-		user_info = await lol_get_user_info(android_id)
+		var user_info = await lol_get_user_info(android_id)
 		socket.emit('lol_user_info', user_info)
 	})
 
-	socket.on('lol_bookmark', async function(data) {
-		var post_data = data.data // post_seq, post_title, replys 등...
-		var isRegister = data.isRegister // or delete
-		var android_id = data.android_id
-
-		if(android_id == client_guest_android_id)
-			return
-
-		log('INFO', 'lol_bookmark', format('{0} 이 {1}번 글을 북마크 {2} : {3}', android_id, post_data.post_seq, isRegister ? "" : "해제", post_data.post_title))
-		
-		if(isRegister)
-		{
-			await db_insert('LoLWikiArchive', ['Owner', 'post_seq', 'icon_img', 'badge_use', 'post_title', 
-				'nickname', 'post_date', 'likes', 'replys', 'youtube_url', 'doodlr', 'pic_new', 'pic_multi', 'post_text', 'views', 'doodlrurls', 'fixedpic', 'stack', 'reply_cnt'], 
-				[ android_id, post_data.post_seq, post_data.icon_img, post_data.badge_use, post_data.post_title, 
-					post_data.nickname, post_data.post_date, post_data.likes, JSON.stringify(post_data.replys), post_data.youtube_url, 
-					post_data.doodlr, post_data.pic_new, post_data.pic_multi, post_data.post_text, post_data.views, post_data.doodlrurls, post_data.fixedpic, post_data.stack, post_data.reply_cnt ])
-		}
-		else // delete
-		{
-			await db_query(format('DELETE FROM `LoLWikiDJ_DB`.`LoLWikiArchive` WHERE (`Owner` = "{0}" AND `post_seq` = "{1}") LIMIT 1', android_id, post_data.post_seq))
-		}
-	})
-
-	socket.on('lol_query_bookmark_list', async function(data) {
-		var android_id = data.android_id
-		var offset = data.offset
-		var count = data.count
-
-		if(android_id == client_guest_android_id)
-			return
-
-		log('INFO', 'lol_bookmark', format('{0} 이 북마크 목록 요청 seq: {1}, cnt: {2}', android_id, offset, count))
-
-		var res = await db_select( ['Owner', 'post_seq', 'icon_img', 'badge_use', 'post_title', 
-			'nickname', 'post_date', 'likes', 'reply_cnt', 'youtube_url', 'doodlr', 'pic_new', 'pic_multi', 'views'], 'LoLWikiArchive', 
-			format('`Owner` LIKE "{0}"', android_id), format('ORDER BY `No` DESC LIMIT {0} OFFSET {1}', count, offset))
-
-		socket.emit('lol_bookmark_list', res)
-	})
-
-	socket.on('lol_query_bookmark_archived', async function(data) {
-		var android_id = data.android_id
-		var post_seq = data.post_seq
-
-		if(android_id == client_guest_android_id)
-			return
-
-		log('INFO', 'lol_bookmark', format('{0} 이 북마크 아카이브 요청 seq: {1}', android_id, post_seq))
-
-		var ret = await db_select( ['post_seq', 'icon_img', 'badge_use', 'post_title', 
-		'nickname', 'post_date', 'likes', 'replys', 'youtube_url', 'doodlr', 'pic_new', 'pic_multi', 'post_text', 'views', 'doodlrurls', 'fixedpic', 'stack'], 'LoLWikiArchive', 
-		format('`Owner` LIKE "{0}" AND `post_seq` LIKE "{1}"', android_id, post_seq), 'LIMIT 1').then(ret => ret[0])
-
-		// 현재 글이 북마크인지 아닌지 체크
-		var res = await db_select('post_seq', 'LoLWikiArchive', format('`Owner` LIKE "{0}" AND `post_seq` LIKE "{1}"', android_id, post_seq), 'LIMIT 1')
-		if(res.length > 0)
-			ret.isBookmarked = true
-
-		socket.emit('data', ret)
-		socket.emit('lol_bookmark_archived', ret)
-	})
-
-	socket.on('lol_login_instantly', async function(android_id) {
-		var user_info = await lol_get_user_info(android_id)
-		if(!user_info)
-		{
-			socket.emit('lol_login', null)
-			log('ERROR', 'lol_login_instantly', `${socket.name} 이 롤디자게 코드 로그인 시도 : ${android_id}`)
-			return
-		}
-		socket.emit('lol_login', [android_id, user_info]) // 인증성공
-	
-		await db_update('Secures', format("android_id = '{0}'", android_id), format('IP = "{0}"', g_users_dic[socket.name].ip))		
-	})
-
-	socket.on('lol_get_user_memos', async function(android_id) {
-		var user_memos = await lol_get_user_memos(android_id)
-		socket.emit('lol_get_user_memos', user_memos) // {'안드아이디': '메모'}
-	})
-
-	socket.on('lol_query_article_writer_android_id', async function(data) {
-		var android_id = data.android_id
-		var post_seq = data.post_seq
-
-		var writer_android_id = await lol_get_android_id_from_article(post_seq)
-		socket.emit('lol_query_article_writer_android_id', writer_android_id)
-	})
-
-	socket.on('lol_update_user_memo', async function(data) {
-		var android_id = data.android_id
-		var post_seq = data.post_seq
-		var memo = data.memo
-
-		log('INFO', 'lol_update_user_memo', data)
-		
-		try
-		{
-			var writer_android_id = await lol_get_android_id_from_article(post_seq)
-
-			// 만약 이 유저의 메모 정보가 없으면 레코드를 추가
-			var is_exist_record = await db_query(`SELECT EXISTS (SELECT android_id FROM LoLWikiMemos WHERE android_id LIKE "${android_id}" LIMIT 1) as success`)
-				.then(e => e[0])
-				.then(JSON.stringify)
-				.then(JSON5.parse)
-				.then(e => e['success'])
-				
-			if(!is_exist_record)
-			{
-				log('INFO', 'lol_update_user_memo', 'new record created.')
-				await db_insert('LoLWikiMemos', ['android_id', 'UserMemos'], [android_id, '{}'])
-			}
-
-			await db_update('LoLWikiMemos', format('UserMemos = JSON_SET(UserMemos, \'$."{0}"\', "{1}")', writer_android_id, memo), format('android_id LIKE "{0}"', android_id))
-				.catch(err => log_exception('lol_update_user_memo - db update', err.err, data))
-			var user_memos = await lol_get_user_memos(android_id)
-			socket.emit('lol_get_user_memos', user_memos) // {'안드아이디': '메모'}
-		}
-		catch (exception)
-		{
-			log_exception('lol_update_user_memo', exception, data)
-		}
-	})
 }) 
 
 function update_users()
@@ -2054,9 +1600,9 @@ function format()
 	return arguments[0].replace (/\{(\d+)\}/g, function (match, index) { return args[index]; }); 
 }
 
-var regH = /(\d+)H/i
-var regM = /(\d+)M/i
-var regS = /(\d+)S/i
+var regH = /(\d+)H/
+var regM = /(\d+)M/
+var regS = /(\d+)S/
 function parse_duration_to_second(pt_time)
 {
 	var h = 0
@@ -2103,7 +1649,6 @@ async function end_of_video() {
 		g_video_title = next_queue_data.data.title
 		g_video_author = next_queue_data.data.author
 		g_played_time_ms = Date.now()
-		g_video_is_twitch = next_queue_data.is_twitch
 
 		// 영상 종료 타이머 설정
 		if(g_video_duration != 0)
@@ -2127,7 +1672,7 @@ async function end_of_video() {
 			g_djs.push(this_dj) // 맨 뒤에 다시 추가
 
 			var playlist_id = await db_select('CurrentPlaylist', 'Accounts', format('Name LIKE "{0}"', this_dj), 'LIMIT 1').then(ret => ret[0].CurrentPlaylist)
-			var video_list = await db_select('VideoList', 'Playlists', format('Id = {0}', playlist_id), 'LIMIT 1').then(ret => ret[0].VideoList).then(JSON5.parse)
+			var video_list = await db_select('VideoList', 'Playlists', format('Id = {0}', playlist_id), 'LIMIT 1').then(ret => ret[0].VideoList).then(JSON.parse)
 
 			// 만약 재생목록이 비어있다면 -> 자동으로 대기열에서 퇴출
 			if(video_list.length == 0)
@@ -2158,7 +1703,6 @@ async function end_of_video() {
 			g_video_title = video_info.Name
 			g_video_author = video_info.Author
 			g_played_time_ms = Date.now()
-			g_video_is_twitch = false
 
 			// 영상 종료 타이머 설정
 			if(g_video_duration != 0)
@@ -2191,7 +1735,6 @@ async function end_of_video() {
 		g_video_duration = 0
 		g_video_title = ''
 		g_video_author = ''
-		g_video_is_twitch = false
 		io.sockets.emit('update_current_video', null)
 	}
 
@@ -2214,7 +1757,6 @@ function update_current_video(dest_socket)
 		title: g_video_title,
 		duration: g_video_duration,
 		thumbnail: g_video_thumbnail,
-		is_twitch: g_video_is_twitch,
 		seek_s: g_video_duration > 0 ? ((Date.now() - g_played_time_ms - 1000) / 1000) : 999999999
 	})
 }
@@ -2249,17 +1791,17 @@ async function update_playlist(socket, show_playlist_id = 0) // show_playlist_id
 	{
 		// 해당 계정의 재생목록ID 전체를 가져옴
 		var acccount_data = await db_select('Playlists, CurrentPlaylist', 'Accounts', format('Name LIKE "{0}"', socket.name), 'LIMIT 1').then( (ret) => ret[0] )
-		var current_playlist = JSON5.parse(acccount_data.CurrentPlaylist)
-		var playlist_id_list = JSON5.parse(acccount_data.Playlists)
+		var current_playlist = JSON.parse(acccount_data.CurrentPlaylist)
+		var playlist_id_list = JSON.parse(acccount_data.Playlists)
 
 		// 해당 재생목록들의 내용을 가져옴 [ { Name:내 재생목록, VideoList:[2134,2345,12,1] } , ... ]
-		var playlist_info_list = await db_select('Id, Name, VideoList', 'Playlists', format('Id IN ({0})', playlist_id_list.join(', '))).then(JSON.stringify).then(JSON5.parse)
+		var playlist_info_list = await db_select('Id, Name, VideoList', 'Playlists', format('Id IN ({0})', playlist_id_list.join(', '))).then(JSON.stringify).then(JSON.parse)
 
 		// VideoList의 원소들을 모은다 (Videos DB에 한번에 요청하기 위해)
 		video_index_list = []
 		for(var e of playlist_info_list)
 		{
-			e.VideoList = JSON5.parse(e.VideoList)
+			e.VideoList = JSON.parse(e.VideoList)
 			video_index_list.push(...e.VideoList)
 		}
 		video_index_list = [...new Set(video_index_list)] // 중복 제거
@@ -2268,7 +1810,7 @@ async function update_playlist(socket, show_playlist_id = 0) // show_playlist_id
 		if(video_index_list.length > 0)
 		{
 			// Videos DB에 비디오 정보를 한번에 조회
-			var video_info_list = await db_select('Id, Name, VideoId, Length, Thumbnail, Author', 'Videos', format('Id IN ({0})', video_index_list.join(', '))).then(JSON.stringify).then(JSON5.parse)
+			var video_info_list = await db_select('Id, Name, VideoId, Length, Thumbnail, Author', 'Videos', format('Id IN ({0})', video_index_list.join(', '))).then(JSON.stringify).then(JSON.parse)
 
 			// Video 정보를 Dic형태로 재구성
 			for(var e of video_info_list)
@@ -2311,7 +1853,7 @@ async function add_to_likeplaylist(nick, video_id)
 		// var failed = result.filter(x => !x.Id && !x.Name)
 
 		// 재생목록에 이미 있는 영상인지 중복체크
-		var cur_videos = await db_select('VideoList', 'Playlists', format('Id = {0}', likeplaylist_id), 'LIMIT 1').then(e => e[0].VideoList).then(JSON5.parse)
+		var cur_videos = await db_select('VideoList', 'Playlists', format('Id = {0}', likeplaylist_id), 'LIMIT 1').then(e => e[0].VideoList).then(JSON.parse)
 		var duplicated = successed.filter(x => cur_videos.indexOf(x.Id) != -1)
 		if(duplicated.length > 0)
 			successed = successed.filter(x => !duplicated.find(y => y.Id == x.Id))
@@ -2369,9 +1911,6 @@ function set_timeout_end_of_video()
 
 function parse_second_to_string(sec) 
 {
-	if(!sec)
-		return "LIVE"
-
 	sec = Math.round(sec)
 	var h = Math.floor(sec / 3600)
 	sec -= h * 60 * 60
@@ -2410,7 +1949,7 @@ function request_youtube_video(video_id)
 {
 	return new Promise(function(resolve, reject) {
 		var url = 'https://www.googleapis.com/youtube/v3/videos'
-		var key = 'AIzaSyCc6I69iM7R0owlMMYLnGRuFAzstkXHuFA'
+		var key = 'AIzaSyARG5pgayIj8ghL0hwzrNL_3pl-QeRQYMc'
 		var part = 'id,snippet,contentDetails,status'
 		var hl = 'ko'
 		var regionCode = 'KR'
@@ -2420,7 +1959,7 @@ function request_youtube_video(video_id)
 			if(err)
 				reject({message: 'request_youtube_video(' + video_id + ')', err: err, youtube_query_error: true})
 			else
-				resolve(JSON5.parse(body))
+				resolve(JSON.parse(body))
 		})
 	})
 }
@@ -2444,13 +1983,13 @@ function request_youtube_playlist(playlist_id, pageToken = '')
 {
 	return new Promise(function(resolve, reject) {
 		var url = 'https://www.googleapis.com/youtube/v3/playlistItems'
-		var key = 'AIzaSyCc6I69iM7R0owlMMYLnGRuFAzstkXHuFA'
+		var key = 'AIzaSyARG5pgayIj8ghL0hwzrNL_3pl-QeRQYMc'
 		var part = 'contentDetails'
 		var maxResults = 50
 		var requestUrl = format('{0}?key={1}&part={2}&maxResults={3}&playlistId={4}&pageToken={5}', url, key, part, maxResults, playlist_id, pageToken)
 		g_last_query = requestUrl
 		request(requestUrl, function(err, response, body) {
-			err ? reject({message: 'request_youtube_playlist(' + playlist_id + ')', err: err}) : resolve(JSON5.parse(body))
+			err ? reject({message: 'request_youtube_playlist(' + playlist_id + ')', err: err}) : resolve(JSON.parse(body))
 		})
 	})
 }
@@ -2460,31 +1999,6 @@ function parse_youtube_playlist_data(query_result)
 	for(var item of query_result.items)
 		ret_video_id_list.push(item.contentDetails.videoId)
 	return {list: ret_video_id_list, nextPageToken: query_result.nextPageToken}
-}
-
-
-/* 유튜브 재생목록에 특정 곡 추가 */
-function youtube_playlist_insert(playlist_id, videoId_list)
-{
-	/*
-	{
-		"context": {
-			"client": {
-				"clientName": "WEB",
-				"clientVersion": "2.20230104.01.00"
-			}
-		},
-		"actions": [
-			{
-				"addedVideoId": "1-nzZI-OBIQ",
-				"action": "ACTION_ADD_VIDEO"
-			}
-		],
-		"playlistId": "PL7axKIpVlfRu8kegDzrz5UTOhGTNGwzN9"
-	}
-	*/
-
-
 }
 
 function db_select(columns, from, where, options = '')
@@ -2612,18 +2126,6 @@ async function make_tts(text, tts_hash, target_nick, voice_name)
 	}
 }
 
-// 아이피에서 국가 추출
-async function get_ip_country(ip)
-{
-	return await request({ 
-		url: format('https://api.ip2location.io/?key=720B0AB5C946C899A269BFE6EA40A45A&ip={0}&format=json', ip),
-		method: 'GET', 
-		encoding: null })
-		.catch(err => console.log('get_ip_country error', err))
-		.then(JSON5.parse)
-		.then(e => e['country_code'])
-}
-
 
 /* ========================================== 롤백 =============================================================== */
 
@@ -2633,7 +2135,7 @@ async function lol_get_new_memo(socket, android_id)
 	var res = await lol_POST('http://lolwiki.kr/freeboard/get_new_memo.php',
 		{ boardid: 'freeboard', 'android_id': android_id })
 		.catch(err => console.log('lol_get_article_list error', err))
-		.then(JSON5.parse)
+		.then(JSON.parse)
 
 		// {"status":"OK","num_results":"1","results":[{"new_memo":"0"}]}
 	if(res && eval(res.num_results) == 1 && eval(res.results[0].new_memo) != 0)
@@ -2643,18 +2145,15 @@ async function lol_get_new_memo(socket, android_id)
 /* 글 목록 검색 */
 async function lol_get_article_list(socket, android_id, seq = 0, cnt = 30, search_body = '', search_nick = '', search_vote = false, search_mine = false)
 {
-	// var articles = await lol_POST('http://lolwiki.kr/freeboard/get_post.php', 
-	// 	{ boardid: 'freeboard', android_id: android_id, seq: seq, search: search_body, cnt: cnt, isvote: search_vote, iszzal: false, ismine: search_mine, nickSearch: search_nick } )
-	// 	.catch(err => console.log('lol_get_article_list error', err))
-	// 	.then(res => res.replace(/\r/g, ''))
-	// 	.then(res => res.replace(/\n/g, '\\r\\n'))
-	// 	.then(res => res.replace(/\},\]/g, '}]'))
-	// 	.then(res => res.replace(/%/g, '％'))
+	var articles = await lol_POST('http://lolwiki.kr/freeboard/get_post.php', 
+		{ boardid: 'freeboard', android_id: android_id, seq: seq, search: search_body, cnt: cnt, isvote: search_vote, iszzal: false, ismine: search_mine, nickSearch: search_nick } )
+		.catch(err => console.log('lol_get_article_list error', err))
+		.then(res => res.replace(/\r/g, ''))
+		.then(res => res.replace(/\n/g, '\\r\\n'))
+		.then(res => res.replace(/\},\]/g, '}]'))
 
-	// console.log(articles)
-
-	// const writeFile = util.promisify(fs.writeFile)
-	// await writeFile('asd.txt', articles)
+	const writeFile = util.promisify(fs.writeFile)
+	await writeFile('asd.txt', articles)
 		
 	articles = await lol_POST('http://lolwiki.kr/freeboard/get_post.php', 
 		{ boardid: 'freeboard', android_id: android_id, seq: seq, search: search_body, cnt: cnt, isvote: search_vote, iszzal: false, ismine: search_mine, nickSearch: search_nick } )
@@ -2662,7 +2161,7 @@ async function lol_get_article_list(socket, android_id, seq = 0, cnt = 30, searc
 		.then(res => res.replace(/\r/g, ''))
 		.then(res => res.replace(/\n/g, '\\r\\n'))
 		.then(res => res.replace(/\},\]/g, '}]'))
-		.then(JSON5.parse)
+		.then(JSON.parse)
 		.catch(err => console.log('lol_get_article_list JSON parse error', err))
 
 	if(android_id != client_guest_android_id && socket) // 회원 전용
@@ -2695,7 +2194,7 @@ async function lol_get_article_detail(android_id, seq)
 		.then(res => res.replace(/'/g, '"'))
 		.then(res => res.replace(/&lt;/g, '<'))
 		.then(res => res.replace(/&gt;/g, '>'))
-		.then(JSON5.parse)
+		.then(JSON.parse)
 		.then(e => e['results'][0])
 	
 	return { post_title: detail['post_title'],
@@ -2729,7 +2228,7 @@ async function lol_get_article_replys(android_id, post_seq)
 		.then(res => res.replace(/\r/g, ' '))
 		.then(res => res.replace(/\n/g, ' '))
 		.then(res => res.replace(/'/g, '"'))
-		.then(JSON5.parse)
+		.then(JSON.parse)
 
 	return reply['results']
 }
@@ -2767,25 +2266,16 @@ async function lol_get_lulu_comment(android_id)
 	return lol_lulu_comment_reg.exec(html)[1]
 }
 
-async function lol_get_user_memos(android_id)
-{
-	var a = await db_select('UserMemos', 'LoLWikiMemos', `android_id LIKE "${android_id}"`, 'LIMIT 1')
-	if(a.length == 0)
-		return {}
-	return JSON5.parse(a[0]['UserMemos'])
-}
-
 /* 내 정보 얻어오기 */
 async function lol_get_user_info(android_id)
 {
 	var ret = await lol_POST('http://lolwiki.kr/freeboard/get_userinfo_new.php', 
 		{ boardid: 'freeboard', android_id: android_id })
-		.then(JSON5.parse)
+		.then(JSON.parse)
 		.then(e => e['results'][0])
 
 	return ret
 }
-
 
 /* 닉네임 변경 */
 async function lol_change_nickname(android_id, new_nick)
@@ -2835,36 +2325,16 @@ async function lol_delete_reply(android_id, post_seq, reply_seq)
 }
 
 /* 글 쓰기 */
-async function lol_write(android_id, subject, body, youtube_url, image='', is_gif=false)
+async function lol_write(android_id, subject, body, youtube_url, image='')
 {
 	var image_filename = '' 
 	if(image.length > 0)
 	{
-		image_filename = lol_make_image_filename(is_gif)
-
-		if(is_gif)
-		{
-			await request.post({ 
-				url: 'http://lolwiki.kr/freeboard/uploads/UploadToServer_new.php', 
-				headers: { 'Content-Type': 'multipart/form-data;boundary=*****' }, 
-				method: 'POST', 
-				formData: {
-					uploaded_file: {
-						value: image,
-						options: image_filename
-					}
-				}, 
-				encoding: null })
-				.catch(err => console.log('lol_POST_gif error', err))
-				// .then(e => iconv.decode(e, 'euc-kr'))
-		}
-		else
-		{
-			await lol_POST('http://lolwiki.kr/freeboard/uploads/php_upload_new.php',
-				{ image: image, 
-					file_name: image_filename,
-					doodlr: 0 })
-		}
+		image_filename = lol_make_image_filename()
+		var res = await lol_POST('http://lolwiki.kr/freeboard/uploads/php_upload_new.php',
+			{ image: image, 
+				file_name: image_filename,
+				doodlr: 0 })
 	}
 
 	await lol_POST('http://lolwiki.kr/freeboard/insert_post_multi_2020.php',
@@ -2891,13 +2361,13 @@ async function lol_icon_change(android_id, image)
 			android_id: android_id })
 }
 
-function lol_make_image_filename(is_gif = false)
+function lol_make_image_filename()
 {
 	// return 'img_-9189942_20220117111041.jpg'
 	// img_1171380_20220116182050.jpg
 	var random_code_7 = get_random_code(7)
 	var now = new Date().toFormat('YYYYMMDDHH24MISS')
-	return format('img_{0}_{1}.{2}', random_code_7, now, is_gif ? 'gif' : 'jpg')
+	return format('img_{0}_{1}.jpg', random_code_7, now)
 }
 
 /* 글 삭제 */
@@ -2932,107 +2402,4 @@ async function lol_POST(url, body = {}) {
 	// const writeFile = util.promisify(fs.writeFile)
 	// await writeFile('asd.txt', a)
 	// return a
-}
-
-
-
-//////////////////////////////////////////////////////// Twitch ////////////////////////////////////////////////////////////////////////
-
-async function twitch_get_access_token()
-{
-	var ret = await request({ 
-		url: 'https://id.twitch.tv/oauth2/token', 
-		headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, 
-		method: 'POST', 
-		qs: {'client_id': twitch_config[0].client_id, 'client_secret': twitch_config[0].secret, 'grant_type': 'client_credentials'}, 
-		encoding: null })
-	return JSON5.parse(ret.toString()).access_token
-}
-
-async function twitch_get_video_info(video_id)
-{
-	var access_token = await twitch_get_access_token()
-	var ret = await request({ 
-		url: 'https://api.twitch.tv/helix/videos?id=' + video_id, 
-		headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'Client-Id': twitch_config[0].client_id, 'Authorization': 'Bearer ' + access_token }, 
-		method: 'GET', 
-		qs: { }, 
-		encoding: null }).then(JSON5.parse).then(e => e.data[0])
-
-		return { author: ret.user_name, 
-			title: ret.title, 
-			thumbnail_url: ret.thumbnail_url.replace('%{width}', 1196).replace('%{height}', 896),  
-			duration: parse_duration_to_second(ret.duration)
-		}
-
-	/*
-		{
-			"data": [
-				{
-				"id": "335921245",
-				"stream_id": null,
-				"user_id": "141981764",
-				"user_login": "twitchdev",
-				"user_name": "TwitchDev",
-				"title": "Twitch Developers 101",
-				"description": "Welcome to Twitch development! Here is a quick overview of our products and information to help you get started.",
-				"created_at": "2018-11-14T21:30:18Z",
-				"published_at": "2018-11-14T22:04:30Z",
-				"url": "https://www.twitch.tv/videos/335921245",
-				"thumbnail_url": "https://static-cdn.jtvnw.net/cf_vods/d2nvs31859zcd8/twitchdev/335921245/ce0f3a7f-57a3-4152-bc06-0c6610189fb3/thumb/index-0000000000-%{width}x%{height}.jpg",
-				"viewable": "public",
-				"view_count": 1863062,
-				"language": "en",
-				"type": "upload",
-				"duration": "3m21s",
-				"muted_segments": [
-					{
-					"duration": 30,
-					"offset": 120
-					}
-				]
-				}
-			],
-			"pagination": {}
-		}
-	*/
-}
-
-async function twitch_get_stream_info(channel)
-{
-	var access_token = await twitch_get_access_token()
-	var ret = await request({ 
-		url: format('https://api.twitch.tv/helix/search/channels?query={0}&first=1&live_only=true', channel), 
-		headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'Client-Id': twitch_config[0].client_id, 'Authorization': 'Bearer ' + access_token }, 
-		method: 'GET', 
-		qs: { }, 
-		encoding: null }).then(JSON5.parse).then(e => e.data[0])
-
-		return { author: ret.display_name, 
-			title: ret.title, 
-			thumbnail_url: ret.thumbnail_url
-		}
-
-		/*
-		{
-			"data": [
-				{
-				"broadcaster_language": "en",
-				"broadcaster_login": "a_seagull",
-				"display_name": "A_Seagull",
-				"game_id": "506442",
-				"game_name": "DOOM Eternal",
-				"id": "19070311",
-				"is_live": true,
-				"tags_ids": [
-					"6ea6bca4-4712-4ab9-a906-e3336a9d8039"
-				],
-				"thumbnail_url": "https://static-cdn.jtvnw.net/jtv_user_pictures/a_seagull-profile_image-4d2d235688c7dc66-300x300.png",
-				"title": "a_seagull",
-				"started_at": "2020-03-18T17:56:00Z"
-				}
-			],
-			"pagination": {}
-		}
-		*/
 }

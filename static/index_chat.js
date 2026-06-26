@@ -1,5 +1,6 @@
 var g_last_chat = ''
 var mute_list = []
+var tts_mute_list = []
 var ping_time = 0
 
 var cached_chat_call_audio = null
@@ -328,6 +329,7 @@ var zzalReg = /^\/짤\s+(.+)/i
 var zzalClearReg = /^\/(짤클리어|짤clear)/i
 var iconReg = /^\/icon\s+(.+)/i
 var muteReg = /^\/mute\s+(.+)/i
+var ttsMuteReg = /^\/ttsmute\s+(.+)/i
 var refreshReg = /^\/refresh\s+(.+)/i
 var ttsReg = /\/(tts|ㅅㅅㄴ)\s+(.+)/i
 var evalReg = /\/eval\s+(\S+)\s+(.+)/i
@@ -534,6 +536,19 @@ function send(force_tts = false) {
 		}
 		mute_list.push(nick)
 		add_system_message(format('\'{0}\' 님을 차단했습니다.\n\n-차단 목록-\n{1}', nick, mute_list.join('\n')))
+		return
+	}
+
+	if(ttsMuteReg.test(message))
+	{
+		var nick = ttsMuteReg.exec(message)[1]
+		if(nick == '설보')
+		{
+			add_system_message('어허~\n그러면 안댕~\n설보를 TTS뮤트하면 죽여버릴지도 모르샤~ /img static/good.png')
+			return
+		}
+		tts_mute_list.push(nick)
+		add_system_message(format('\'{0}\' 님의 TTS를 차단했습니다.\n\n-TTS차단 목록-\n{1}', nick, tts_mute_list.join('\n')))
 		return
 	}
 

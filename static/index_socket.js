@@ -449,6 +449,8 @@ socket.on('tts', function(data) {
 	var target_nick = data.target_nick
 	if(mute_list.indexOf(target_nick) >= 0)
 		return
+	if(tts_mute_list.indexOf(target_nick) >= 0)
+		return
 	
 	var file_name = data.file_name
 	var new_tts = new Audio(file_name)
