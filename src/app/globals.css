@@ -1,0 +1,48 @@
+@import "tailwindcss";
+
+:root {
+  color-scheme: dark;
+  --app-bg: #09090b;
+  --app-fg: #f4f4f5;
+  --panel: #18181b;
+  --surface: #27272a;
+  --input: #09090b;
+  --line: #3f3f46;
+  --muted: #a1a1aa;
+  --hover: #27272a;
+  --selected: #164e63;
+  --button: #f4f4f5;
+  --button-fg: #09090b;
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
+  --app-bg: #f8fafc;
+  --app-fg: #111827;
+  --panel: #ffffff;
+  --surface: #eef2f7;
+  --input: #ffffff;
+  --line: #cbd5e1;
+  --muted: #64748b;
+  --hover: #f1f5f9;
+  --selected: #bae6fd;
+  --button: #111827;
+  --button-fg: #ffffff;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+  background: var(--app-bg);
+  color: var(--app-fg);
+}
+
+button,
+input {
+  font: inherit;
+}

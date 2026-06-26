@@ -1,0 +1,28 @@
+.git
+.next
+.omx
+.vscode
+data
+dist
+node_modules
+coverage
+npm-debug.log*
+.env
+.env.*
+
+backup
+patch_note
+_기타 파일들
+*.zip
+
+# Legacy root assets are not needed for the Next.js container build.
+/*.ahk
+/*.html
+/*.js
+/*.png
+
+# Local secrets and machine-specific notes.
+*config.txt
+tts-api-*.json
+lolwiki.kr 아이피.txt
+도움말.md

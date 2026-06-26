@@ -1,4 +1,29 @@
-_기타 파일들/
-static/영수증.xlsx
 node_modules/
+.next/
+dist/
+coverage/
+tsconfig.tsbuildinfo
+
+.env
+.env.*
+!.env.example
+
+data/
 .omx/
+.vscode/
+
+# Legacy local backups and exported bundles.
+backup/
+patch_note/
+_기타 파일들/
+*.zip
+/*.ahk
+/*.html
+/*.js
+/*.png
+/*.sh
+
+# Local secrets and machine-specific notes.
+*config.txt
+tts-api-*.json
+lolwiki.kr 아이피.txt

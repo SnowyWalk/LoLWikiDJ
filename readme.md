@@ -1,119 +1,70 @@
-<br>
+# LoLWikiDJ2
 
-# 2022-01-21
-### - 플레이리스트 검색 기능 추가
-![](/patch_note/20220121_search.png)
+Next.js, Tailwind CSS v4, and Socket.IO migration of the LoLWikiDJ app.
 
-### - (임시) `/chat` 챗모드 추가
+## Requirements
 
-### - 검색 기능 사용 중, 영상 삭제 기능이 오작동 하던 버그 수정
+- Node.js 24 or compatible current LTS
+- npm
+- Docker or Docker Compose for container operation
 
-### - 채팅창 최적화 및 일부 UI 가독성 개선
+## Local Development
 
-### - 단일 이모지 채팅 시 크게 보이는 기능 추가 
+```sh
+npm install
+npm run dev
+```
 
-<br>
+The dev server uses the custom Node HTTP server at `http://localhost:3000` by default.
 
-# 2021-11-22
-### - 유튜브 볼륨 제어 기능 추가
-![](/patch_note/20211122_volume.png)
-### - TTS 음성 선택 옵션 추가
-![](/patch_note/20211122_tts옵션.png)
-### - 차단한 유저의 TTS가 들리지 않도록 수정
+Useful checks:
 
-<br>
+```sh
+npm run lint
+npm run typecheck
+npm test
+npm run build
+```
 
-# 2021-11-07
-### - 다크 모드 테마 적용 
-![](/patch_note/20211107_다크모드.png)
-### - '@everyone' 호출 기능 추가
-![](/patch_note/20211107_everyone.png)
-### - '/vol 유저명' 볼륨 확인 명령어 추가
-![](/patch_note/20211107_vol.png)
-### - 유튜브 Shorts 주소도 재생 가능하도록 수정
-### - 기타 편의성 패치
+## Environment
 
-<br>
+| Variable | Default | Description |
+| --- | --- | --- |
+| `HOST` | `0.0.0.0` | HTTP bind host |
+| `PORT` | `3000` | HTTP bind port |
+| `PUBLIC_ORIGIN` | required in production | Public HTTPS origin behind a reverse proxy; used as the browser origin trust boundary |
+| `DATA_DIR` | `data` | Parent directory for cache and uploads |
+| `CACHE_DIR` | `${DATA_DIR}/cache` | Remote image cache root |
+| `UPLOAD_DIR` | `${DATA_DIR}/uploads` | Uploaded image root |
 
-# 2021-10-13
-### - AD 명령어 추가
-<img src="/patch_note/20211013.png" width=75%>
+## Image Storage
 
-<br>
+- LoLWiki remote images are routed through `/api/image-cache?url=...` and cached locally under `CACHE_DIR/lolwiki`.
+- Chat and LoLWiki uploaded images are stored under `UPLOAD_DIR` and served through `/api/uploads/:scope/:fileName`.
+- Blob/base64 payloads should be uploaded first, then referenced by the returned local URL.
 
-# 2021-09-24
-### - 아이콘 버튼에 툴팁 추가
-### - 플레이리스트에서 즉시 대기열에 추가하는 버튼 추가
-### - 옵션 탭에 유튜브 선호 화질 설정 추가
-### - 옵션 탭 - 로그아웃 버튼 크기 개선
-#### - 영상 되감기, 빨리감기 시에 채팅창에 영상 정보 뜨지 않게 변경
-#### - 영상 스킵 시, 스킵 커맨드 채팅(/s)이 더 위에 올라오도록 변경
-#### - 좌측 하단 부분, 재생목록의 이름이 길면 이상하게 표기되던 점 개선
+## Docker
 
-<br>
+```sh
+cp .env.example .env
+docker compose up --build
+```
 
-# 2021-08-28
-### - 번역된 한글 제목이 있을 시, 한글 제목을 선택하도록 수정
-### - 하단 영상 정보의 TITLE 앞에 [채널명] 추가
+The app container listens on HTTP only. Put TLS termination in an external reverse proxy. See `docs/deployment.md` and `deploy/nginx/lolwikidj.conf`.
 
-<br>
+Docker deployment is intentionally single-writer stateful: one app container owns the mounted `/app/data` volume for cache and upload writes. Horizontal scaling requires moving cache/uploads to shared object storage or another coordinated storage layer first.
 
-# 2021-08-26
-### - 재생목록 패널 개선
-### - 재생목록 맨 위, 맨 아래로 보내는 기능 추가
+## Migration Status
 
-<br>
+Implemented:
 
-# 2021-08-03
-### - 자동 로그인 적용 (로그아웃은 옵션탭에)
-### - 최근 영상목록 기능 적용
+- Next.js app router shell with Tailwind CSS v4
+- Custom HTTP server with Socket.IO compatibility layer
+- Local LoLWiki image cache
+- Local upload storage for chat and LoLWiki image payloads
+- Dockerfile, Compose, and Nginx reverse proxy reference
 
-<br>
+Known gaps:
 
-# 2021-07-26
-### - 로그아웃 처리 되지 않은 계정에 재로그인할 수 없던 버그 수정
-### - 참여자 목록 탭 구현
-
-<br>
-
-# 2021-07-20
-### - 채팅 헤더 추가
-### - 옵션 카테고리 추가 (언급 알림, TTS 자동 재생 여부)
-
-<br>
-
-# 2021-07-17
-### - TTS 기능 추가
-
-<br>
-
-# 2021-07-16
-### - 새 재생목록을 만들면 해당 재생목록이 선택되도록 수정
-### - 재생목록의 이름이 길 때, 우측의 버튼패널이 이탈하던 버그 수정
-### - 빈 재생목록을 재생할 수 있던 문제 수정
-### - 라이브챗의 기본 너비를 채팅창의 폭과 동일하게 수정
-### - '@닉네임' 호출 기능 추가
-
-<br>
-
-# 2021-06-28
-### - 실시간 방송 라이브챗 윈도우 추가
-### - 구글 광고 제거 (원래 안나왔지만)
-
-<br>
-
-# 2021-05-10
-### - 패치노트 적용
-### - 유튜브 썸네일 고화질로 변경
-### - 로그인 화면에 현재 서버(포트번호) 표시
-
-<br>
-<br>
-<br>
-
-## 향후 업데이트
-
-### - 관리자 기능 (강퇴, 대기열 수정, 강제 스킵 등)
-### - 볼륨 컨트롤 패널
-### - TTS 한꺼번에 들리는 문제 
-### - 이미지 복붙 개선 (용량 무관하도록)
+- Legacy playlist, media playback, admin, and external service integrations are represented by the new UI/contracts but not fully feature-complete.
+- Docker build could not be executed in this workspace because Docker/Podman CLI is not installed.
