@@ -13,6 +13,168 @@ var g_lol_icon_change_drag_start_my = 0 // 드래그 이벤트를 위해
 var g_lol_icon_change_drag_start_x = 0 // 드래그 시작했을때 크롭영역의 위치
 var g_lol_icon_change_drag_start_y = 0 // 드래그 시작했을때 크롭영역의 위치
 var g_lol_icon_change_has_image = false
+var g_storage_lol_api_account_key = 'lolwiki_api_account_id'
+var g_storage_lol_api_session_key = 'lolwiki_api_session_ready'
+var g_lol_api_account_id = lol_api_storage_get(g_storage_lol_api_account_key)
+var g_lol_api_password = ''
+var g_lol_api_session_ready = lol_api_storage_get(g_storage_lol_api_session_key) == '1'
+
+function lol_api_storage_get(key)
+{
+	try
+	{
+		return localStorage.getItem(key) || ''
+	}
+	catch(error)
+	{
+		return ''
+	}
+}
+
+function lol_api_storage_set(key, value)
+{
+	try
+	{
+		localStorage.setItem(key, value)
+	}
+	catch(error) {}
+}
+
+function lol_api_storage_remove(key)
+{
+	try
+	{
+		localStorage.removeItem(key)
+	}
+	catch(error) {}
+}
+
+function lol_remember_api_session(accountId)
+{
+	g_lol_api_account_id = accountId
+	g_lol_api_session_ready = true
+	lol_api_storage_set(g_storage_lol_api_account_key, accountId)
+	lol_api_storage_set(g_storage_lol_api_session_key, '1')
+}
+
+function lol_invalidate_api_session()
+{
+	g_lol_api_password = ''
+	g_lol_api_session_ready = false
+	lol_api_storage_remove(g_storage_lol_api_session_key)
+}
+
+function lol_confirm_api_session()
+{
+	if(!g_lol_api_account_id)
+		return
+
+	lol_remember_api_session(g_lol_api_account_id)
+	g_lol_api_password = ''
+}
+
+function lol_request_api_credentials(callback)
+{
+	if(g_lol_api_account_id && (g_lol_api_password || g_lol_api_session_ready))
+	{
+		callback({ account_id: g_lol_api_account_id, password: g_lol_api_password })
+		return
+	}
+
+	var existing = document.getElementById('lol_api_login_overlay')
+	if(existing)
+	{
+		existing.querySelector('input').focus()
+		return
+	}
+
+	var overlay = document.createElement('div')
+	overlay.id = 'lol_api_login_overlay'
+	overlay.style.cssText = 'position:fixed;left:0;top:0;right:0;bottom:0;z-index:100000;background:rgba(0,0,0,.68);display:flex;align-items:center;justify-content:center;padding:16px;box-sizing:border-box;'
+
+	var form = document.createElement('form')
+	form.style.cssText = 'width:360px;max-width:100%;padding:22px;border-radius:8px;background:#252525;color:#fff;box-shadow:0 8px 30px rgba(0,0,0,.5);font-size:14px;box-sizing:border-box;'
+
+	var title = document.createElement('div')
+	title.textContent = '롤백과사전 쓰기 로그인'
+	title.style.cssText = 'font-size:18px;font-weight:bold;margin-bottom:10px;'
+	form.appendChild(title)
+
+	var guide = document.createElement('div')
+	guide.textContent = '새 API에서는 글과 댓글 작성 시 계정 로그인이 필요합니다. 처음 사용하는 아이디라면 현재 롤백 계정에 새 로그인 정보로 연결됩니다.'
+	guide.style.cssText = 'line-height:1.55;margin-bottom:14px;color:#ddd;'
+	form.appendChild(guide)
+
+	var accountInput = document.createElement('input')
+	accountInput.type = 'text'
+	accountInput.autocomplete = 'username'
+	accountInput.placeholder = '롤백과사전 계정 아이디'
+	accountInput.value = g_lol_api_account_id
+	accountInput.style.cssText = 'display:block;width:100%;height:38px;margin-bottom:9px;padding:0 10px;border:1px solid #555;border-radius:4px;background:#151515;color:#fff;box-sizing:border-box;'
+	form.appendChild(accountInput)
+
+	var passwordInput = document.createElement('input')
+	passwordInput.type = 'password'
+	passwordInput.autocomplete = 'current-password'
+	passwordInput.placeholder = '비밀번호'
+	passwordInput.style.cssText = accountInput.style.cssText
+	form.appendChild(passwordInput)
+
+	var buttonRow = document.createElement('div')
+	buttonRow.style.cssText = 'display:flex;justify-content:flex-end;gap:8px;margin-top:14px;'
+
+	var cancelButton = document.createElement('button')
+	cancelButton.type = 'button'
+	cancelButton.textContent = '취소'
+	cancelButton.style.cssText = 'padding:8px 14px;border:0;border-radius:4px;background:#555;color:#fff;cursor:pointer;'
+	cancelButton.onclick = function() { document.body.removeChild(overlay) }
+	buttonRow.appendChild(cancelButton)
+
+	var loginButton = document.createElement('button')
+	loginButton.type = 'submit'
+	loginButton.textContent = '확인'
+	loginButton.style.cssText = 'padding:8px 14px;border:0;border-radius:4px;background:#4f78d1;color:#fff;cursor:pointer;'
+	buttonRow.appendChild(loginButton)
+	form.appendChild(buttonRow)
+	overlay.appendChild(form)
+
+	form.onsubmit = function(event)
+	{
+		event.preventDefault()
+		var accountId = accountInput.value.trim()
+		var password = passwordInput.value
+		if(!accountId || !password)
+		{
+			alert('계정 아이디와 비밀번호를 모두 입력해주세요.')
+			return
+		}
+
+		lol_remember_api_session(accountId)
+		g_lol_api_password = password
+		document.body.removeChild(overlay)
+		callback({ account_id: accountId, password: password })
+	}
+
+	document.body.appendChild(overlay)
+	if(accountInput.value)
+		passwordInput.focus()
+	else
+		accountInput.focus()
+}
+
+function lol_forget_api_password()
+{
+	g_lol_api_password = ''
+}
+
+function lol_forget_api_credentials()
+{
+	g_lol_api_account_id = ''
+	g_lol_api_password = ''
+	g_lol_api_session_ready = false
+	lol_api_storage_remove(g_storage_lol_api_account_key)
+	lol_api_storage_remove(g_storage_lol_api_session_key)
+}
 
 /* 롤백 패널 열기 */
 function onrclick_playlist_info_box() 
@@ -58,8 +220,8 @@ function lol_get_article_list(seq = 0, cnt = 30, body = '', nick = '', vote = fa
 {
 	g_lol_is_bookmark = false
 
-	console.log('query', {android_id: g_lol_spec_android_id, seq: seq, cnt: cnt, body: body, nick: nick, vote: vote, mine: mine})
-	socket.emit('lol_get_article_list', {android_id: g_lol_spec_android_id, seq: seq, cnt: cnt, body: body, nick: nick, vote: vote, mine: mine})
+	console.log('query', {android_id: g_lol_spec_android_id, viewer_android_id: g_lol_android_id, seq: seq, cnt: cnt, body: body, nick: nick, vote: vote, mine: mine})
+	socket.emit('lol_get_article_list', {android_id: g_lol_spec_android_id, viewer_android_id: g_lol_android_id, seq: seq, cnt: cnt, body: body, nick: nick, vote: vote, mine: mine})
 }
 
 /* 글 목록 업뎃 */
@@ -3833,6 +3995,13 @@ function lol_onclick_userinfo_blocklist_reset()
 	alert('만들기 귀찮아서 유기')
 }
 
+/* 내 정보 - 쓰기 API 계정 로그아웃 클릭 */
+function lol_onclick_userinfo_api_logout()
+{
+	event.stopPropagation()
+	socket.emit('lol_api_logout', g_lol_android_id)
+}
+
 /* 내 정보 - 롤디자게 로그아웃 클릭 */
 function lol_onclick_userinfo_logout()
 {
@@ -3841,6 +4010,7 @@ function lol_onclick_userinfo_logout()
 		return
 
 	localStorage.removeItem(g_storage_lol_key)
+	lol_forget_api_credentials()
 
 	lol_lpanel_userinfo_menu.style.display = 'none'
 
@@ -3888,13 +4058,18 @@ function lol_onclick_write_confirm()
 	if(lol_write_body.value.length == 0)
 		return
 
-	socket.emit('lol_write', { 
-		android_id: g_lol_android_id, 
-		subject: lol_write_subject.value,
-		body: lol_write_body.value + ' <ㄹㅗㄹㄷㅣ>',
-		youtube_url: lol_write_youtube.value,
-		image: g_lol_write_image_data_gif ? g_lol_write_image_data_gif : g_lol_write_image_data,
-		is_gif: g_lol_write_image_data_gif ? true : false})
+	lol_request_api_credentials(function(credentials) {
+		socket.emit('lol_write', {
+			android_id: g_lol_android_id,
+			subject: lol_write_subject.value,
+			body: lol_write_body.value,
+			youtube_url: lol_write_youtube.value,
+			image: g_lol_write_image_data_gif ? g_lol_write_image_data_gif : g_lol_write_image_data,
+			is_gif: g_lol_write_image_data_gif ? true : false,
+			account_id: credentials.account_id,
+			password: credentials.password
+		})
+	})
 }
 
 /* 글 북마크 버튼 */
@@ -3961,7 +4136,7 @@ function lol_rpanel_update()
 
 	if(g_lol_android_id == g_lol_guest_id)
 	{
-		lol_rpanel_header_button.firstChild.nodeValue = '[이 계정에 로그인하기]'
+		lol_rpanel_header_button.firstChild.nodeValue = '[계정 코드로 로그인하기]'
 		lol_rpanel_header_memo_container.style.display = 'none'
 	}
 	else
@@ -3990,7 +4165,11 @@ function lol_rpanel_update()
 
 	// 사진
 	var zzals = []
-	if(g_lol_current_detail['pic_multi'].length)
+	if(Array.isArray(g_lol_current_detail['image_urls']) && g_lol_current_detail['image_urls'].length)
+	{
+		zzals = g_lol_current_detail['image_urls']
+	}
+	else if(g_lol_current_detail['pic_multi'].length)
 	{
 		zzals = g_lol_current_detail['pic_multi'].split('/').filter(e => e.length).map(e => format('http://lolwiki.kr/freeboard/uploads/files/{0}/{1}', lol_get_date_from_filename(e), e))
 	}
@@ -4171,12 +4350,15 @@ function lol_rpanel_update()
 		reply_body.appendChild(nick_container)
 
 		// 댓글이미지
-		if(e['reply_img'].length > 0)
+		var reply_image_url = e['image_url'] || (e['reply_img'] && e['reply_img'].length > 0
+			? format('http://lolwiki.kr/freeboard/uploads/files/{0}/{1}', lol_get_date_from_filename(e['reply_img']), e['reply_img'])
+			: '')
+		if(reply_image_url)
 		{
 			var img = document.createElement('img')
 			img.toggleAttribute('img', true)
 			img.toggleAttribute('small', true)
-			img.src = lol_convert_uri_to_mirror(format('http://lolwiki.kr/freeboard/uploads/files/{0}/{1}', lol_get_date_from_filename(e['reply_img']), e['reply_img']))
+			img.src = lol_convert_uri_to_mirror(reply_image_url)
 			img.onclick = lol_onclick_reply_img
 			reply_body.appendChild(img)
 		}
@@ -4406,11 +4588,12 @@ function lol_onclick_auth_or_block()
 {
 	if(g_lol_android_id == g_lol_guest_id)
 	{
-		// 이 계정에 로그인하기
-		if(!g_lol_current_detail || g_lol_current_detail['post_seq'].length == 0)
+		var encoded_aid = prompt('계정 코드를 입력해주세요.')
+
+		if(!encoded_aid)
 			return
 
-		socket.emit('lol_auth_request', g_lol_current_detail['post_seq'])
+		socket.emit('lol_login_instantly', lol_decode_account_code(encoded_aid))
 		return
 	}
 
@@ -4554,8 +4737,17 @@ function lol_write_reply()
 	if(g_lol_android_id == g_lol_guest_id)
 		return
 
-	socket.emit('lol_write_reply', { android_id: g_lol_android_id, post_seq: g_lol_current_detail['post_seq'], body: lol_rpanel_reply_board_input.value, image: g_lol_write_reply_image_data })
-	lol_clear_reply_image()
+	lol_request_api_credentials(function(credentials) {
+		socket.emit('lol_write_reply', {
+			android_id: g_lol_android_id,
+			post_seq: g_lol_current_detail['post_seq'],
+			body: lol_rpanel_reply_board_input.value,
+			image: g_lol_write_reply_image_data,
+			account_id: credentials.account_id,
+			password: credentials.password
+		})
+		lol_clear_reply_image()
+	})
 }
 
 /* UI 업뎃 */
@@ -4631,9 +4823,13 @@ function lol_write_image_onpaste()
 		console.log('이미지 첨부 실패: 클립보드 내용이 이미지가 아니다..')
 		return
 	}
+	g_lol_write_image_data = ''
+	g_lol_write_image_data_gif = ''
 	var reader = new FileReader()
 	reader.onload = function(ev) { 
 		var ret = ev.target.result
+		if(blob.type == 'image/gif')
+			g_lol_write_image_data_gif = ret.substring(ret.indexOf(',') + 1)
 		lol_write_image_placeholder.style.display = 'none'
 		lol_write_image.src = ret
 		lol_write_image.style.display = 'block'
@@ -4663,14 +4859,12 @@ async function lol_write_image_ondrop(e)
 		return;
 	}
 		
-	var file = e.dataTransfer.files[0]
+	var file = files[0]
 	// console.log('file', file);
 
-	var gif_stream_result = await readAsArrayBuffer_async(file)
-	// console.warn('readAsArrayBuffer', gif_stream_result)
-	g_lol_write_image_data_gif = gif_stream_result
-
 	var base64_result = await readAsDataURL_async(file) // data:image/gif;base64,R0lGO ...
+	g_lol_write_image_data = ''
+	g_lol_write_image_data_gif = file.type == 'image/gif' ? base64_result.substring(base64_result.indexOf(',') + 1) : ''
 	// console.log('target', base64_result)
 	lol_write_image_placeholder.style.display = 'none'
 	lol_write_image.src = base64_result
@@ -4700,26 +4894,13 @@ function readAsDataURL_async(file) {
 	})
 }
 
-function readAsArrayBuffer_async(file) {
-	return new Promise((resolve, reject) => {
-	  let reader = new FileReader();
-  
-	  reader.onload = () => {
-		resolve(reader.result);
-	  };
-  
-	  reader.onerror = reject;
-  
-	  reader.readAsArrayBuffer(file);
-	})
-}
-
 async function lol_write_image_onload()
 {
 	lol_write_canvas.width = lol_write_image.naturalWidth
 	lol_write_canvas.height = lol_write_image.naturalHeight
 	lol_write_canvas.getContext('2d').drawImage(lol_write_image, 0,0)
-	g_lol_write_image_data = (lol_write_canvas.toDataURL("image/jpeg").substr(23))
+	if(!g_lol_write_image_data_gif)
+		g_lol_write_image_data = (lol_write_canvas.toDataURL("image/jpeg").substr(23))
 	lol_write_image_guide.innerHTML = '이미지가 첨부 되었습니다.'
 }
 
@@ -4893,17 +5074,16 @@ function lol_icon_change_confirm()
 	alert('아이콘 변경을 요청했습니다.')
 }
 
-const filenameReg = /.*\/(.+)/
 function lol_convert_uri_to_mirror(uri)
 {
-	if(!uri.startsWith('http'))
+	if(!uri || !uri.startsWith('http'))
 		return uri
+	if(/^https?:\/\/(?:img\.)?lolwiki\.kr(?:\/|$)/i.test(uri) || uri.startsWith('http://'))
+		return format('{0}/lolwiki_mirror?uri={1}', location.origin, encodeURIComponent(uri))
 	if(uri.startsWith('https://'))
 		return uri
-	if(filenameReg.test(uri))
-		return format('{0}/lolwiki_mirror/{1}?uri={2}', location.origin, filenameReg.exec(uri)[1], encodeURIComponent(uri))
 
-	return format('{0}/lolwiki_mirror/{1}?uri={2}', location.origin, generate_id(32), encodeURIComponent(uri))
+	return format('{0}/lolwiki_mirror?uri={1}', location.origin, encodeURIComponent(uri))
 }
 
 function lol_encode_account_code(code)

@@ -1605,9 +1605,10 @@ io.sockets.on('connection', function(socket)
 		var nick = data.nick
 		var vote = data.vote
 		var android_id = data.android_id
+		var viewer_android_id = data.viewer_android_id || android_id
 		var mine = data.mine
 
-		var ret = await lol_get_article_list(socket, android_id, seq, cnt, body, nick, vote, mine)
+		var ret = await lol_get_article_list(socket, android_id, seq, cnt, body, nick, vote, mine, viewer_android_id)
 		socket.emit('data', ret)
 
 		/*
@@ -1701,6 +1702,12 @@ io.sockets.on('connection', function(socket)
 		socket.emit('lol_change_nickname', is_success)
 	})
 
+	/* 쓰기 API 계정 로그아웃 */
+	socket.on('lol_api_logout', function(android_id) {
+		lolwikiApiClient.logout(android_id)
+		socket.emit('lol_api_logout')
+	})
+
 	/* 댓글 작성 */
 	socket.on('lol_write_reply', async function(data) {
 		var android_id = data.android_id
@@ -1710,7 +1717,20 @@ io.sockets.on('connection', function(socket)
 
 		log('INFO', 'lol_write_reply', format('{0}가 {1} 계정으로 댓글 남김 -> {2} : {3}{4}', socket.name, android_id, post_seq, body, (image ? ' (짤 첨부)' : '')))
 
-		await lol_write_reply(post_seq, android_id, body, image)
+		try
+		{
+			await lol_write_reply(post_seq, android_id, body, image, data.account_id, data.password)
+		}
+		catch(error)
+		{
+			log('ERROR', 'lol_write_reply_api', error.message)
+			socket.emit('lol_api_error', {
+				code: error.code || '',
+				status_code: error.statusCode || 0,
+				message: '댓글 작성에 실패했습니다. 롤백과사전 계정 정보 또는 API 연결 상태를 확인해주세요.'
+			})
+			return
+		}
 
 		var ret = await lol_get_article_detail(android_id, post_seq)
 		var replys = await lol_get_article_replys(android_id, post_seq)
@@ -1757,7 +1777,20 @@ io.sockets.on('connection', function(socket)
 		
 		log('INFO', 'lol_write', format('{0}가 {1} 계정으로 글 작성 -> 제목: {2}, 내용: {3}, 유튜브주소: {4} {5}', socket.name, android_id, subject.replace('\n', '\\n'), body.replace('\n', '\\n'), youtube_url, (image ? '(짤 첨부)' : '')))
 
-		await lol_write(android_id, subject, body, youtube_url, image, is_gif)
+		try
+		{
+			await lol_write(android_id, subject, body, youtube_url, image, is_gif, data.account_id, data.password)
+		}
+		catch(error)
+		{
+			log('ERROR', 'lol_write_api', error.message)
+			socket.emit('lol_api_error', {
+				code: error.code || '',
+				status_code: error.statusCode || 0,
+				message: '글 작성에 실패했습니다. 롤백과사전 계정 정보 또는 API 연결 상태를 확인해주세요.'
+			})
+			return
+		}
 
 		socket.emit('lol_write')
 	})
@@ -2997,6 +3030,23 @@ async function twitch_get_video_info(video_id)
 		}
 	*/
 }
+
+/* New REST API compatibility layer. Keep the socket/UI contract stable across every channel server. */
+const lolwikiApiClient = require('./lolwiki-api').createLolWikiClient(request)
+lol_get_new_memo = lolwikiApiClient.getNewMemo
+lol_get_article_list = lolwikiApiClient.getArticleList
+lol_get_article_detail = lolwikiApiClient.getArticleDetail
+lol_get_article_replys = lolwikiApiClient.getArticleReplies
+lol_get_android_id_from_article = lolwikiApiClient.getArticleAuthorId
+lol_get_lulu_comment = async function() { return '' }
+lol_get_user_info = lolwikiApiClient.getUserInfo
+lol_change_nickname = lolwikiApiClient.changeNickname
+lol_write_reply = lolwikiApiClient.writeReply
+lol_like = lolwikiApiClient.votePost
+lol_delete_reply = lolwikiApiClient.deleteReply
+lol_write = lolwikiApiClient.writePost
+lol_icon_change = lolwikiApiClient.changeIcon
+lol_delete = lolwikiApiClient.deletePost
 
 async function twitch_get_stream_info(channel)
 {

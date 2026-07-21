@@ -123,7 +123,9 @@ function GetDate() // YYYYMMDD HHMMSS
 
 function lol_get_icon_url(icon_img, badge_use = 0)
 {
-	if(icon_img.length)
+	if(icon_img && /^https?:\/\//i.test(icon_img))
+		return icon_img
+	if(icon_img && icon_img.length)
 		return format('http://lolwiki.kr/freeboard/uploads/icon_img/files/{0}/{1}', lol_get_date_from_filename(icon_img), icon_img)
 	return format('http://lol100.co.kr/badge/{0}.jpg', badge_use)
 }

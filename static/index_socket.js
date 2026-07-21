@@ -560,6 +560,8 @@ socket.on('lol_login', function(android_id_and_user_info) {
 		alert('롤디자게 로그인에 실패했습니다!!')
 		return
 	}
+	if(g_lol_android_id != android_id_and_user_info[0] && g_lol_android_id != g_lol_guest_id)
+		lol_forget_api_credentials()
 	g_lol_android_id = android_id_and_user_info[0]
 	g_lol_user_info = android_id_and_user_info[1]
 	localStorage.setItem(g_storage_lol_key, g_lol_android_id)
@@ -574,6 +576,7 @@ socket.on('lol_user_info', function(user_info) {
 	if(!user_info)
 	{
 		localStorage.removeItem(g_storage_lol_key)
+		lol_forget_api_credentials()
 
 		lol_lpanel_userinfo_menu.style.display = 'none'
 	
@@ -618,7 +621,25 @@ socket.on('lol_change_nickname', function(is_success) {
 		socket.emit('lol_user_info', g_lol_android_id)
 })
 
+socket.on('lol_api_error', function(error) {
+	var message = typeof error == 'string' ? error : error && error.message
+	var code = error && typeof error == 'object' ? error.code : ''
+	var statusCode = error && typeof error == 'object' ? Number(error.status_code) : 0
+	if(code == 'LOLWIKI_AUTH_FAILED' || statusCode == 401)
+		lol_invalidate_api_session()
+
+	alert(message || '롤백과사전 요청에 실패했습니다. 계정 정보를 확인한 뒤 다시 시도해주세요.')
+})
+
+socket.on('lol_api_logout', function() {
+	lol_forget_api_credentials()
+	lol_lpanel_userinfo_menu.style.display = 'none'
+	alert('쓰기 계정에서 로그아웃했습니다. 다음 글이나 댓글 작성 시 계정 정보를 다시 입력할 수 있습니다.')
+})
+
 socket.on('lol_write_reply', function(data) {
+	lol_confirm_api_session()
+
 	if(g_lol_current_detail && g_lol_current_detail['post_seq'] == data.post_seq)
 		g_lol_same_article_prev = true
 	else
@@ -652,6 +673,8 @@ socket.on('lol_delete_reply', function(data) {
 })
 
 socket.on('lol_write', function() {
+	lol_confirm_api_session()
+
 	lol_write_subject.value = ''
 	lol_write_body.value = ''
 	lol_write_youtube.value = ''
